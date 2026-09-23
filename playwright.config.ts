@@ -15,7 +15,8 @@ export default defineConfig({
   reporter: process.env.CI ? "github" : "list",
   use: { baseURL, trace: "on-first-retry" },
   projects: [
-    { name: "mobile-chrome", use: { ...devices["Pixel 7"] } },
+    // Engine tests are browser-API tests; running them once (desktop) is enough.
+    { name: "mobile-chrome", use: { ...devices["Pixel 7"] }, testIgnore: /image-engine/ },
     { name: "desktop-chrome", use: { ...devices["Desktop Chrome"] } },
   ],
   webServer: {
@@ -24,5 +25,7 @@ export default defineConfig({
     // Never reuse: a different app on the same port would silently be tested instead.
     reuseExistingServer: false,
     timeout: 60_000,
+    // Enables the /dev/image-engine harness page (404 otherwise).
+    env: { ENGINE_HARNESS: "1" },
   },
 });

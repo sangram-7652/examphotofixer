@@ -1,9 +1,11 @@
 import { FORMAT_LABELS, SUPPORTED_INPUT_FORMATS, type ImageFormat } from "@/lib/image/formats";
 import { MAX_INPUT_BYTES } from "@/lib/image/limits";
-import type { OutputFacts } from "@/lib/image/pipeline";
+import type { MetadataKind } from "@/lib/image/jpeg";
+import type { OutputFacts, OutputRequirements } from "@/lib/image/pipeline";
 import { kbRangeToByteWindow } from "@/lib/image/size-target";
-import type { ImagePreset } from "@/lib/presets/types";
 import type { ValidationCheck, ValidationReport } from "./types";
+
+const EXPECTED_METADATA = "No personal metadata (EXIF, GPS, camera)";
 
 /** Aspect-ratio tolerance; exact dimensions are checked separately. */
 const ASPECT_TOLERANCE = 0.01;
@@ -12,6 +14,17 @@ export function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
   return `${(bytes / 1024).toFixed(1)} KB`;
 }
+
+const METADATA_LABELS: Readonly<Record<MetadataKind, string>> = {
+  exif: "EXIF",
+  gps: "GPS location",
+  xmp: "XMP",
+  icc: "colour profile",
+  iptc: "IPTC",
+  comment: "comment",
+  "jfif-thumbnail": "thumbnail",
+  "other-app": "vendor data",
+};
 
 function formatList(formats: readonly ImageFormat[]): string {
   return formats.map((format) => FORMAT_LABELS[format]).join(", ");
@@ -22,11 +35,12 @@ function skipped(id: ValidationCheck["id"], label: string, expected: string): Va
 }
 
 /**
- * Validates a produced (or user-supplied) file against a preset.
+ * Validates a produced (or user-supplied) file against output requirements
+ * (a preset, or requirements built by a generic tool).
  * Pass `error` when processing failed; remaining checks are then skipped.
  */
 export function validateAgainstPreset(
-  preset: ImagePreset,
+  preset: OutputRequirements,
   facts: OutputFacts | null,
   error?: string,
 ): ValidationReport {
@@ -54,6 +68,7 @@ export function validateAgainstPreset(
         skipped("format", "Format", expectedFormat),
         skipped("file-size", "File size", expectedSize),
         skipped("dpi", "DPI", expectedDpi),
+        skipped("metadata", "Metadata", EXPECTED_METADATA),
       ],
     };
   }
@@ -129,6 +144,19 @@ export function validateAgainstPreset(
       : facts.dpi === null
         ? `File has no DPI information; it must be ${expectedDpi}.`
         : `DPI must be between ${preset.dpi.min} and ${preset.dpi.max}.`,
+  });
+
+  const metadataOk = facts.metadata.length === 0;
+  const found = facts.metadata.map((kind) => METADATA_LABELS[kind]).join(", ");
+  checks.push({
+    id: "metadata",
+    label: "Metadata",
+    expected: EXPECTED_METADATA,
+    actual: metadataOk ? "None" : found,
+    status: metadataOk ? "pass" : "fail",
+    message: metadataOk
+      ? null
+      : `File still contains personal or extra metadata (${found}). Process it again to remove it.`,
   });
 
   return {

@@ -55,3 +55,115 @@ export function detectImageFormat(bytes: Uint8Array): ImageFormat | null {
   }
   return null;
 }
+
+function u32be(bytes: Uint8Array, offset: number): number {
+  return (
+    ((bytes[offset] << 24) |
+      (bytes[offset + 1] << 16) |
+      (bytes[offset + 2] << 8) |
+      bytes[offset + 3]) >>>
+    0
+  );
+}
+
+function u24le(bytes: Uint8Array, offset: number): number {
+  return bytes[offset] | (bytes[offset + 1] << 8) | (bytes[offset + 2] << 16);
+}
+
+interface PngChunk {
+  type: string;
+  offset: number;
+  length: number;
+}
+
+/** Iterates PNG chunks; stops at the first chunk that runs past the end. */
+function* pngChunks(bytes: Uint8Array): Generator<PngChunk> {
+  let pos = 8;
+  while (pos + 8 <= bytes.length) {
+    const length = u32be(bytes, pos);
+    const type = ascii(bytes, pos + 4, 4);
+    if (pos + 12 + length > bytes.length) return;
+    yield { type, offset: pos, length };
+    pos += 12 + length;
+  }
+}
+
+interface RiffChunk {
+  id: string;
+  offset: number;
+  size: number;
+}
+
+function* webpChunks(bytes: Uint8Array): Generator<RiffChunk> {
+  let pos = 12;
+  while (pos + 8 <= bytes.length) {
+    const id = ascii(bytes, pos, 4);
+    const size =
+      (bytes[pos + 4] | (bytes[pos + 5] << 8) | (bytes[pos + 6] << 16) | (bytes[pos + 7] << 24)) >>>
+      0;
+    yield { id, offset: pos, size };
+    pos += 8 + size + (size % 2);
+  }
+}
+
+/** Pixel dimensions read from the PNG/WebP header (JPEG: see `readJpegDimensions`). */
+export function readPngOrWebpDimensions(
+  bytes: Uint8Array,
+  format: "png" | "webp",
+): { width: number; height: number } | null {
+  if (format === "png") {
+    if (bytes.length < 24 || ascii(bytes, 12, 4) !== "IHDR") return null;
+    const width = u32be(bytes, 16);
+    const height = u32be(bytes, 20);
+    return width > 0 && height > 0 ? { width, height } : null;
+  }
+  for (const chunk of webpChunks(bytes)) {
+    const p = chunk.offset + 8;
+    if (chunk.id === "VP8X" && p + 10 <= bytes.length) {
+      return { width: u24le(bytes, p + 4) + 1, height: u24le(bytes, p + 7) + 1 };
+    }
+    if (chunk.id === "VP8 " && p + 10 <= bytes.length) {
+      if (bytes[p + 3] !== 0x9d || bytes[p + 4] !== 0x01 || bytes[p + 5] !== 0x2a) return null;
+      const width = (bytes[p + 6] | (bytes[p + 7] << 8)) & 0x3fff;
+      const height = (bytes[p + 8] | (bytes[p + 9] << 8)) & 0x3fff;
+      return width > 0 && height > 0 ? { width, height } : null;
+    }
+    if (chunk.id === "VP8L" && p + 5 <= bytes.length) {
+      if (bytes[p] !== 0x2f) return null;
+      const bits = bytes[p + 1] | (bytes[p + 2] << 8) | (bytes[p + 3] << 16) | (bytes[p + 4] << 24);
+      return { width: (bits & 0x3fff) + 1, height: ((bits >>> 14) & 0x3fff) + 1 };
+    }
+  }
+  return null;
+}
+
+/** True for animated PNG (APNG) and animated WebP. Animated inputs are rejected. */
+export function isAnimatedImage(bytes: Uint8Array, format: ImageFormat): boolean {
+  if (format === "gif") return true; // GIF is unsupported regardless; treat as animated-capable
+  if (format === "png") {
+    for (const chunk of pngChunks(bytes)) {
+      if (chunk.type === "acTL") return true;
+      if (chunk.type === "IDAT") return false;
+    }
+    return false;
+  }
+  if (format === "webp") {
+    for (const chunk of webpChunks(bytes)) {
+      if (chunk.id === "VP8X") return (bytes[chunk.offset + 8] & 0x02) !== 0;
+      if (chunk.id === "ANIM" || chunk.id === "ANMF") return true;
+    }
+  }
+  return false;
+}
+
+/** Structural completeness for PNG/WebP: catches truncated downloads before decoding. */
+export function isCompletePngOrWebp(bytes: Uint8Array, format: "png" | "webp"): boolean {
+  if (format === "png") {
+    for (const chunk of pngChunks(bytes)) {
+      if (chunk.type === "IEND") return true;
+    }
+    return false;
+  }
+  const riffSize = (bytes[4] | (bytes[5] << 8) | (bytes[6] << 16) | (bytes[7] << 24)) >>> 0;
+  return bytes.length >= 12 && riffSize + 8 <= bytes.length;
+}

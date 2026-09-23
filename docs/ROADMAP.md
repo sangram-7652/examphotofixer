@@ -5,12 +5,11 @@
 Project setup, presets with source metadata, tool registry, SEO skeleton, validation model,
 pure image helpers (geometry, size search, DPI choice, format sniffing), test infrastructure, docs.
 
-## Phase 1 — Image pipeline
+## Phase 1 (P2): Image engine ✅
 
-- Web Worker pipeline: decode (`createImageBitmap`), EXIF orientation, crop, high-quality resize, white background, JPEG encode.
-- JFIF density writer/reader; metadata stripping.
-- Wire `findQualityForByteWindow`; decide "too small" strategy.
-- Browser tests for every `it.todo` in `pipeline.test.ts`, with fixtures.
+Web Worker engine: decode, EXIF orientation 1–8, crop (auto/rect/viewport), stepped resize,
+white background, JPEG encode, KB search, JFIF DPI, metadata stripping, validation, typed
+progress and errors. Below-minimum decision locked: report it, never pad. Unit and browser tests.
 
 ## Phase 2 — Tool UI
 

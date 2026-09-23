@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import {
   MAX_QUALITY,
   MIN_QUALITY,
-  PREFERRED_MAX_QUALITY,
   findQualityForByteWindow,
   kbRangeToByteWindow,
   type ByteWindow,
@@ -22,11 +21,7 @@ const linear = (base: number, perStep: number) => (q: number) => base + q * perS
 
 describe("kbRangeToByteWindow", () => {
   it("satisfies both 1000- and 1024-byte KB interpretations", () => {
-    const window = kbRangeToByteWindow({ min: 5, max: 50 });
-    expect(window.minBytes).toBe(5 * 1024);
-    expect(window.maxBytes).toBe(50 * 1000);
-    expect(window.ceilingBytes).toBeLessThan(window.maxBytes);
-    expect(window.ceilingBytes).toBeGreaterThan(window.minBytes);
+    expect(kbRangeToByteWindow({ min: 5, max: 50 })).toEqual({ minBytes: 5120, maxBytes: 50_000 });
   });
 
   it("rejects invalid ranges", () => {
@@ -36,58 +31,65 @@ describe("kbRangeToByteWindow", () => {
 });
 
 describe("findQualityForByteWindow", () => {
-  const window: ByteWindow = kbRangeToByteWindow({ min: 5, max: 20 }); // 5120 – 20000, ceiling 19600
+  const window: ByteWindow = kbRangeToByteWindow({ min: 5, max: 20 }); // 5120 – 20000
 
-  it("keeps the preferred quality when it already fits (one encode)", async () => {
-    const { encode, calls } = fakeEncoder(linear(1000, 100)); // q92 → 10200
+  it("uses maximum quality when it already fits (one encode)", async () => {
+    const { encode, calls } = fakeEncoder(linear(1000, 100)); // q100 → 11000
     const result = await findQualityForByteWindow(encode, window);
-    expect(result).toMatchObject({ status: "in-range", quality: PREFERRED_MAX_QUALITY });
-    expect(calls).toEqual([PREFERRED_MAX_QUALITY]);
+    expect(result).toMatchObject({ status: "within_range", quality: MAX_QUALITY, attempts: 1 });
+    expect(calls).toEqual([MAX_QUALITY]);
   });
 
-  it("finds the highest quality under the ceiling when too large", async () => {
-    const bytesAt = linear(0, 300); // q92 → 27600; ceiling 19600 → q65 = 19500
-    const { encode } = fakeEncoder(bytesAt);
+  it("finds the highest quality under the maximum (binary search)", async () => {
+    const bytesAt = linear(0, 300); // q66 → 19800, q67 → 20100
+    const { encode, calls } = fakeEncoder(bytesAt);
     const result = await findQualityForByteWindow(encode, window);
-    expect(result.status).toBe("in-range");
-    expect(result.quality).toBe(65);
-    expect(result.output.byteLength).toBeLessThanOrEqual(window.ceilingBytes);
-    expect(bytesAt(result.quality + 1)).toBeGreaterThan(window.ceilingBytes);
+    expect(result).toMatchObject({ status: "within_range", quality: 66 });
+    expect(bytesAt(67)).toBeGreaterThan(window.maxBytes);
+    expect(calls.length).toBeLessThanOrEqual(8);
   });
 
-  it("is deterministic and bounded in encoder calls", async () => {
+  it("is deterministic", async () => {
     const first = fakeEncoder(linear(0, 300));
     const second = fakeEncoder(linear(0, 300));
-    await findQualityForByteWindow(first.encode, window);
-    const result = await findQualityForByteWindow(second.encode, window);
+    const a = await findQualityForByteWindow(first.encode, window);
+    const b = await findQualityForByteWindow(second.encode, window);
     expect(first.calls).toEqual(second.calls);
-    expect(result.attempts).toBeLessThanOrEqual(8);
+    expect(a.quality).toBe(b.quality);
   });
 
-  it("raises quality above the preferred maximum only to reach the minimum", async () => {
-    const bytesAt = linear(-40_000, 490); // q92 → 5080 (< 5120), q93 → 5570
-    const { encode } = fakeEncoder(bytesAt);
+  it("accepts outputs exactly at the byte boundaries", async () => {
+    for (const bytes of [window.minBytes, window.maxBytes]) {
+      const result = await findQualityForByteWindow(async () => ({ byteLength: bytes }), window);
+      expect(result.status).toBe("within_range");
+    }
+  });
+
+  it("returns below_minimum with the maximum-quality output (no padding, no retries)", async () => {
+    const { encode, calls } = fakeEncoder(() => 3000);
     const result = await findQualityForByteWindow(encode, window);
-    expect(result).toMatchObject({ status: "in-range", quality: 93 });
+    expect(result).toMatchObject({ status: "below_minimum", quality: MAX_QUALITY });
+    expect(result.output?.byteLength).toBe(3000);
+    expect(calls).toEqual([MAX_QUALITY]);
   });
 
-  it("reports too-small when even maximum quality is under the minimum", async () => {
-    const { encode } = fakeEncoder(() => 3000);
-    const result = await findQualityForByteWindow(encode, window);
-    expect(result).toMatchObject({ status: "too-small", quality: MAX_QUALITY });
-  });
-
-  it("reports too-large when even minimum quality exceeds the maximum", async () => {
+  it("returns above_maximum with the lowest-quality output", async () => {
     const { encode } = fakeEncoder(() => 90_000);
     const result = await findQualityForByteWindow(encode, window);
-    expect(result).toMatchObject({ status: "too-large", quality: MIN_QUALITY });
+    expect(result).toMatchObject({ status: "above_maximum", quality: MIN_QUALITY });
   });
 
-  it("accepts the exact byte boundaries", async () => {
-    const atMin = await findQualityForByteWindow(
-      async () => ({ byteLength: window.minBytes }),
-      window,
-    );
-    expect(atMin.status).toBe("in-range");
+  it("returns unable_to_process when the encoder fails", async () => {
+    const result = await findQualityForByteWindow(async () => {
+      throw new Error("boom");
+    }, window);
+    expect(result.status).toBe("unable_to_process");
+  });
+
+  it("respects custom quality bounds", async () => {
+    const { encode, calls } = fakeEncoder(linear(0, 300));
+    await findQualityForByteWindow(encode, window, { min: 50, max: 90 });
+    expect(Math.min(...calls)).toBeGreaterThanOrEqual(50);
+    expect(Math.max(...calls)).toBeLessThanOrEqual(90);
   });
 });

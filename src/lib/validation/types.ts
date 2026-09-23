@@ -1,4 +1,5 @@
-export type CheckId = "processing" | "dimensions" | "aspect-ratio" | "format" | "file-size" | "dpi";
+export type CheckId =
+  "processing" | "dimensions" | "aspect-ratio" | "format" | "file-size" | "dpi" | "metadata";
 
 /** `skipped` = could not be evaluated (e.g. processing failed earlier). */
 export type CheckStatus = "pass" | "fail" | "skipped";

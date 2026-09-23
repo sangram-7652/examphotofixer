@@ -1,18 +1,12 @@
 # Test fixtures
 
-Image fixtures for pipeline tests (next phase). Keep each file small (< 200 KB) except
-where a test needs a large input — generate huge images in-test instead of committing them.
+No binary fixtures are committed. Image engine tests generate their inputs deterministically:
 
-Planned fixtures (none committed yet):
+- Node unit tests: synthetic JPEG byte streams and EXIF segments from
+  `src/lib/image/testing/` (`buildSyntheticJpeg`, `buildExifSegment`).
+- Browser tests: canvas patterns (quadrants, stripes, seeded noise, flat, transparent) drawn in
+  the page by `src/app/dev/image-engine/scenarios.ts`, with EXIF injected via `insertExif`.
 
-| File                     | Purpose                                |
-| ------------------------ | -------------------------------------- |
-| `portrait.jpg`           | 3:4 portrait photo                     |
-| `landscape.jpg`          | 4:3 landscape photo                    |
-| `square.png`             | 1:1 PNG with alpha channel             |
-| `exif-orientation-6.jpg` | Stored landscape, EXIF says rotate 90° |
-| `exif-orientation-3.jpg` | Stored upside-down, EXIF says 180°     |
-| `truncated.jpg`          | Corrupt JPEG (valid header, cut short) |
-| `not-an-image.jpg`       | Text file with a .jpg extension        |
-
-Never commit real people's photos or signatures. Use synthetic or openly licensed images.
+If a real-world file is ever needed (e.g. a specific camera's EXIF layout), add it here: keep
+it under 200 KB, make sure it is synthetic or openly licensed, and never commit real people's
+photos or signatures.

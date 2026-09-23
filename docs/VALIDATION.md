@@ -10,22 +10,24 @@ ValidationReport = { presetId, ready, checks: ValidationCheck[] }
 ValidationCheck  = { id, status: "pass" | "fail" | "skipped", label, expected, actual, message }
 ```
 
-Check ids: `processing`, `dimensions`, `aspect-ratio`, `format`, `file-size`, `dpi`.
+Check ids: `processing`, `dimensions`, `aspect-ratio`, `format`, `file-size`, `dpi`, `metadata`.
 `ready` is true only when every check passes. When processing fails, a single `processing`
 failure is returned and the rest are `skipped`.
 
-`OutputFacts` must be read from the **final encoded bytes** (dimensions, byte length,
+`validateAgainstPreset` accepts any `OutputRequirements` (presets satisfy it).
+`OutputFacts` must be read from the **final encoded bytes** (`readJpegFacts`) (dimensions, byte length,
 magic-byte format, JFIF density) — never from the intended settings.
 
 ## Rules
 
-| Check        | Rule                                                                     |
-| ------------ | ------------------------------------------------------------------------ |
-| Dimensions   | Exactly `preset.width × preset.height`.                                  |
-| Aspect ratio | Within 1 % of preset ratio (diagnostic: explains _why_ dimensions fail). |
-| Format       | Detected format ∈ `preset.formats`.                                      |
-| File size    | `minBytes ≤ bytes ≤ maxBytes`, see KB interpretation below.              |
-| DPI          | Both X and Y density within `[dpi.min, dpi.max]`; missing DPI fails.     |
+| Check        | Rule                                                                                        |
+| ------------ | ------------------------------------------------------------------------------------------- |
+| Dimensions   | Exactly `preset.width × preset.height`.                                                     |
+| Aspect ratio | Within 1 % of preset ratio (diagnostic: explains _why_ dimensions fail).                    |
+| Format       | Detected format ∈ `preset.formats`.                                                         |
+| File size    | `minBytes ≤ bytes ≤ maxBytes`, see KB interpretation below.                                 |
+| DPI          | Both X and Y density within `[dpi.min, dpi.max]`; missing DPI fails.                        |
+| Metadata     | No EXIF, GPS, XMP, ICC, IPTC, comments, thumbnails or vendor segments (`listJpegMetadata`). |
 
 ### KB interpretation
 
@@ -45,3 +47,10 @@ Display each check in order with ✓ / ✗ and `label`; on failure show `message
 
 `checkInputFile({ byteLength, format })` → `"empty-file" | "file-too-large" | "unsupported-format" | null`.
 Supported input: JPEG, PNG, WebP. HEIC is detected but rejected in V1 with a helpful message.
+The engine additionally rejects animated images and truncated files (see IMAGE_PROCESSING.md).
+
+## Below-minimum outputs
+
+When the highest-quality output is still under the minimum KB, the engine returns it with
+`compression.status = "below_minimum"`; the `file-size` check fails and `ready` is false.
+The file is never padded or altered.

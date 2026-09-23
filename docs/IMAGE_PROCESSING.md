@@ -1,51 +1,135 @@
 # Image Processing
 
-Status: **contract + pure helpers implemented; browser pipeline not yet built.**
+Status: **engine implemented (P2).** Runs in a Web Worker; not yet wired to the tool UI.
 
 ## Pipeline
 
 ```
-INPUT → load → read metadata → EXIF orientation → target aspect ratio
-      → smart/manual crop → resize → JPEG encode → size-window compression
-      → DPI metadata → final validation → download
+INPUT → decode → EXIF orientation → crop → resize → white background
+      → JPEG encode → size-window compression → DPI → strip metadata
+      → validate (on final bytes) → Blob + metadata
 ```
 
-Stage names and error codes are fixed in `src/lib/image/pipeline.ts`.
+## Architecture
 
-| Stage            | Implementation plan                                                                                                          | Status                                   |
-| ---------------- | ---------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------- |
-| Sniff format     | `detectImageFormat` (magic bytes, never trust extension/MIME)                                                                | ✅ `formats.ts`                          |
-| Input limits     | `checkInputFile`, `MAX_INPUT_BYTES`, `MAX_INPUT_PIXELS`                                                                      | ✅ `validation/validate.ts`, `limits.ts` |
-| Load / decode    | `createImageBitmap(file, { imageOrientation: "from-image" })`                                                                | ⏳                                       |
-| EXIF orientation | Rely on `imageOrientation`; fall back to parsing APP1 orientation; `orientedSize` for dimension swap                         | ✅ helper, ⏳ parser                     |
-| Huge images      | `scaleToFitPixelBudget` against `MAX_CANVAS_PIXELS` (16.7 MP, iOS limit), downscale on decode via `resizeWidth/resizeHeight` | ✅ helper                                |
-| Crop             | `computeCoverCrop(source, target, focus)`; manual crop overrides                                                             | ✅ `geometry.ts`                         |
-| Resize           | Canvas `drawImage` with `imageSmoothingQuality = "high"`; multi-step halving for > 2× reductions                             | ⏳                                       |
-| Transparency     | Fill white before drawing (JPEG has no alpha)                                                                                | ⏳                                       |
-| Encode           | `OffscreenCanvas.convertToBlob({ type: "image/jpeg", quality })`                                                             | ⏳                                       |
-| Compress         | `findQualityForByteWindow(encode, kbRangeToByteWindow(preset.fileSizeKB))`                                                   | ✅ `size-target.ts`                      |
-| DPI              | Write JFIF APP0 density (units = 1, X/Y density) with `chooseOutputDpi(preset.dpi)`                                          | ✅ choice, ⏳ writer                     |
-| Validate         | `validateAgainstPreset(preset, facts)` on the **final bytes**                                                                | ✅                                       |
+```
+React (future P3)                     Web Worker (image.worker.ts)
+─────────────────                     ────────────────────────────
+processImage(file, { requirements,    runImagePipeline(file, options, report)
+  crop, onProgress, signal })          ├─ inspectInput: sniff, animation, integrity, dims
+  │  worker/client.ts                  ├─ decode: createImageBitmap (EXIF removed first)
+  │  one worker per job, typed         ├─ render: orient + crop + white bg + resize steps
+  │  messages, timeout, abort          ├─ encode + findQualityForByteWindow
+  └─▶ { ok, result } | { ok, error }   ├─ finalizeJpeg: strip metadata + JFIF DPI
+                                        └─ readJpegFacts → validateAgainstPreset
+```
 
-## Quality rules
+| Module (`src/lib/image/`) | Role                                                                 | Environment         |
+| ------------------------- | -------------------------------------------------------------------- | ------------------- |
+| `worker/client.ts`        | Only API for UI code. Never rejects; returns a typed outcome.        | main thread         |
+| `worker/protocol.ts`      | `ImageProcessingRequest/Progress/Result/ErrorInfo`, `WorkerResponse` | shared              |
+| `worker/image.worker.ts`  | Worker entry; maps exceptions to structured errors                   | worker              |
+| `engine.ts`               | Orchestration using `createImageBitmap` + `OffscreenCanvas`          | worker (any thread) |
+| `jpeg.ts`, `exif.ts`      | Byte-level JPEG: segments, SOF size, EOI, EXIF, JFIF DPI, strip      | pure                |
+| `formats.ts`              | Magic bytes, PNG/WebP dims, animation, truncation                    | pure                |
+| `orientation.ts`          | EXIF 1–8 transforms and rect mapping                                 | pure                |
+| `crop.ts`                 | `CropSpec` → rect (auto / rect / viewport+zoom)                      | pure                |
+| `resize.ts`               | Resize steps, decode scale                                           | pure                |
+| `size-target.ts`          | KB window, quality search                                            | pure                |
+| `inspect.ts`              | Facts from final bytes                                               | pure                |
 
-- **Never stretch.** Crop to target aspect ratio first, then scale uniformly.
-- **Don't aim for the minimum KB.** Target the highest quality that fits under
-  `ceilingBytes` (max minus a 2 % / 256 B safety margin). Default quality 92; go
-  above 92 only to reach the minimum size.
-- **Deterministic search.** Binary search on integer quality, ≤ ~8 encodes, cached.
-  Tested with a fake encoder (`size-target.test.ts`).
-- **Too small at quality 100** (tiny, flat images, e.g. a signature on white): status
-  `too-small`. Open decision: pad with a JPEG COM segment vs. mild noise vs. report. Decide
-  before implementing; padding must be proven acceptable to target portals.
-- **Too large at quality 30:** status `too-large` → report as `size-target-unreachable`.
-- **DPI:** `PREFERRED_OUTPUT_DPI = 150`, clamped into the preset range — strictly inside
-  both CCC ranges so edge-of-range checks can't reject it. DPI is metadata only; it does not
-  change pixels.
-- Strip all other metadata (EXIF GPS, camera data) from output — privacy.
+The engine is generic: it takes `OutputRequirements` (width, height, KB range, DPI range, formats).
+Presets satisfy that shape; no exam-specific logic lives in `lib/image`.
 
-## Performance
+One worker per job: the worker is terminated after the result, which frees every buffer the job used.
 
-- Run the pipeline in a Web Worker; transfer `ImageBitmap`s.
-- Decode at reduced size when source ≫ target.
-- Release bitmaps (`close()`) and object URLs promptly.
+## Stages
+
+**Input.** Sniffed from magic bytes (JPEG, PNG, WebP accepted; SVG, GIF, BMP, HEIC and
+unknown rejected). Animated PNG (`acTL`) and animated WebP (VP8X flag / `ANIM`) rejected.
+Truncated files rejected before decoding (JPEG: no EOI reachable through scan data; PNG: no
+`IEND`; WebP: RIFF size exceeds file). Pixel count from the header is checked against
+`MAX_INPUT_PIXELS` before decoding (decompression-bomb guard). The declared MIME type and
+file extension are ignored: content decides.
+
+**EXIF orientation.** Read from APP1 (`readJpegOrientation`), then the EXIF segment is
+removed from a copy of the bytes before decoding, so no browser can auto-rotate. The engine
+applies the orientation itself with a canvas transform (`orientationMatrix`), for all eight
+values. Result: identical output in every browser. PNG/WebP EXIF orientation is not parsed
+(rare); if a decoder rotates anyway, the engine detects the transposed bitmap and adapts.
+
+**Crop.** `CropSpec` in oriented source pixels:
+`{ mode: "auto", focus? }` (default, centred), `{ mode: "rect", rect }` (trimmed to target
+ratio, never stretched), `{ mode: "viewport", center, zoom }` (for the future cropper UI).
+Rounding can shift the ratio by ≤ 1 source pixel.
+
+**Resize.** The first canvas draws the crop region straight from the bitmap at ≤ 8× the
+target, then halves (2× steps) to exactly `width × height`. `imageSmoothingQuality = "high"`.
+Upscaling (source smaller than target) is a single step and still yields the exact size.
+
+**Transparency.** The first canvas is filled white before drawing, so alpha is composited
+onto white; later steps are opaque. Canvases are created with alpha (an `alpha: false`
+canvas starts black).
+
+**Encode + compression.** `OffscreenCanvas.convertToBlob({ type: "image/jpeg", quality })`.
+The output type is verified (some browsers silently fall back to PNG). Each candidate is
+finalised (metadata stripped, DPI written) before measuring, so size decisions use the exact
+bytes the user downloads.
+
+`findQualityForByteWindow`:
+
+1. Encode at quality 100. If ≤ max bytes → done (`within_range`, or `below_minimum` if under min).
+2. Otherwise binary-search the highest integer quality in [30, 99] that is ≤ max bytes
+   (≤ 7 more encodes, cached).
+3. None fits → `above_maximum` with the quality-30 output.
+4. Encoder throws → `unable_to_process` → `encode-failed` error.
+
+KB window: min × 1024, max × 1000 bytes (satisfies both KB interpretations).
+
+**Locked decision — below minimum.** If maximum quality is still under the minimum, the
+engine returns that output unchanged with `status: "below_minimum"` and a message. It never
+pads files, adds noise or alters pixels. Validation's file-size check then fails, and the UI
+decides how to explain it.
+
+**DPI.** `chooseOutputDpi` (150, clamped into the requirement range) is written as a JFIF 1.01
+APP0 segment: units = 1 (dots per inch), X/Y density = DPI, no thumbnail. `writeDpi(blob, dpi)`
+/ `readDpi(blob)` expose this for Blobs; `readJpegDpi` reads JFIF (units 1 or 2), falling back
+to EXIF X/YResolution. DPI is metadata only and never changes pixel dimensions.
+
+**Metadata privacy.** `finalizeJpeg` rebuilds the header: SOI, a fresh JFIF APP0, the
+decoding segments (DQT, SOF, DHT, DRI…) and Adobe APP14 (colour transform, no personal
+data). Everything else is dropped: EXIF (GPS, make/model, timestamps, serials), XMP, ICC,
+IPTC, MPF and other APPn, comments, JFIF thumbnails, and any trailer after EOI. Image data
+(SOS → EOI) is copied byte-for-byte. `listJpegMetadata` verifies the result.
+
+**Validation.** `readJpegFacts` parses the final bytes (SOF size, magic-byte format, JFIF
+DPI, metadata kinds) and `validateAgainstPreset` checks dimensions, aspect ratio, format,
+file size, DPI and metadata.
+
+## Memory
+
+- Input bytes are read once. The EXIF-free copy handed to the decoder is a byte copy, not pixels.
+- Decode scale is chosen so the crop decodes at ~8× the target and within 16.7 MP. A 6000×8000
+  photo for a 132×170 target decodes at ~1060×1410, not 48 MP.
+- Intermediate canvases are released (`width = height = 0`) right after use; the bitmap is
+  closed after rendering; the worker is terminated after each job.
+- Remaining peak: the browser's internal full-resolution JPEG decode, which `resizeWidth`
+  may or may not avoid depending on the browser.
+
+## Progress
+
+`loading → orientation → cropping → resizing → encoding → dpi → metadata → validation → complete`,
+reported as `{ stage, step, totalSteps, fraction }`. DPI and metadata are applied while each
+candidate is encoded; their stages verify them on the final bytes.
+
+## Errors
+
+`ImageProcessingErrorInfo { code, stage, message }`. Codes: `invalid-request`, `empty-file`,
+`file-too-large`, `unsupported-format`, `animated-image`, `corrupt-file`, `image-too-large`,
+`decode-failed`, `encode-failed`, `unsupported-browser`, `worker-failed`, `timeout`,
+`aborted`, `internal-error`. Messages live in `PROCESSING_ERROR_MESSAGES`.
+
+## Browser support
+
+Needs module Workers, `OffscreenCanvas` 2D and `createImageBitmap`: Chrome/Edge 69+,
+Firefox 105+, Safari 16.4+. `isImageProcessingSupported()` lets the UI show a fallback message.

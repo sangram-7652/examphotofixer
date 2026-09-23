@@ -12,6 +12,9 @@ runtime features, no env secrets.
 | `NEXT_PUBLIC_SITE_URL`       | production | Canonical origin, no trailing slash. Falls back to `https://examphotofixer.com`. |
 | `NEXT_PUBLIC_SITE_INDEXABLE` | launch     | Exactly `true` to allow indexing. Leave unset on previews and until tools work.  |
 
+Never set `ENGINE_HARNESS` in production: it enables the `/dev/image-engine` test page
+(Playwright sets it for e2e only).
+
 See `.env.example`. Both are inlined at build time — rebuild after changing them.
 
 ## CI pipeline (recommended)
@@ -30,7 +33,8 @@ npm run test:e2e
 ## Launch checklist
 
 - [ ] CCC presets have official `source.url`, `document`, `version`, `verifiedOn`; status `verified`.
-- [ ] Image pipeline implemented and all `it.todo` pipeline tests real and passing.
+- [x] Image engine implemented with unit and browser tests (P2).
+- [ ] Tool UI wired to the engine (P3).
 - [ ] Privacy and Terms reviewed.
 - [ ] `NEXT_PUBLIC_SITE_URL` set; `NEXT_PUBLIC_SITE_INDEXABLE=true` on production only.
 - [ ] Sitemap submitted to Google Search Console and Bing.

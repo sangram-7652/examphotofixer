@@ -16,8 +16,9 @@ src/
   config/site.ts       Brand, canonical URL, indexing switch.
   lib/
     presets/           Single source of truth for official requirements (+ source metadata).
-    image/             Framework-free image logic: formats, geometry, size targeting, DPI, limits,
-                       pipeline contract. No React, no Next imports.
+    image/             Image engine: pure byte/geometry modules, engine.ts (canvas), and
+                       worker/ (typed protocol, worker entry, main-thread client).
+                       No React, no Next imports.
     validation/        Framework-free validation model (checks → report).
     tools/registry.ts  Tool definitions (route, presets, SEO copy). Drives pages, nav, sitemap.
     seo/               Metadata builder, JSON-LD builders, route list for sitemap.
@@ -34,21 +35,21 @@ docs/                  Product and technical documentation.
 ## Data flow (target)
 
 ```
-File ─▶ checkInputFile ─▶ pipeline (lib/image, in a Web Worker) ─▶ OutputFacts
+File ─▶ processImage (client) ─▶ image.worker ─▶ runImagePipeline ─▶ OutputFacts
                                                                    │
                          preset (lib/presets) ────────────────────▶ validateAgainstPreset ─▶ ValidationReport ─▶ UI checklist
 ```
 
 ## Key decisions
 
-| Decision                              | Reason                                                                                                         |
-| ------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| Local-only processing                 | Privacy, zero server cost, works on slow networks after load.                                                  |
-| Presets as data, not UI               | One place to update when an exam body changes rules; testable.                                                 |
-| Tool registry                         | Routes, navigation, internal links and sitemap stay in sync.                                                   |
-| Static pages                          | Fast first load, cheap hosting, good Core Web Vitals.                                                          |
-| Pipeline in a Web Worker (next phase) | Keeps UI responsive on large images; `OffscreenCanvas` + `createImageBitmap`.                                  |
-| No image libraries yet                | Browser canvas + small custom JFIF writer should suffice; add a dependency only if a test proves it necessary. |
+| Decision                 | Reason                                                                                                           |
+| ------------------------ | ---------------------------------------------------------------------------------------------------------------- |
+| Local-only processing    | Privacy, zero server cost, works on slow networks after load.                                                    |
+| Presets as data, not UI  | One place to update when an exam body changes rules; testable.                                                   |
+| Tool registry            | Routes, navigation, internal links and sitemap stay in sync.                                                     |
+| Static pages             | Fast first load, cheap hosting, good Core Web Vitals.                                                            |
+| Pipeline in a Web Worker | Keeps UI responsive on large images; `OffscreenCanvas` + `createImageBitmap`. One worker per job.                |
+| No image libraries       | Canvas plus small byte-level JPEG code (EXIF, JFIF, stripping) covers everything; no runtime dependencies added. |
 
 ## Adding a tool
 

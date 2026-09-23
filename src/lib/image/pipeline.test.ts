@@ -1,20 +1,44 @@
-import { describe, it } from "vitest";
+import { describe, expect, it } from "vitest";
+import { CCC_PHOTO } from "@/lib/presets/ccc";
+import { PROCESSING_ERROR_MESSAGES, PROGRESS_STAGES, type OutputRequirements } from "./pipeline";
+import { progressFor } from "./worker/protocol";
 
 /**
- * Required coverage for the image pipeline (next phase). Each todo becomes a
- * real test once the browser pipeline exists. See docs/TESTING.md.
+ * Pipeline behaviour on real images (decode, orientation, crop, resize,
+ * transparency, encoding, compression, DPI, metadata, large images, worker
+ * errors, progress, validation) is covered in a real browser by
+ * e2e/image-engine.spec.ts. These are the contract tests.
  */
-describe("image pipeline (to implement)", () => {
-  it.todo("portrait input → exact preset dimensions, no distortion");
-  it.todo("landscape input → exact preset dimensions, no distortion");
-  it.todo("square input → exact preset dimensions, no distortion");
-  it.todo("JPG input → JPEG output");
-  it.todo("PNG input (with transparency) → JPEG output on white background");
-  it.todo("EXIF orientation 6/8/3 is applied before cropping");
-  it.todo("huge image (>16.7 MP) is downscaled safely before processing");
-  it.todo("invalid / truncated image fails with decode-failed");
-  it.todo("output lands inside the file-size window at both boundaries");
-  it.todo("output has exact width and height");
-  it.todo("output JFIF header carries the chosen DPI");
-  it.todo("output format is JPEG (magic bytes)");
+describe("pipeline contract", () => {
+  it("reports progress stages in pipeline order", () => {
+    expect(PROGRESS_STAGES).toEqual([
+      "loading",
+      "orientation",
+      "cropping",
+      "resizing",
+      "encoding",
+      "dpi",
+      "metadata",
+      "validation",
+      "complete",
+    ]);
+    expect(progressFor("loading")).toEqual({
+      stage: "loading",
+      step: 1,
+      totalSteps: 9,
+      fraction: 1 / 9,
+    });
+    expect(progressFor("complete").fraction).toBe(1);
+  });
+
+  it("has a user-facing message for every error code", () => {
+    for (const message of Object.values(PROCESSING_ERROR_MESSAGES)) {
+      expect(message.length).toBeGreaterThan(10);
+    }
+  });
+
+  it("accepts presets as output requirements (no CCC logic in the engine)", () => {
+    const requirements: OutputRequirements = CCC_PHOTO;
+    expect(requirements.width).toBe(132);
+  });
 });

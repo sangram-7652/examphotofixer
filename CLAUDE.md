@@ -37,12 +37,17 @@ FORM_PRESETS, SEO_STRATEGY, SEO_URL_MAP, ANALYTICS, TESTING, PRIVACY, DEPLOYMENT
 - All processing is local in the browser. Never upload or persist user images.
 - Never stretch: crop to target aspect ratio (`computeCoverCrop`), then scale uniformly.
 - Correct EXIF orientation before cropping.
-- Size targeting: highest quality inside the byte window (`findQualityForByteWindow`), not the minimum.
+- Heavy work runs in the image worker. UI code uses only `src/lib/image/worker/client.ts`
+  (`processImage`), never the engine or worker directly.
+- `lib/image` stays generic: it takes `OutputRequirements`, never exam names or preset ids.
+- Size targeting: highest quality whose final bytes fit the maximum (`findQualityForByteWindow`).
+- Below minimum at max quality → return `below_minimum`. Never pad, add noise or alter pixels
+  to inflate size (locked product decision).
 - KB window: min × 1024, max × 1000 bytes (`kbRangeToByteWindow`).
 - Guard huge inputs (`MAX_INPUT_BYTES`, `MAX_INPUT_PIXELS`, `MAX_CANVAS_PIXELS`).
 - Detect formats from magic bytes, not extension/MIME.
 - Validate the **final bytes**, not intended settings. Fail with specific, actionable messages.
-- Strip EXIF/GPS from outputs.
+- Strip EXIF/GPS from outputs (`finalizeJpeg`); image data is copied byte-for-byte.
 
 ## Coding rules
 
@@ -65,7 +70,8 @@ FORM_PRESETS, SEO_STRATEGY, SEO_URL_MAP, ANALYTICS, TESTING, PRIVACY, DEPLOYMENT
 
 - Unit: Vitest, colocated `*.test.ts`. E2E: Playwright in `e2e/` (mobile project first).
 - Compression tests are deterministic (injected encoder or range assertions).
-- Pipeline coverage list lives as `it.todo` in `src/lib/image/pipeline.test.ts`; convert, don't delete.
+- Engine browser tests: `e2e/image-engine.spec.ts` via the `/dev/image-engine` harness
+  (enabled only when the server runs with `ENGINE_HARNESS=1`). Generate fixtures in-page; no network.
 - Bug fixes include a failing-first test. Preset changes update `presets.test.ts`.
 
 ## Privacy rules

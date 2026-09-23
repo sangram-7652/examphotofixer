@@ -1,9 +1,10 @@
 /**
  * File-size targeting for JPEG output.
  *
- * Strategy: produce the highest quality that fits inside the allowed byte
- * window, below a small safety margin under the maximum. We do not aim for the
- * minimum size — that throws away quality for no benefit.
+ * Strategy: the highest quality whose *final* bytes fit under the maximum.
+ * If even maximum quality is below the minimum, the output is kept as-is and
+ * reported as `below_minimum` — we never pad files, add noise or alter pixels
+ * to inflate size (locked product decision, see docs/IMAGE_PROCESSING.md).
  */
 
 import type { NumericRange } from "@/lib/presets/types";
@@ -11,12 +12,8 @@ import type { NumericRange } from "@/lib/presets/types";
 export interface ByteWindow {
   minBytes: number;
   maxBytes: number;
-  /** Preferred upper bound: `maxBytes` minus a safety margin. */
-  ceilingBytes: number;
 }
 
-/** JPEG quality above this adds bytes with little visible gain; exceeded only to reach the minimum size. */
-export const PREFERRED_MAX_QUALITY = 92;
 export const MIN_QUALITY = 30;
 export const MAX_QUALITY = 100;
 
@@ -34,37 +31,52 @@ export function kbRangeToByteWindow(range: NumericRange): ByteWindow {
   if (minBytes >= maxBytes) {
     throw new RangeError("File-size range is too narrow once KB ambiguity is removed");
   }
-  const margin = Math.max(256, Math.floor(maxBytes * 0.02));
-  const ceilingBytes = Math.max(minBytes, maxBytes - margin);
-  return { minBytes, maxBytes, ceilingBytes };
+  return { minBytes, maxBytes };
 }
 
 export interface EncodeResult {
   byteLength: number;
 }
 
+/** Encodes at an integer quality 1–100 and returns the final bytes' size. */
 export type Encoder<T extends EncodeResult> = (quality: number) => Promise<T>;
 
-export type QualitySearchStatus = "in-range" | "too-large" | "too-small";
+export type CompressionStatus =
+  | "within_range"
+  /** Highest quality output is still smaller than the minimum; returned unchanged. */
+  | "below_minimum"
+  /** Even the lowest allowed quality exceeds the maximum; smallest output returned. */
+  | "above_maximum"
+  /** The encoder failed. */
+  | "unable_to_process";
 
-export interface QualitySearchResult<T extends EncodeResult> {
-  status: QualitySearchStatus;
-  quality: number;
-  output: T;
-  /** Number of encoder calls made (for tests and performance budgets). */
-  attempts: number;
+export type CompressionResult<T extends EncodeResult> =
+  | {
+      status: Exclude<CompressionStatus, "unable_to_process">;
+      quality: number;
+      output: T;
+      /** Encoder calls made (for tests and performance budgets). */
+      attempts: number;
+    }
+  | { status: "unable_to_process"; quality: null; output: null; attempts: number; error: unknown };
+
+export interface QualityBounds {
+  min: number;
+  max: number;
 }
 
 /**
- * Finds a JPEG quality whose output lands in `window`.
+ * Finds the highest JPEG quality whose output fits `window.maxBytes`.
  *
- * Deterministic for a deterministic encoder. Assumes output size is roughly
- * monotonic in quality, and re-checks the final candidate against the window.
+ * One encode when maximum quality already fits; otherwise a binary search
+ * (≤ 7 more encodes). Deterministic for a deterministic encoder. Assumes size
+ * grows with quality and re-checks the chosen output against the window.
  */
 export async function findQualityForByteWindow<T extends EncodeResult>(
   encode: Encoder<T>,
   window: ByteWindow,
-): Promise<QualitySearchResult<T>> {
+  bounds: QualityBounds = { min: MIN_QUALITY, max: MAX_QUALITY },
+): Promise<CompressionResult<T>> {
   const cache = new Map<number, T>();
   const run = async (quality: number): Promise<T> => {
     const cached = cache.get(quality);
@@ -73,57 +85,43 @@ export async function findQualityForByteWindow<T extends EncodeResult>(
     cache.set(quality, output);
     return output;
   };
-  const inWindow = (bytes: number) => bytes >= window.minBytes && bytes <= window.maxBytes;
-  const result = (status: QualitySearchStatus, quality: number, output: T) => ({
-    status,
+  const settle = (quality: number, output: T): CompressionResult<T> => ({
+    status:
+      output.byteLength > window.maxBytes
+        ? "above_maximum"
+        : output.byteLength < window.minBytes
+          ? "below_minimum"
+          : "within_range",
     quality,
     output,
     attempts: cache.size,
   });
 
-  const preferred = await run(PREFERRED_MAX_QUALITY);
-  if (preferred.byteLength >= window.minBytes && preferred.byteLength <= window.ceilingBytes) {
-    return result("in-range", PREFERRED_MAX_QUALITY, preferred);
-  }
+  try {
+    const best = await run(bounds.max);
+    if (best.byteLength <= window.maxBytes) return settle(bounds.max, best);
 
-  if (preferred.byteLength > window.ceilingBytes) {
-    // Highest quality in [MIN_QUALITY, PREFERRED_MAX_QUALITY) under the ceiling.
-    let lo = MIN_QUALITY;
-    let hi = PREFERRED_MAX_QUALITY - 1;
-    let best: number | null = null;
+    let lo = bounds.min;
+    let hi = bounds.max - 1;
+    let found: number | null = null;
     while (lo <= hi) {
       const mid = Math.floor((lo + hi) / 2);
-      if ((await run(mid)).byteLength <= window.ceilingBytes) {
-        best = mid;
+      if ((await run(mid)).byteLength <= window.maxBytes) {
+        found = mid;
         lo = mid + 1;
       } else {
         hi = mid - 1;
       }
     }
-    if (best === null) {
-      const floor = await run(MIN_QUALITY);
-      return result(inWindow(floor.byteLength) ? "in-range" : "too-large", MIN_QUALITY, floor);
-    }
-    const output = await run(best);
-    return result(inWindow(output.byteLength) ? "in-range" : "too-small", best, output);
+    const quality = found ?? bounds.min;
+    return settle(quality, await run(quality));
+  } catch (error) {
+    return {
+      status: "unable_to_process",
+      quality: null,
+      output: null,
+      attempts: cache.size,
+      error,
+    };
   }
-
-  // Too small at the preferred quality: lowest quality above it that reaches the minimum.
-  let lo = PREFERRED_MAX_QUALITY + 1;
-  let hi = MAX_QUALITY;
-  let best: number | null = null;
-  while (lo <= hi) {
-    const mid = Math.floor((lo + hi) / 2);
-    if ((await run(mid)).byteLength >= window.minBytes) {
-      best = mid;
-      hi = mid - 1;
-    } else {
-      lo = mid + 1;
-    }
-  }
-  if (best === null) {
-    return result("too-small", MAX_QUALITY, await run(MAX_QUALITY));
-  }
-  const output = await run(best);
-  return result(inWindow(output.byteLength) ? "in-range" : "too-large", best, output);
 }

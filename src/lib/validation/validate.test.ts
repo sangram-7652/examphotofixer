@@ -13,6 +13,7 @@ const validPhoto: OutputFacts = {
   byteLength: 20_000,
   format: "jpeg",
   dpi: { x: 150, y: 150 },
+  metadata: [],
 };
 
 function statusOf(facts: OutputFacts, id: string, preset = photo) {
@@ -29,6 +30,7 @@ describe("validateAgainstPreset", () => {
       "format",
       "file-size",
       "dpi",
+      "metadata",
     ]);
     expect(report.checks.every((check) => check.status === "pass")).toBe(true);
   });
@@ -64,6 +66,14 @@ describe("validateAgainstPreset", () => {
     expect(statusOf({ ...validPhoto, dpi: null }, "dpi")).toBe("fail");
     const sigFacts = { ...validPhoto, width: 170, height: 132, dpi: { x: 300, y: 300 } };
     expect(statusOf(sigFacts, "dpi", signature)).toBe("fail");
+  });
+
+  it("fails when personal metadata is present", () => {
+    const report = validateAgainstPreset(photo, { ...validPhoto, metadata: ["exif", "gps"] });
+    const metadata = report.checks.find((check) => check.id === "metadata");
+    expect(report.ready).toBe(false);
+    expect(metadata?.status).toBe("fail");
+    expect(metadata?.actual).toBe("EXIF, GPS location");
   });
 
   it("reports processing errors and skips the rest", () => {
