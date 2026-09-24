@@ -1,5 +1,7 @@
 import { FORMAT_LABELS } from "@/lib/image/formats";
+import { sourceCitation } from "@/lib/presets/source";
 import type { ImagePreset } from "@/lib/presets/types";
+import { SourceLink } from "./SourceLink";
 
 /** Renders a preset's requirements. All numbers come from the preset — never hard-code them here. */
 export function RequirementsTable({ preset }: { preset: ImagePreset }) {
@@ -34,21 +36,21 @@ export function RequirementsTable({ preset }: { preset: ImagePreset }) {
           ))}
         </tbody>
       </table>
+      {preset.guidance && preset.guidance.length > 0 ? (
+        <div className="border-t border-border px-4 py-3 text-sm">
+          <p className="font-medium">The same guidelines also ask:</p>
+          <ul className="mt-1 list-disc space-y-1 pl-5 text-muted">
+            {preset.guidance.map((line) => (
+              <li key={line}>{line}</li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
       <p className="border-t border-border px-4 py-2 text-xs text-muted">
-        Source: {source.authority}
-        {source.document ? ` – ${source.document}` : ""}
-        {source.url ? (
-          <>
-            {" "}
-            (
-            <a href={source.url} rel="noopener noreferrer" className="underline">
-              official source
-            </a>
-            )
-          </>
-        ) : null}
-        {source.verifiedOn ? `. Last checked ${source.verifiedOn}.` : "."} Always confirm with the
-        official notification before uploading.
+        Source: {sourceCitation(source)}
+        {source.page ? `, page ${source.page}` : ""}.{" "}
+        {source.url ? <SourceLink source={source}>View source</SourceLink> : null} Always confirm
+        with the current official notification before uploading.
       </p>
     </section>
   );

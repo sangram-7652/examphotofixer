@@ -20,16 +20,27 @@ export type AcceptedFormat = "jpeg";
  */
 export type VerificationStatus = "verified" | "project-input" | "unverified";
 
+/**
+ * Where a preset's numbers come from. Requirements are tied to a specific
+ * document version: older versions of the same guidelines can differ, so never
+ * present values without their version and date.
+ */
 export interface RequirementSource {
-  /** Conducting body / authority, e.g. "NIELIT". */
+  /** Issuing organisation, e.g. "NIELIT". */
   authority: string;
   /** Title of the notice, instruction page or brochure. */
   document: string | null;
   /** Official URL of the source. `null` until recorded — never guess one. */
   url: string | null;
-  /** Version, edition or publication date of the source document. */
+  /** Version or edition as printed in the document, e.g. "1.11". */
   version: string | null;
-  /** ISO date (YYYY-MM-DD) on which a person last checked the source. */
+  /** Publication/revision date as printed in the document (e.g. "2023" or "2023-06-14"). */
+  published: string | null;
+  /** Page where the requirements appear (1-based), for re-verification. */
+  page?: number;
+  /** SHA-256 of the source file when it was verified; a change means re-verify. */
+  sha256?: string;
+  /** ISO date (YYYY-MM-DD) on which a person last checked the values against the source. */
   verifiedOn: string | null;
   status: VerificationStatus;
   notes?: string;
@@ -55,6 +66,8 @@ export interface ImagePreset {
   /** Allowed DPI range (inclusive). */
   dpi: NumericRange;
   formats: readonly AcceptedFormat[];
+  /** Non-technical instructions from the same source (e.g. background, recency), paraphrased closely. */
+  guidance?: readonly string[];
   source: RequirementSource;
 }
 

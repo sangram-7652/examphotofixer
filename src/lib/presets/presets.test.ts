@@ -24,10 +24,14 @@ describe("preset registry", () => {
     },
   );
 
-  it("requires url and verifiedOn for presets marked verified", () => {
-    for (const preset of listPresets().filter((p) => p.source.status === "verified")) {
-      expect(preset.source.url, preset.id).toMatch(/^https:\/\//);
-      expect(preset.source.verifiedOn, preset.id).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+  it("requires complete, versioned source metadata for presets marked verified", () => {
+    for (const { id, source } of listPresets().filter((p) => p.source.status === "verified")) {
+      expect(source.url, id).toMatch(/^https:\/\//);
+      expect(source.verifiedOn, id).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+      expect(source.document, id).toBeTruthy();
+      expect(source.version, id).toBeTruthy(); // values are only meaningful per version
+      expect(source.published, id).toBeTruthy();
+      if (source.sha256 !== undefined) expect(source.sha256, id).toMatch(/^[0-9a-f]{64}$/);
     }
   });
 
@@ -42,7 +46,24 @@ describe("preset registry", () => {
   });
 });
 
-describe("CCC presets match project-supplied requirements", () => {
+describe("CCC source", () => {
+  it.each(["ccc-photo", "ccc-signature", "ccc-left-thumb"])(
+    "%s cites NIELIT guidelines Version 1.11 (2023)",
+    (id) => {
+      expect(getPreset(id).source).toMatchObject({
+        authority: "NIELIT",
+        document: "CCC Examination Application Guidelines",
+        url: "https://nva.nielit.gov.in/ccc/CCC_ExamGuideLine.pdf",
+        version: "1.11",
+        published: "2023",
+        page: 3,
+        status: "verified",
+      });
+    },
+  );
+});
+
+describe("CCC presets match Version 1.11 (2023), page 3", () => {
   it("photo", () => {
     const photo = getPreset("ccc-photo");
     expect([photo.width, photo.height]).toEqual([132, 170]);

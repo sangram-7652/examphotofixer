@@ -7,6 +7,8 @@ export type ToolId =
 
 export interface ToolDefinition {
   id: ToolId;
+  /** `live` tools render the interactive tool; others show a placeholder. */
+  status: "live" | "coming-soon";
   /** URL path, e.g. "/ccc-photo-resizer". Must match a route in src/app. */
   path: string;
   kind: ToolKind;
@@ -25,6 +27,7 @@ export const TOOLS: readonly ToolDefinition[] = [
   {
     id: "ccc-photo",
     path: "/ccc-photo-resizer",
+    status: "live",
     kind: "preset",
     exam: "ccc",
     presetIds: ["ccc-photo"],
@@ -38,6 +41,7 @@ export const TOOLS: readonly ToolDefinition[] = [
   {
     id: "ccc-signature",
     path: "/ccc-signature-resizer",
+    status: "coming-soon",
     kind: "preset",
     exam: "ccc",
     presetIds: ["ccc-signature"],
@@ -51,6 +55,7 @@ export const TOOLS: readonly ToolDefinition[] = [
   {
     id: "ccc-thumb",
     path: "/ccc-thumb-impression-resizer",
+    status: "coming-soon",
     kind: "preset",
     exam: "ccc",
     presetIds: ["ccc-left-thumb"],
@@ -64,6 +69,7 @@ export const TOOLS: readonly ToolDefinition[] = [
   {
     id: "ccc-pack",
     path: "/ccc-image-resizer",
+    status: "coming-soon",
     kind: "pack",
     exam: "ccc",
     presetIds: ["ccc-photo", "ccc-signature", "ccc-left-thumb"],
@@ -77,6 +83,7 @@ export const TOOLS: readonly ToolDefinition[] = [
   {
     id: "image-resizer",
     path: "/image-resizer",
+    status: "coming-soon",
     kind: "generic-resize",
     exam: null,
     presetIds: [],
@@ -90,6 +97,7 @@ export const TOOLS: readonly ToolDefinition[] = [
   {
     id: "image-compressor",
     path: "/image-compressor",
+    status: "coming-soon",
     kind: "generic-compress",
     exam: null,
     presetIds: [],

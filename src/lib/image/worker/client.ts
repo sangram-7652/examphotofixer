@@ -7,6 +7,7 @@
  */
 
 import type { CropSpec } from "../crop";
+import { isImageProcessingSupported } from "../support";
 import {
   PROCESSING_ERROR_MESSAGES,
   type OutputRequirements,
@@ -59,13 +60,7 @@ function createImageWorker(): WorkerLike {
   }) as WorkerLike;
 }
 
-export function isImageProcessingSupported(): boolean {
-  return (
-    typeof Worker === "function" &&
-    typeof OffscreenCanvas === "function" &&
-    typeof createImageBitmap === "function"
-  );
-}
+export { isImageProcessingSupported };
 
 let jobCounter = 0;
 

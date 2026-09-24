@@ -28,7 +28,11 @@ FORM_PRESETS, SEO_STRATEGY, SEO_URL_MAP, ANALYTICS, TESTING, PRIVACY, DEPLOYMENT
   unknown, leave the exam `planned` with no presets.
 - Every preset carries `source` (authority, document, url, version, verifiedOn, status).
   Never fabricate a source URL; use `null` until a real one is recorded.
-- `status: "verified"` requires an https `url` and `verifiedOn` (enforced by tests).
+- `status: "verified"` requires an https `url`, `verifiedOn`, `document`, `version` and
+  `published` (enforced by tests). Record `page` and `sha256` so re-verification is mechanical.
+- Values belong to a document version. Older versions of the same guidelines can differ; never
+  show values without their version/date, and update `source` with the numbers.
+- Reference sources, never imply endorsement: no "official", "approved by" or "affiliated" claims.
 - Changing a preset value requires the official source in the same change and an updated test.
 - UI must show the source and remind users to check the official notification.
 
@@ -57,6 +61,19 @@ FORM_PRESETS, SEO_STRATEGY, SEO_URL_MAP, ANALYTICS, TESTING, PRIVACY, DEPLOYMENT
 - Accessible by default: labels for inputs, one `h1` per page, landmarks, visible focus.
 - Prettier formatting (100 cols, double quotes). Match surrounding style and comment density.
 - Next.js 16: consult `node_modules/next/dist/docs/` for APIs (see AGENTS.md).
+
+## Tool UI rules
+
+- Tool UI lives in `src/components/tool/` and is driven by a preset; no exam-specific components.
+  Exam-specific wording belongs in `src/content/tool-content.ts`, built from preset values.
+- A tool goes live via `status: "live"` in the registry; `ToolPage` then mounts `ImageTool`.
+- Never duplicate engine logic in React: crop geometry via `resolveCropRect` (see
+  `lib/tools/cropper.ts`), pass/fail from the engine's `ValidationReport`.
+- `below_minimum` is a warning (`READY_WITH_WARNING`), never an error; download stays available.
+- Load the engine lazily (`import("@/lib/image/worker/client")`); keep Blobs/URLs in component
+  state and revoke URLs on reset/unmount.
+- Status must never rely on colour alone; announce state changes via the live region.
+- Analytics via `track()` only; no file names or image-derived data.
 
 ## SEO rules
 

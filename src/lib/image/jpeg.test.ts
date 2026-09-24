@@ -58,6 +58,20 @@ describe("findJpegEnd / isCompleteJpeg", () => {
     expect(findJpegEnd(bytes, parseJpeg(bytes).scanOffset)).toBe(bytes.length);
   });
 
+  it("rejects files without quantization tables or a frame header", () => {
+    const bytes = buildSyntheticJpeg();
+    const { segments } = parseJpeg(bytes);
+    const without = (marker: number) => {
+      const segment = segments.find((s) => s.marker === marker)!;
+      return new Uint8Array([
+        ...bytes.subarray(0, segment.offset),
+        ...bytes.subarray(segment.offset + segment.length),
+      ]);
+    };
+    expect(isCompleteJpeg(without(0xdb))).toBe(false); // no DQT
+    expect(isCompleteJpeg(without(0xc0))).toBe(false); // no SOF
+  });
+
   it("detects truncated files", () => {
     expect(isCompleteJpeg(buildSyntheticJpeg({ truncated: true }))).toBe(false);
     expect(isCompleteJpeg(buildSyntheticJpeg())).toBe(true);

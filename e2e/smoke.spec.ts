@@ -36,8 +36,9 @@ for (const { path, h1 } of TOOL_PAGES) {
 
 test("CCC photo page shows requirements from the preset", async ({ page }) => {
   await page.goto("/ccc-photo-resizer");
-  await expect(page.getByText("132 × 170 pixels (width × height)")).toBeVisible();
-  await expect(page.getByText("5–50 KB")).toBeVisible();
+  const table = page.getByRole("region", { name: "CCC Photo requirements" });
+  await expect(table.getByText("132 × 170 pixels (width × height)")).toBeVisible();
+  await expect(table.getByText("5–50 KB")).toBeVisible();
 });
 
 test("sitemap and robots are served", async ({ request }) => {

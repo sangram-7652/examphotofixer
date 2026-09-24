@@ -150,11 +150,19 @@ export function findJpegEnd(bytes: Uint8Array, scanOffset: number): number {
   return -1;
 }
 
-/** True when the file has a complete header and reaches an EOI marker. */
+const DQT = 0xdb;
+
+/**
+ * True when the file has a frame header (SOF), quantization tables (DQT, which
+ * have no defaults in the JPEG standard) and reaches an EOI marker. Some
+ * decoders (WebKit) silently render files missing these; we reject them.
+ */
 export function isCompleteJpeg(bytes: Uint8Array): boolean {
   try {
-    const { scanOffset } = parseJpeg(bytes);
-    return findJpegEnd(bytes, scanOffset) !== -1;
+    const { segments, scanOffset } = parseJpeg(bytes);
+    const hasFrame = segments.some((segment) => SOF_MARKERS.has(segment.marker));
+    const hasTables = segments.some((segment) => segment.marker === DQT);
+    return hasFrame && hasTables && findJpegEnd(bytes, scanOffset) !== -1;
   } catch {
     return false;
   }

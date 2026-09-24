@@ -317,9 +317,36 @@ test.describe("image engine (browser + worker)", () => {
     expect(outcome.result?.validation.checks.find((c) => c.id === "metadata")?.status).toBe("pass");
   });
 
+  test("typical 12 MP phone photo: UI thread stays responsive", async ({ page, browserName }) => {
+    const outcome = await run(page, {
+      input: {
+        fixture: { pattern: "quadrants", width: 3000, height: 4000, type: "image/jpeg" },
+      },
+      requirements: PHOTO,
+    });
+    expect(outcome.result?.facts).toMatchObject({ width: 132, height: 170 });
+    if (browserName === "firefox") {
+      // Known Firefox limitation (see the 6000×8000 test): the decode itself runs on the main
+      // thread (~170 ms for 12 MP when idle, more under CPU load). Recorded, not asserted.
+      test.info().annotations.push({
+        type: "known-limitation",
+        description: `Firefox main-thread decode stall: ${outcome.mainThreadMaxGapMs} ms`,
+      });
+    } else {
+      expect(outcome.mainThreadMaxGapMs).toBeLessThan(250);
+    }
+  });
+
   test("large 6000×8000 photo: decoded at reduced size, UI thread stays responsive", async ({
     page,
+    browserName,
   }) => {
+    test.fail(
+      browserName === "firefox",
+      "Known Firefox limitation: createImageBitmap(Blob) decodes on the main thread even when " +
+        "called from a worker, so a 48 MP decode stalls the page for ~0.3–1.5 s. " +
+        "See docs/IMAGE_PROCESSING.md (Browser support).",
+    );
     test.setTimeout(120_000);
     const outcome = await run(page, {
       input: {
@@ -353,6 +380,18 @@ test.describe("image engine (browser + worker)", () => {
       ],
       [{ bytes: svg, type: "image/svg+xml" }, "unsupported-format"],
       [{ bytes: gif, type: "image/gif" }, "unsupported-format"],
+      // Complete SOI…EOI structure but no quantization tables (WebKit would render it).
+      [
+        {
+          bytes: [
+            0xff, 0xd8, 0xff, 0xc0, 0x00, 0x0b, 0x08, 0x00, 0x10, 0x00, 0x10, 0x01, 0x01, 0x11,
+            0x00, 0xff, 0xda, 0x00, 0x08, 0x01, 0x01, 0x00, 0x00, 0x3f, 0x00, 0x12, 0x34, 0xff,
+            0xd9,
+          ],
+          type: "image/jpeg",
+        },
+        "corrupt-file",
+      ],
       [
         {
           fixture: {
@@ -388,13 +427,29 @@ test.describe("image engine (browser + worker)", () => {
   });
 
   test("worker error handling: decoder failure inside the worker is reported", async ({ page }) => {
-    // Structurally complete JPEG (SOI … EOI) whose image data is garbage.
-    const bogus = [
-      0xff, 0xd8, 0xff, 0xc0, 0x00, 0x0b, 0x08, 0x00, 0x10, 0x00, 0x10, 0x01, 0x01, 0x11, 0x00,
-      0xff, 0xda, 0x00, 0x08, 0x01, 0x01, 0x00, 0x00, 0x3f, 0x00, 0x12, 0x34, 0xff, 0xd9,
+    // Structurally valid JPEG (SOI, DQT, 12-bit SOF1, DHT, SOS … EOI) that 8-bit browser
+    // decoders cannot decode, so the failure happens inside createImageBitmap in the worker.
+    const segment = (marker: number, payload: number[]) => [
+      0xff,
+      marker,
+      (payload.length + 2) >> 8,
+      (payload.length + 2) & 0xff,
+      ...payload,
+    ];
+    const twelveBit = [
+      0xff,
+      0xd8,
+      ...segment(0xdb, [0x00, ...new Array(64).fill(1)]),
+      ...segment(0xc1, [12, 0, 16, 0, 16, 1, 1, 0x11, 0]),
+      ...segment(0xc4, [0x00, 1, ...new Array(15).fill(0), 0]),
+      ...segment(0xda, [1, 1, 0, 0, 0x3f, 0]),
+      0x12,
+      0x34,
+      0xff,
+      0xd9,
     ];
     const outcome = await run(page, {
-      input: { bytes: bogus, type: "image/jpeg" },
+      input: { bytes: twelveBit, type: "image/jpeg" },
       requirements: PHOTO,
     });
     expect(outcome.ok).toBe(false);

@@ -5,7 +5,8 @@ const baseURL = `http://localhost:${PORT}`;
 
 /**
  * E2E runs against a production build (`npm run build` first).
- * Mobile-first: the phone project is the primary target.
+ * Runs on Chromium, Firefox and WebKit, plus a phone viewport.
+ * WebKit on Linux needs system libraries: `sudo npx playwright install-deps webkit`.
  */
 export default defineConfig({
   testDir: "./e2e",
@@ -15,9 +16,12 @@ export default defineConfig({
   reporter: process.env.CI ? "github" : "list",
   use: { baseURL, trace: "on-first-retry" },
   projects: [
-    // Engine tests are browser-API tests; running them once (desktop) is enough.
+    { name: "chromium", use: { ...devices["Desktop Chrome"] } },
+    { name: "firefox", use: { ...devices["Desktop Firefox"] } },
+    { name: "webkit", use: { ...devices["Desktop Safari"] } },
+    // Mobile-first checks on a phone viewport with touch. Engine tests are
+    // browser-API tests and already run on the three desktop engines.
     { name: "mobile-chrome", use: { ...devices["Pixel 7"] }, testIgnore: /image-engine/ },
-    { name: "desktop-chrome", use: { ...devices["Desktop Chrome"] } },
   ],
   webServer: {
     command: `npm run start -- --port ${PORT}`,

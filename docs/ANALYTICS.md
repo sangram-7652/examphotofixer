@@ -1,6 +1,8 @@
 # Analytics
 
-Status: **not implemented.** No analytics script is loaded in V1 foundation.
+Status: **hooks implemented, no provider.** `src/lib/analytics` exposes `track(name, props)`.
+Events go to an optional provider (`setAnalyticsProvider`) and are dispatched as a DOM
+`epf:analytics` event (used by e2e tests). No analytics script is loaded.
 
 ## Principles
 
@@ -9,15 +11,24 @@ Status: **not implemented.** No analytics script is loaded in V1 foundation.
   EXIF data or anything derived from image content.
 - No personal data; no cross-site tracking; no advertising pixels.
 
-## Planned events
+## Events (implemented in `ImageTool`)
 
-| Event               | Properties                                                              | Purpose                            |
-| ------------------- | ----------------------------------------------------------------------- | ---------------------------------- |
-| `tool_view`         | `tool_id`                                                               | Funnel start (page view is enough) |
-| `file_selected`     | `tool_id`, `input_format`, `size_bucket` (e.g. `<1MB`, `1–5MB`, `>5MB`) | Input mix                          |
-| `processing_failed` | `tool_id`, `error_code`                                                 | Fix pipeline issues                |
-| `validation_failed` | `tool_id`, `check_id`                                                   | Which requirements users miss      |
-| `download`          | `tool_id`, `preset_id`, `quality_bucket`                                | Success metric                     |
+All events carry `tool_id` and `preset_id`.
+
+| Event                  | Extra properties                                                                           |
+| ---------------------- | ------------------------------------------------------------------------------------------ |
+| `tool_open`            | —                                                                                          |
+| `image_selected`       | `accepted`, `input_format`, `size_bucket` (`<1MB`, `1-5MB`, `5-10MB`, `>10MB`) or `reason` |
+| `crop_started`         | —                                                                                          |
+| `crop_completed`       | `zoom`                                                                                     |
+| `processing_started`   | —                                                                                          |
+| `processing_completed` | `ok`, `duration_ms`, `quality` or `error_code`                                             |
+| `validation_passed`    | —                                                                                          |
+| `validation_warning`   | `status` (e.g. `below_minimum`)                                                            |
+| `validation_failed`    | `checks` (failed check ids)                                                                |
+| `download_clicked`     | `state`                                                                                    |
+| `download_completed`   | — (browsers don't report save completion; fired right after hand-off)                      |
+| `tool_reset`           | —                                                                                          |
 
 Event names and allowed properties will live in one typed module (`src/lib/analytics/`) so
 nothing else can send ad-hoc data.

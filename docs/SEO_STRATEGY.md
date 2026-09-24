@@ -37,3 +37,11 @@ Guides (future) ──▶ tools they explain
 - `FAQPage` JSON-LD only when a page has a real, visible FAQ.
 - `HowTo`-style guides ("CCC photo size rejected — how to fix") linking to tools.
 - Search Console + Bing Webmaster verification at launch.
+
+## First production tool: `/ccc-photo-resizer`
+
+Structure: breadcrumb → H1 → short intro (values from preset) → the tool (in the first mobile
+screen) → how it works → CCC requirements table → source & verification → common problems →
+FAQ (visible `<details>`, mirrored as `FAQPage` JSON-LD) → privacy note → related tools.
+All requirement numbers in the copy are interpolated from the preset (`src/content/tool-content.ts`);
+a unit test fails if they drift. No affiliation is claimed.

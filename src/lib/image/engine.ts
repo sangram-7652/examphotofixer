@@ -159,9 +159,21 @@ async function inspectInput(file: Blob): Promise<InspectedInput> {
   return { format, stored, orientation: 1, decodable: file };
 }
 
+/**
+ * Firefox performs createImageBitmap(Blob) decoding on the main thread, even
+ * when called from a worker, and its decode-time resize is slower than a plain
+ * decode. There we decode at full size when it fits the memory budget and let
+ * the worker's canvas steps do the downscaling off the main thread.
+ */
+const DECODES_ON_MAIN_THREAD =
+  typeof navigator !== "undefined" && /\bFirefox\//.test(navigator.userAgent);
+const FULL_DECODE_MAX_PIXELS = 2 * MAX_CANVAS_PIXELS;
+
 async function decode(blob: Blob, stored: Size, scale: number): Promise<ImageBitmap> {
+  const preferFullDecode =
+    DECODES_ON_MAIN_THREAD && stored.width * stored.height <= FULL_DECODE_MAX_PIXELS;
   const attempts: (ImageBitmapOptions | undefined)[] =
-    scale < 1
+    scale < 1 && !preferFullDecode
       ? [
           {
             resizeWidth: Math.max(1, Math.round(stored.width * scale)),

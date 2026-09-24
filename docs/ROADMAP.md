@@ -11,15 +11,22 @@ Web Worker engine: decode, EXIF orientation 1–8, crop (auto/rect/viewport), st
 white background, JPEG encode, KB search, JFIF DPI, metadata stripping, validation, typed
 progress and errors. Below-minimum decision locked: report it, never pad. Unit and browser tests.
 
-## Phase 2 — Tool UI
+## Phase 2 (P3): Tool UI, CCC Photo ✅
 
-- Uploader (camera + gallery), crop UI (touch drag/zoom), live validation checklist, download.
-- Replace `UploadPlaceholder`. CCC Complete Pack: three slots, one download each (zip optional, only if needed).
-- Generic resizer/compressor inputs.
+Reusable preset-driven tool UI (upload, crop, real progress, checklist, preview, download, reset),
+`/ccc-photo-resizer` live with full content and FAQ, analytics hooks, Chromium/Firefox/WebKit
+e2e projects. Next: turn on `/ccc-signature-resizer` and `/ccc-thumb-impression-resizer`
+(status + content only), then the CCC Complete Pack and generic tools.
+
+## Phase 2.5 (P4): Hardening ✅
+
+Official CCC source recorded (NIELIT guidelines Version 1.11 (2023), page 3, SHA-256) with a
+Source & verification section; guidance from the source shown; WebKit run and passing; JPEG
+integrity check hardened (DQT required) after a WebKit difference.
 
 ## Phase 3 — Launch
 
-- Record official CCC sources → `verified`. Legal review. Analytics decision. Enable indexing.
+- Legal review. Analytics decision. Enable indexing.
 
 ## Phase 4 — Growth
 

@@ -47,8 +47,10 @@ One worker per job: the worker is terminated after the result, which frees every
 
 **Input.** Sniffed from magic bytes (JPEG, PNG, WebP accepted; SVG, GIF, BMP, HEIC and
 unknown rejected). Animated PNG (`acTL`) and animated WebP (VP8X flag / `ANIM`) rejected.
-Truncated files rejected before decoding (JPEG: no EOI reachable through scan data; PNG: no
-`IEND`; WebP: RIFF size exceeds file). Pixel count from the header is checked against
+Truncated or incomplete files rejected before decoding (JPEG: no SOF, no quantization tables
+(DQT) or no EOI reachable through scan data; PNG: no `IEND`; WebP: RIFF size exceeds file).
+The DQT check exists because WebKit silently renders JPEGs without quantization tables, which
+the JPEG standard does not allow. Pixel count from the header is checked against
 `MAX_INPUT_PIXELS` before decoding (decompression-bomb guard). The declared MIME type and
 file extension are ignored: content decides.
 
@@ -131,5 +133,17 @@ candidate is encoded; their stages verify them on the final bytes.
 
 ## Browser support
 
-Needs module Workers, `OffscreenCanvas` 2D and `createImageBitmap`: Chrome/Edge 69+,
-Firefox 105+, Safari 16.4+. `isImageProcessingSupported()` lets the UI show a fallback message.
+Needs module Workers, `OffscreenCanvas` 2D (with `convertToBlob`) and `createImageBitmap`:
+Chrome/Edge 69+, Firefox 105+, Safari 16.4+. `isImageProcessingSupported()` (in `support.ts`,
+tiny and loaded up front) lets the UI show a fallback message.
+
+Tested with Playwright on Chromium, Firefox and WebKit (desktop) and Chromium on a Pixel 7
+viewport; all pass (WebKit run details in TESTING.md).
+
+**Known Firefox limitation.** Firefox runs `createImageBitmap(Blob)` decoding on the main thread
+even when called from a worker (measured: main-thread stall ≈ decode time). Nothing else in
+the pipeline blocks. Mitigation in `engine.ts`: on Firefox, images up to 2 × 16.7 MP decode at
+full size (a plain decode is faster there than a decode-time resize) and the worker's canvas
+does the downscaling. Measured stalls (idle machine): 2000×1500 ≈ 50 ms, 12 MP ≈ 165–180 ms,
+48 MP ≈ 0.6–1 s. Chromium stays at ~10 ms for all sizes. A JS/WASM decoder in the worker would
+remove the stall at a large size/speed cost; not done.

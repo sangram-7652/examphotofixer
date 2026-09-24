@@ -4,8 +4,19 @@ import { JsonLd } from "@/components/JsonLd";
 import { RequirementsTable } from "@/components/RequirementsTable";
 import { ToolCard } from "@/components/ToolCard";
 import { UploadPlaceholder } from "@/components/UploadPlaceholder";
-import { getPreset } from "@/lib/presets";
-import { breadcrumbJsonLd, toolJsonLd, type Crumb } from "@/lib/seo/json-ld";
+import { ImageTool } from "@/components/tool/ImageTool";
+import { getToolContent } from "@/content/tool-content";
+import { EXAMS, getPreset } from "@/lib/presets";
+import { formatIsoDate, isVerifiedSource, sourceCitation } from "@/lib/presets/source";
+import type { ImagePreset } from "@/lib/presets/types";
+import { SourceLink } from "@/components/SourceLink";
+import {
+  breadcrumbJsonLd,
+  faqJsonLd,
+  toolJsonLd,
+  type Crumb,
+  type JsonLdObject,
+} from "@/lib/seo/json-ld";
 import { TOOLS, getTool, type ToolId } from "@/lib/tools/registry";
 
 const PRESET_STEPS = [
@@ -30,11 +41,46 @@ const GENERIC_STEPS: Record<"generic-resize" | "generic-compress", string[]> = {
   ],
 };
 
+function SourceSection({ preset }: { preset: ImagePreset }) {
+  const { source } = preset;
+  const verified = isVerifiedSource(source);
+  return (
+    <section
+      aria-labelledby="source"
+      data-testid="requirements-source"
+      className="mt-6 rounded-lg bg-surface p-4 text-sm"
+    >
+      <h3 id="source" className="font-semibold">
+        Source and verification
+      </h3>
+      <p className="mt-1">Requirements based on {sourceCitation(source)}.</p>
+      {verified && source.verifiedOn ? (
+        <p className="mt-1">
+          Values verified against the source on{" "}
+          <time dateTime={source.verifiedOn}>{formatIsoDate(source.verifiedOn)}</time>
+          {source.page ? ` (page ${source.page})` : ""}.{" "}
+          <SourceLink source={source}>View source</SourceLink>
+        </p>
+      ) : (
+        <p className="mt-1">The official source link has not been recorded yet.</p>
+      )}
+      <p className="mt-2 text-muted">
+        ExamPhotoFixer is an independent tool and is not affiliated with {source.authority}. We only
+        reference their published requirements. Guidelines can change — check the current version
+        before you upload.
+      </p>
+    </section>
+  );
+}
+
 export function ToolPage({ toolId }: { toolId: ToolId }) {
   const tool = getTool(toolId);
   const presets = tool.presetIds.map(getPreset);
+  const content = getToolContent(tool, presets);
+  const livePreset = tool.status === "live" && presets.length === 1 ? presets[0] : null;
   const steps =
-    tool.kind === "preset" || tool.kind === "pack" ? PRESET_STEPS : GENERIC_STEPS[tool.kind];
+    content?.howItWorks ??
+    (tool.kind === "preset" || tool.kind === "pack" ? PRESET_STEPS : GENERIC_STEPS[tool.kind]);
   const related = TOOLS.filter(
     (other) => other.id !== tool.id && (tool.exam === null || other.exam === tool.exam),
   );
@@ -43,31 +89,24 @@ export function ToolPage({ toolId }: { toolId: ToolId }) {
     { name: "Tools", path: "/tools" },
     { name: tool.name, path: tool.path },
   ];
+  const jsonLd: JsonLdObject[] = [toolJsonLd(tool), breadcrumbJsonLd(crumbs)];
+  if (content) jsonLd.push(faqJsonLd(content.faq));
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-8">
-      <JsonLd data={[toolJsonLd(tool), breadcrumbJsonLd(crumbs)]} />
+    <div className="mx-auto max-w-3xl px-4 py-6 sm:py-8">
+      <JsonLd data={jsonLd} />
       <Breadcrumbs crumbs={crumbs} />
 
-      <h1 className="mt-4 text-3xl font-bold tracking-tight">{tool.h1}</h1>
-      <p className="mt-2 text-muted">{tool.summary}</p>
+      <h1 className="mt-3 text-3xl font-bold tracking-tight">{tool.h1}</h1>
+      <p className="mt-2 text-muted">{content?.intro ?? tool.summary}</p>
 
-      <div className="mt-6">
-        <UploadPlaceholder label={tool.kind === "pack" ? "Select files" : "Select image"} />
+      <div className="mt-5">
+        {livePreset ? (
+          <ImageTool preset={livePreset} toolId={tool.id} />
+        ) : (
+          <UploadPlaceholder label={tool.kind === "pack" ? "Select files" : "Select image"} />
+        )}
       </div>
-
-      {presets.length > 0 ? (
-        <section aria-labelledby="requirements" className="mt-10">
-          <h2 id="requirements" className="text-xl font-semibold">
-            Upload requirements
-          </h2>
-          <div className="mt-4 space-y-4">
-            {presets.map((preset) => (
-              <RequirementsTable key={preset.id} preset={preset} />
-            ))}
-          </div>
-        </section>
-      ) : null}
 
       <section aria-labelledby="how-it-works" className="mt-10">
         <h2 id="how-it-works" className="text-xl font-semibold">
@@ -79,6 +118,56 @@ export function ToolPage({ toolId }: { toolId: ToolId }) {
           ))}
         </ol>
       </section>
+
+      {presets.length > 0 ? (
+        <section aria-labelledby="requirements" className="mt-10">
+          <h2 id="requirements" className="text-xl font-semibold">
+            {tool.exam
+              ? `${EXAMS[tool.exam].shortName} upload requirements`
+              : "Upload requirements"}
+          </h2>
+          <div className="mt-4 space-y-4">
+            {presets.map((preset) => (
+              <RequirementsTable key={preset.id} preset={preset} />
+            ))}
+          </div>
+          {livePreset ? <SourceSection preset={livePreset} /> : null}
+        </section>
+      ) : null}
+
+      {content ? (
+        <>
+          <section aria-labelledby="common-problems" className="mt-10">
+            <h2 id="common-problems" className="text-xl font-semibold">
+              Common problems this fixes
+            </h2>
+            <dl className="mt-4 space-y-4">
+              {content.commonProblems.map((problem) => (
+                <div key={problem.title}>
+                  <dt className="font-semibold">{problem.title}</dt>
+                  <dd className="mt-1 text-muted">{problem.body}</dd>
+                </div>
+              ))}
+            </dl>
+          </section>
+
+          <section aria-labelledby="faq" className="mt-10">
+            <h2 id="faq" className="text-xl font-semibold">
+              Frequently asked questions
+            </h2>
+            <div className="mt-4 divide-y divide-border rounded-lg border border-border">
+              {content.faq.map((item) => (
+                <details key={item.question} className="group px-4 py-3">
+                  <summary className="min-h-11 cursor-pointer py-2 font-medium">
+                    {item.question}
+                  </summary>
+                  <p className="pb-2 text-muted">{item.answer}</p>
+                </details>
+              ))}
+            </div>
+          </section>
+        </>
+      ) : null}
 
       <section aria-labelledby="privacy-note" className="mt-10 rounded-lg bg-surface p-4">
         <h2 id="privacy-note" className="font-semibold">

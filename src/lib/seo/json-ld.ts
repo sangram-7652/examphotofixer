@@ -50,3 +50,15 @@ export function breadcrumbJsonLd(crumbs: readonly Crumb[]): JsonLdObject {
     })),
   };
 }
+
+export function faqJsonLd(items: readonly { question: string; answer: string }[]): JsonLdObject {
+  return {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: items.map((item) => ({
+      "@type": "Question",
+      name: item.question,
+      acceptedAnswer: { "@type": "Answer", text: item.answer },
+    })),
+  };
+}

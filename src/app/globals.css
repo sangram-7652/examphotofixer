@@ -11,6 +11,9 @@
   --brand-soft: #e8f1fb;
   --success: #15803d;
   --danger: #b91c1c;
+  --danger-soft: #fdecec;
+  --warning: #9a4a05;
+  --warning-soft: #fff6e0;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -25,6 +28,9 @@
     --brand-soft: #132638;
     --success: #4ade80;
     --danger: #f87171;
+    --danger-soft: #3a1717;
+    --warning: #fbbf24;
+    --warning-soft: #33280f;
   }
 }
 
@@ -39,6 +45,9 @@
   --color-brand-soft: var(--brand-soft);
   --color-success: var(--success);
   --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
 }
 
