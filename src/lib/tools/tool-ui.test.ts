@@ -182,6 +182,21 @@ describe("tool registry and content", () => {
     expect(text.toLowerCase()).not.toContain("guaranteed target");
   });
 
+  it("IBPS photo tool: live, content from its preset, safe filename", () => {
+    const tool = getTool("ibps-photo");
+    expect(tool).toMatchObject({ status: "live", exam: "ibps", presetIds: ["ibps-photo"] });
+    const preset = getPreset("ibps-photo");
+    expect(buildDownloadFilename(preset)).toBe("IBPS_Photo_200x230.jpg");
+    const changed = { ...preset, width: 210, height: 240, fileSizeKB: { min: 25, max: 45 } };
+    const text = JSON.stringify(getToolContent(tool, [changed]));
+    expect(text).toContain("210 × 240");
+    expect(text).toContain("25–45 KB");
+    expect(text).not.toMatch(/200 × 230|20–50 KB/);
+    expect(text.toLowerCase()).not.toMatch(
+      /official ibps|ibps approved|approved by ibps|guaranteed/,
+    );
+  });
+
   it("pack content lists every preset's values", () => {
     const text = JSON.stringify(
       getToolContent(getTool("ccc-pack"), [CCC_PHOTO, CCC_SIGNATURE, CCC_LEFT_THUMB]),

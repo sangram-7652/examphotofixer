@@ -69,8 +69,12 @@ export function GuidePage({ guide }: { guide: Guide }) {
     presets.length > 0 && presets.every((preset) => preset.source === presets[0].source)
       ? presets[0]
       : null;
-  // Small cluster: every other guide is related.
-  const related = listGuides().filter((other) => other.slug !== guide.slug);
+  // Related = other guides about the same exam.
+  const exams = new Set(presets.map((preset) => preset.exam));
+  const related = listGuides().filter(
+    (other) =>
+      other.slug !== guide.slug && guidePresets(other).some((preset) => exams.has(preset.exam)),
+  );
 
   return (
     <article className="mx-auto max-w-3xl px-4 py-6 sm:py-8">

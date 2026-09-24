@@ -32,6 +32,11 @@ FORM_PRESETS, SEO_STRATEGY, SEO_URL_MAP, ANALYTICS, TESTING, PRIVACY, DEPLOYMENT
   `published` (enforced by tests). Record `page` and `sha256` so re-verification is mechanical.
 - Values belong to a document version. Older versions of the same guidelines can differ; never
   show values without their version/date, and update `source` with the numbers.
+- Follow `docs/EXAM_REQUIREMENT_VERIFICATION.md` for any new exam: official source, verified TLS,
+  SHA-256, printed page, corrigenda, verbatim mapping. One canonical source per preset. Use
+  `dpi.max: null` for minimum-only DPI and `preferredDimensions` for "preferred" sizes — never
+  invent a missing value. Requirements the engine can't check (background, recency, live capture)
+  go in `guidance`, never in validation.
 - Reference sources, never imply endorsement: no "official", "approved by" or "affiliated" claims.
 - Changing a preset value requires the official source in the same change and an updated test.
 - UI must show the source and remind users to check the official notification.

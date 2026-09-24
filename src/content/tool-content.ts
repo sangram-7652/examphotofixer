@@ -3,6 +3,7 @@
  * the preset — never typed into copy — so content can't drift from the data.
  */
 
+import { chooseOutputDpi } from "@/lib/image/dpi";
 import { describePreset } from "@/lib/presets/describe";
 import { sourceCitation } from "@/lib/presets/source";
 import type { ImagePreset } from "@/lib/presets/types";
@@ -325,6 +326,55 @@ function imageCompressorContent(): ToolContent {
   };
 }
 
+function ibpsPhotoContent(preset: ImagePreset): ToolContent {
+  const d = describe(preset);
+  const citation = sourceCitation(preset.source);
+  return {
+    intro: `Resize your photo to the requirements in IBPS's published scanning guidelines — ${d.size}, ${d.kb}, ${d.format}, ${d.dpi} — and check it before you upload. Your photo is processed on your device and never uploaded to our servers.`,
+    howItWorks: [
+      "Choose a recent passport-style colour photo (see the guideline notes further down this page).",
+      `Drag and zoom so your face fills the frame. The frame has the ${preset.width}:${preset.height} shape, so your photo is cropped, never stretched.`,
+      `Tap “Process photo”. We fix the orientation, resize to ${d.size}, compress to fit ${d.kb} at the best possible quality, and write ${chooseOutputDpi(preset.dpi)} DPI into the file.`,
+      "Check the results list, download the JPG and upload it in the photograph field of the IBPS application.",
+    ],
+    commonProblems: [
+      {
+        title: "Photo rejected as too large",
+        body: `Phone photos are usually several megabytes. The tool compresses to fit within ${d.kb} while keeping the highest quality that fits.`,
+      },
+      {
+        title: "Two photo steps in the application",
+        body: "IBPS asks for this uploaded photograph and, separately, a photo captured live with a webcam or phone during the application. This tool prepares the uploaded photograph only.",
+      },
+      {
+        title: "Face squashed after resizing",
+        body: "Resizing without cropping distorts the face. The tool crops to the required shape first, so proportions stay natural.",
+      },
+    ],
+    faq: [
+      {
+        question: "What size should the IBPS photo be?",
+        answer: `According to the ${citation}: ${d.size} (width × height, stated as preferred), between ${d.kb}, in ${d.format} format. The scanning instructions ask for ${d.dpi}. Check the notification for your recruitment before you upload.`,
+      },
+      {
+        question: "Does this replace the live photo capture?",
+        answer:
+          "No. IBPS also asks you to capture a photo with a webcam or mobile phone during the application. That step happens on the IBPS website; this tool only prepares the photograph you upload.",
+      },
+      {
+        question: "Is my photo uploaded to your server?",
+        answer:
+          "No. Cropping, resizing and compression all happen inside your browser. The photo never leaves your device.",
+      },
+      {
+        question: "Is ExamPhotoFixer affiliated with IBPS?",
+        answer:
+          "No. ExamPhotoFixer is an independent tool and is not affiliated with IBPS or any bank or exam body.",
+      },
+    ],
+  };
+}
+
 const CONTENT: Partial<
   Record<ToolDefinition["id"], (presets: ImagePreset[]) => ToolContent | null>
 > = {
@@ -333,6 +383,7 @@ const CONTENT: Partial<
     presets.length === 1 ? cccInkContent(presets[0], "signature") : null,
   "ccc-thumb": (presets) => (presets.length === 1 ? cccInkContent(presets[0], "thumb") : null),
   "ccc-pack": (presets) => (presets.length > 1 ? cccPackContent(presets) : null),
+  "ibps-photo": (presets) => (presets.length === 1 ? ibpsPhotoContent(presets[0]) : null),
   "image-resizer": () => imageResizerContent(),
   "image-compressor": () => imageCompressorContent(),
 };

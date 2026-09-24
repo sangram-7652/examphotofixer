@@ -62,3 +62,13 @@ SSC, Railway and UPSC exist in `EXAMS` as `planned` with **no presets**. A test 
    `published` — enforced in `presets.test.ts`.
 5. Re-verify each active preset at least every 6 months and whenever a new exam cycle opens.
 6. Update the CCC test in `presets.test.ts` in the same change; the diff must show the source.
+
+## IBPS (P8)
+
+| id           | Size (px)             | KB    | DPI                                        | Format   | Status   |
+| ------------ | --------------------- | ----- | ------------------------------------------ | -------- | -------- |
+| `ibps-photo` | 200 × 230 (preferred) | 20–50 | ≥ 200 (scanner minimum; no maximum stated) | JPG/JPEG | verified |
+
+Source: IBPS CRP RRBs XV Detailed Notification (01.09.2026), Annexure III, printed pages 56 and 58.
+Full audit trail: `EXAM_REQUIREMENT_VERIFICATION.md`. `DpiRange.max` may be `null` when a source
+states only a minimum; `preferredDimensions` marks sizes the source calls "preferred".

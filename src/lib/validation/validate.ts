@@ -2,6 +2,7 @@ import { FORMAT_LABELS, SUPPORTED_INPUT_FORMATS, type ImageFormat } from "@/lib/
 import { MAX_INPUT_BYTES } from "@/lib/image/limits";
 import type { MetadataKind } from "@/lib/image/jpeg";
 import { byteWindowFor, type OutputFacts, type OutputRequirements } from "@/lib/image/pipeline";
+import { dpiText } from "@/lib/presets/describe";
 import type { ValidationCheck, ValidationReport } from "./types";
 
 const EXPECTED_METADATA = "No personal metadata (EXIF, GPS, camera)";
@@ -71,7 +72,7 @@ export function validateAgainstPreset(
     ? formatByteLimit(preset.fileSizeBytes.maxBytes)
     : `${preset.fileSizeKB?.max} KB`;
   const dpiRange = preset.dpi;
-  const expectedDpi = dpiRange ? `${dpiRange.min}–${dpiRange.max} DPI` : null;
+  const expectedDpi = dpiRange ? dpiText(dpiRange) : null;
 
   if (!facts || error) {
     return {
@@ -153,7 +154,9 @@ export function validateAgainstPreset(
   if (dpiRange && expectedDpi) {
     const dpiOk =
       facts.dpi !== null &&
-      [facts.dpi.x, facts.dpi.y].every((value) => value >= dpiRange.min && value <= dpiRange.max);
+      [facts.dpi.x, facts.dpi.y].every(
+        (value) => value >= dpiRange.min && (dpiRange.max === null || value <= dpiRange.max),
+      );
     checks.push({
       id: "dpi",
       label: "DPI",
@@ -168,7 +171,9 @@ export function validateAgainstPreset(
         ? null
         : facts.dpi === null
           ? `File has no DPI information; it must be ${expectedDpi}.`
-          : `DPI must be between ${dpiRange.min} and ${dpiRange.max}.`,
+          : dpiRange.max === null
+            ? `DPI must be at least ${dpiRange.min}.`
+            : `DPI must be between ${dpiRange.min} and ${dpiRange.max}.`,
     });
   }
 

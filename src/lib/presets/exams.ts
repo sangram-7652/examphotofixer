@@ -12,6 +12,13 @@ export const EXAMS: Readonly<Record<ExamId, ExamDefinition>> = {
     conductingBody: "NIELIT",
     status: "active",
   },
+  ibps: {
+    id: "ibps",
+    shortName: "IBPS",
+    fullName: "Institute of Banking Personnel Selection",
+    conductingBody: "IBPS",
+    status: "active",
+  },
   ssc: {
     id: "ssc",
     shortName: "SSC",

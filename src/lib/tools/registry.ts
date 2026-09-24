@@ -3,7 +3,13 @@ import type { ExamId } from "@/lib/presets/types";
 export type ToolKind = "preset" | "pack" | "generic-resize" | "generic-compress";
 
 export type ToolId =
-  "ccc-photo" | "ccc-signature" | "ccc-thumb" | "ccc-pack" | "image-resizer" | "image-compressor";
+  | "ccc-photo"
+  | "ccc-signature"
+  | "ccc-thumb"
+  | "ccc-pack"
+  | "ibps-photo"
+  | "image-resizer"
+  | "image-compressor";
 
 export interface ToolDefinition {
   id: ToolId;
@@ -79,6 +85,20 @@ export const TOOLS: readonly ToolDefinition[] = [
     metaDescription:
       "Prepare all three CCC application images — photo, signature and left thumb impression — on one page, check each against the requirements and download them together as a ZIP. Processed in your browser.",
     summary: "Prepare the CCC photo, signature and left thumb impression together.",
+  },
+  {
+    id: "ibps-photo",
+    path: "/ibps-photo-resizer",
+    status: "live",
+    kind: "preset",
+    exam: "ibps",
+    presetIds: ["ibps-photo"],
+    name: "IBPS Photo Resizer",
+    h1: "IBPS Photo Resizer",
+    metaTitle: "IBPS Photo Resizer – Resize Photo for IBPS Bank Exam Forms",
+    metaDescription:
+      "Resize your photo to the size, file size, format and DPI in IBPS's published scanning guidelines for its bank recruitment forms, and check it before you upload — processed in your browser.",
+    summary: "Resize and check your photo for IBPS bank recruitment application forms.",
   },
   {
     id: "image-resizer",

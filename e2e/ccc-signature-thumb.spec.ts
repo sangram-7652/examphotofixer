@@ -117,7 +117,7 @@ for (const { path, h1, noun, preset } of TOOLS) {
         metadata: [],
       });
       expect(facts.dpi!.x).toBeGreaterThanOrEqual(preset.dpi.min);
-      expect(facts.dpi!.x).toBeLessThanOrEqual(preset.dpi.max);
+      expect(facts.dpi!.x).toBeLessThanOrEqual(preset.dpi.max!);
       expect(facts.byteLength).toBeGreaterThanOrEqual(preset.fileSizeKB.min * 1024);
       expect(facts.byteLength).toBeLessThanOrEqual(preset.fileSizeKB.max * 1000);
 

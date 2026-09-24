@@ -12,7 +12,7 @@ import type { ImagePreset } from "@/lib/presets/types";
 import { getTool, type ToolId } from "@/lib/tools/registry";
 import type { QA } from "./tool-content";
 
-export type GuideCategory = "CCC" | "Application Help";
+export type GuideCategory = "CCC" | "IBPS" | "Application Help";
 
 /** Text with optional inline links (internal paths only). */
 export type Inline = string | { href: string; text: string };
@@ -427,11 +427,102 @@ const GUIDES: readonly Guide[] = [
       };
     },
   },
+  {
+    slug: "ibps-photo-size",
+    category: "IBPS",
+    title: "IBPS Photo Size: Dimensions, File Size, Format and DPI",
+    metaTitle: "IBPS Photo Size – Dimensions, KB, Format & DPI for Bank Exam Forms",
+    description:
+      "The photograph size in IBPS's scanning guidelines for its bank recruitment forms: pixel dimensions, file size in KB, format and DPI, with the source notification and how to prepare your photo.",
+    summary: "The photograph dimensions, file size, format and DPI in IBPS's scanning guidelines.",
+    presetIds: ["ibps-photo"],
+    toolLinks: [{ toolId: "ibps-photo", text: "Resize your photo with the IBPS Photo Resizer" }],
+    reviewedOn: REVIEWED_ON,
+    build: ([photo]) => {
+      const d = describePreset(photo);
+      return {
+        shortAnswer: `According to the ${sourceCitation(photo.source)}, the uploaded photograph should be ${d.size} (width × height, stated as preferred), ${d.kb}, in ${d.format} format, scanned at ${d.dpi}.`,
+        sections: [
+          {
+            id: "two-photos",
+            heading: "Two photo steps: upload and live capture",
+            blocks: [
+              p(
+                "IBPS asks for a scanned or digital photograph that you upload, and separately for a photograph captured live with a webcam or mobile phone during the online application.",
+              ),
+              p(
+                "The requirements on this page are for the uploaded photograph. ExamPhotoFixer can't do the live capture for you — that happens on the IBPS application website.",
+              ),
+            ],
+          },
+          {
+            id: "prepare",
+            heading: "How to prepare your photo",
+            blocks: [
+              steps(
+                [
+                  "Start from a recent passport-style colour photo that follows the guideline notes above.",
+                ],
+                [
+                  "Open the ",
+                  toolLink("ibps-photo", "IBPS Photo Resizer"),
+                  " and choose the photo.",
+                ],
+                [
+                  `Drag and zoom so your face fills the ${photo.width}:${photo.height} frame — nothing is stretched.`,
+                ],
+                [
+                  "Process the photo, check the results list, then download the JPG and upload it in the photograph field.",
+                ],
+              ),
+            ],
+          },
+          {
+            id: "tool-vs-guideline",
+            heading: "What the tool handles — and what it can't",
+            blocks: [
+              list(
+                [`Size of ${d.size}, cropped rather than stretched`],
+                [`File size within ${d.kb}, at the best quality that fits`],
+                [`${d.format} output with ${chooseOutputDpi(photo.dpi)} DPI written into the file`],
+                ["Correct orientation, and location/camera details removed"],
+              ),
+              p(
+                "It can't check your background, how recent the photo is, glasses reflections or headwear — those are up to you, as the guideline describes. It also doesn't replace the live photo capture.",
+              ),
+            ],
+          },
+          {
+            id: "preferred-dimensions",
+            heading: `Why the dimensions say “preferred”`,
+            blocks: [
+              p(
+                `IBPS lists ${photo.width} × ${photo.height} pixels as the preferred size, while the file size range and format are stated as requirements. Using the preferred size exactly is the safest choice, which is what ExamPhotoFixer produces.`,
+              ),
+            ],
+          },
+          belowMinimumSection(photo, "photo"),
+        ],
+        faq: [
+          ...sizeFaq(photo, "photo").filter((qa) => !qa.question.startsWith("What does")),
+          {
+            question: "What DPI should the IBPS photo have?",
+            answer: `The scanning instructions ask you to set the scanner resolution to ${d.dpi}. No maximum is stated. ExamPhotoFixer writes ${chooseOutputDpi(photo.dpi)} DPI into the file; DPI doesn't change the pixel size.`,
+          },
+          {
+            question: "Is ExamPhotoFixer affiliated with IBPS?",
+            answer:
+              "No. ExamPhotoFixer is an independent tool and is not affiliated with IBPS or any bank or exam body.",
+          },
+        ],
+      };
+    },
+  },
 ];
 
 const BY_SLUG = new Map(GUIDES.map((guide) => [guide.slug, guide]));
 
-export const GUIDE_CATEGORIES: readonly GuideCategory[] = ["CCC", "Application Help"];
+export const GUIDE_CATEGORIES: readonly GuideCategory[] = ["CCC", "IBPS", "Application Help"];
 
 export function listGuides(): readonly Guide[] {
   return GUIDES;

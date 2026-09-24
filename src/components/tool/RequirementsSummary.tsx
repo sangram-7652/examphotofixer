@@ -1,4 +1,5 @@
 import { FORMAT_LABELS } from "@/lib/image/formats";
+import { dpiShortText } from "@/lib/presets/describe";
 import type { ImagePreset } from "@/lib/presets/types";
 
 /** Compact "Required" panel shown above the uploader. Values come from the preset. */
@@ -14,7 +15,7 @@ export function RequirementsSummary({
     ["Dimensions", `${preset.width} × ${preset.height} px`],
     ["File size", `${preset.fileSizeKB.min}–${preset.fileSizeKB.max} KB`],
     ["Format", preset.formats.map((format) => FORMAT_LABELS[format]).join(", ")],
-    ["DPI", `${preset.dpi.min}–${preset.dpi.max}`],
+    ["DPI", dpiShortText(preset.dpi)],
   ];
   return (
     <section aria-labelledby={`${preset.id}-required`}>

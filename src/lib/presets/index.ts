@@ -1,10 +1,11 @@
 import { CCC_PRESETS } from "./ccc";
+import { IBPS_PRESETS } from "./ibps";
 import type { ExamId, ImagePreset } from "./types";
 
 export * from "./types";
 export { EXAMS, listExams } from "./exams";
 
-const ALL_PRESETS: readonly ImagePreset[] = [...CCC_PRESETS];
+const ALL_PRESETS: readonly ImagePreset[] = [...CCC_PRESETS, ...IBPS_PRESETS];
 
 const PRESETS_BY_ID = new Map(ALL_PRESETS.map((preset) => [preset.id, preset]));
 

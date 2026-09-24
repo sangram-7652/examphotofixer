@@ -1,4 +1,5 @@
 import { FORMAT_LABELS } from "@/lib/image/formats";
+import { dpiText } from "@/lib/presets/describe";
 import { sourceCitation } from "@/lib/presets/source";
 import type { ImagePreset } from "@/lib/presets/types";
 import { SourceLink } from "./SourceLink";
@@ -6,10 +7,13 @@ import { SourceLink } from "./SourceLink";
 /** Renders a preset's requirements. All numbers come from the preset — never hard-code them here. */
 export function RequirementsTable({ preset }: { preset: ImagePreset }) {
   const rows: [string, string][] = [
-    ["Dimensions", `${preset.width} × ${preset.height} pixels (width × height)`],
+    [
+      "Dimensions",
+      `${preset.width} × ${preset.height} pixels (width × height)${preset.preferredDimensions ? ", stated as preferred" : ""}`,
+    ],
     ["File size", `${preset.fileSizeKB.min}–${preset.fileSizeKB.max} KB`],
     ["Format", preset.formats.map((format) => FORMAT_LABELS[format]).join(", ")],
-    ["DPI", `${preset.dpi.min}–${preset.dpi.max} DPI`],
+    ["DPI", dpiText(preset.dpi)],
   ];
   const { source } = preset;
 

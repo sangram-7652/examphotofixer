@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { getPreset } from "@/lib/presets";
+import { dpiText } from "@/lib/presets/describe";
 import { getTool } from "@/lib/tools/registry";
 import {
   GUIDE_CATEGORIES,
@@ -14,12 +15,13 @@ import {
 const text = (guide: Guide) => JSON.stringify(buildGuide(guide));
 
 describe("guide registry", () => {
-  it("has the four initial CCC guides with unique, URL-safe slugs", () => {
+  it("has the four CCC guides and the IBPS guide, with unique, URL-safe slugs", () => {
     expect(listGuides().map((g) => g.slug)).toEqual([
       "ccc-photo-size",
       "ccc-signature-size",
       "ccc-thumb-impression-size",
       "ccc-photo-upload-problems",
+      "ibps-photo-size",
     ]);
     for (const guide of listGuides()) {
       expect(guide.slug).toMatch(/^[a-z0-9]+(-[a-z0-9]+)*$/);
@@ -62,13 +64,14 @@ describe("guide content comes from presets", () => {
     ["ccc-signature-size", "ccc-signature"],
     ["ccc-thumb-impression-size", "ccc-left-thumb"],
     ["ccc-photo-upload-problems", "ccc-photo"],
+    ["ibps-photo-size", "ibps-photo"],
   ])("%s states the %s preset values and its source", (slug, presetId) => {
     const guide = getGuide(slug)!;
     const preset = getPreset(presetId);
     const body = text(guide);
     expect(body).toContain(`${preset.width} × ${preset.height} pixels`);
     expect(body).toContain(`${preset.fileSizeKB.min}–${preset.fileSizeKB.max} KB`);
-    expect(body).toContain(`${preset.dpi.min}–${preset.dpi.max} DPI`);
+    expect(body).toContain(dpiText(preset.dpi));
     expect(guide.presetIds).toContain(presetId);
   });
 
@@ -84,6 +87,22 @@ describe("guide content comes from presets", () => {
     expect(body).toContain("150 × 190 pixels");
     expect(body).toContain("8–40 KB");
     expect(body).not.toMatch(/132|5–50/);
+  });
+
+  it("IBPS guide follows its preset and states the live-capture limitation", () => {
+    const guide = getGuide("ibps-photo-size")!;
+    const changed = {
+      ...getPreset("ibps-photo"),
+      width: 210,
+      height: 240,
+      fileSizeKB: { min: 25, max: 45 },
+    };
+    const body = JSON.stringify(guide.build([changed]));
+    expect(body).toContain("210 × 240 pixels");
+    expect(body).toContain("25–45 KB");
+    expect(body).not.toMatch(/200 × 230|20–50 KB/);
+    expect(text(guide)).toContain("live");
+    expect(text(guide)).toContain("at least 200 DPI");
   });
 
   it("makes no approval, affiliation or acceptance-guarantee claims", () => {

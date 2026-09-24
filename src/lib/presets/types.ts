@@ -4,7 +4,7 @@
  * presets only — never hard-code numbers elsewhere.
  */
 
-export type ExamId = "ccc" | "ssc" | "railway" | "upsc";
+export type ExamId = "ccc" | "ibps" | "ssc" | "railway" | "upsc";
 
 export type DocumentType = "photo" | "signature" | "left-thumb-impression";
 
@@ -51,6 +51,15 @@ export interface NumericRange {
   max: number;
 }
 
+/**
+ * DPI requirement. `max: null` means the source states only a minimum
+ * (e.g. "scan at a minimum of 200 dpi") — never invent a maximum.
+ */
+export interface DpiRange {
+  min: number;
+  max: number | null;
+}
+
 export interface ImagePreset {
   /** Stable id, e.g. "ccc-photo". Used in URLs, analytics and tests. */
   id: string;
@@ -63,9 +72,11 @@ export interface ImagePreset {
   height: number;
   /** Allowed file size in KB exactly as written by the source. See docs/VALIDATION.md for byte interpretation. */
   fileSizeKB: NumericRange;
-  /** Allowed DPI range (inclusive). */
-  dpi: NumericRange;
+  /** Allowed DPI range (inclusive); `max: null` when the source gives only a minimum. */
+  dpi: DpiRange;
   formats: readonly AcceptedFormat[];
+  /** The source calls the dimensions "preferred" rather than mandatory; shown as such. */
+  preferredDimensions?: boolean;
   /** Non-technical instructions from the same source (e.g. background, recency), paraphrased closely. */
   guidance?: readonly string[];
   source: RequirementSource;

@@ -10,7 +10,7 @@ import { genericTools, toolsForExam } from "@/lib/tools/registry";
 export const metadata: Metadata = buildPageMetadata({
   title: "All Tools – Exam Photo, Signature & Image Tools",
   description:
-    "Every ExamPhotoFixer tool: CCC photo, signature and thumb impression resizers and the CCC Complete Pack, plus a general image resizer and image compressor.",
+    "Every ExamPhotoFixer tool: CCC photo, signature and thumb impression resizers, the CCC Complete Pack and the IBPS photo resizer, plus a general image resizer and image compressor.",
   path: "/tools",
 });
 
@@ -30,11 +30,18 @@ export default function ToolsPage() {
         <h2 id="exam-tools" className="text-xl font-semibold">
           Exam &amp; Application Tools
         </h2>
-        <div className="mt-4 grid gap-3 sm:grid-cols-2">
-          {toolsForExam("ccc").map((tool) => (
-            <ToolCard key={tool.id} tool={tool} />
+        {listExams()
+          .filter((exam) => exam.status === "active")
+          .map((exam) => (
+            <div key={exam.id} className="mt-4">
+              <h3 className="font-medium text-muted">{exam.shortName}</h3>
+              <div className="mt-2 grid gap-3 sm:grid-cols-2">
+                {toolsForExam(exam.id).map((tool) => (
+                  <ToolCard key={tool.id} tool={tool} />
+                ))}
+              </div>
+            </div>
           ))}
-        </div>
       </section>
 
       <section aria-labelledby="generic" className="mt-10">

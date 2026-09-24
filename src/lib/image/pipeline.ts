@@ -6,7 +6,7 @@
  *       → size-window compression → DPI → strip metadata → validate → Blob + metadata
  */
 
-import type { NumericRange } from "@/lib/presets/types";
+import type { DpiRange, NumericRange } from "@/lib/presets/types";
 import type { ImageFormat } from "./formats";
 import type { MetadataKind } from "./jpeg";
 import { kbRangeToByteWindow, type ByteWindow } from "./size-target";
@@ -101,7 +101,7 @@ export interface OutputRequirements {
   fileSizeKB: NumericRange | null;
   /** Exact byte limits (generic tools, 1 KB = 1024 bytes). Takes precedence over `fileSizeKB`. */
   fileSizeBytes?: ByteWindow | null;
-  dpi: NumericRange | null;
+  dpi: DpiRange | null;
   formats: readonly OutputFormat[];
 }
 

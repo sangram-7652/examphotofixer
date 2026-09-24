@@ -18,7 +18,9 @@ export const metadata: Metadata = {
 
 export default function HomePage() {
   const examEntries: ExamSearchEntry[] = listExams().map((exam) => {
-    const hub = toolsForExam(exam.id).find((tool) => tool.kind === "pack");
+    // Hub = the exam's pack if it has one, otherwise its first live tool.
+    const live = toolsForExam(exam.id).filter((tool) => tool.status === "live");
+    const hub = live.find((tool) => tool.kind === "pack") ?? live[0];
     return { exam, href: hub?.path ?? null };
   });
 

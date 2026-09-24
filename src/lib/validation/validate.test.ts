@@ -76,6 +76,19 @@ describe("validateAgainstPreset", () => {
     expect(metadata?.actual).toBe("EXIF, GPS location");
   });
 
+  it("minimum-only DPI (IBPS): at least the minimum passes, no upper bound", () => {
+    const ibps = getPreset("ibps-photo");
+    const facts = { ...validPhoto, width: 200, height: 230, byteLength: 30_000 };
+    const dpiOf = (x: number) =>
+      validateAgainstPreset(ibps, { ...facts, dpi: { x, y: x } }).checks.find(
+        (c) => c.id === "dpi",
+      )!;
+    expect(dpiOf(200).status).toBe("pass");
+    expect(dpiOf(600).status).toBe("pass");
+    expect(dpiOf(150)).toMatchObject({ status: "fail", expected: "at least 200 DPI" });
+    expect(dpiOf(150).message).toBe("DPI must be at least 200.");
+  });
+
   it("reports processing errors and skips the rest", () => {
     const report = validateAgainstPreset(photo, null, "Could not read this image.");
     expect(report.ready).toBe(false);

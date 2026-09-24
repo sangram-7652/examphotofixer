@@ -16,7 +16,8 @@ describe("preset registry", () => {
       expect(preset.fileSizeKB.min).toBeGreaterThanOrEqual(0);
       expect(preset.fileSizeKB.max).toBeGreaterThan(preset.fileSizeKB.min);
       expect(preset.dpi.min).toBeGreaterThan(0);
-      expect(preset.dpi.max).toBeGreaterThanOrEqual(preset.dpi.min);
+      // max: null = source states only a minimum; otherwise a proper range.
+      if (preset.dpi.max !== null) expect(preset.dpi.max).toBeGreaterThanOrEqual(preset.dpi.min);
       expect(preset.formats.length).toBeGreaterThan(0);
       expect(preset.source.authority).not.toBe("");
       expect(preset.source.status).not.toBe("unverified");
@@ -108,5 +109,39 @@ describe("tool registry", () => {
   it("has unique ids and paths", () => {
     expect(new Set(TOOLS.map((t) => t.id)).size).toBe(TOOLS.length);
     expect(new Set(TOOLS.map((t) => t.path)).size).toBe(TOOLS.length);
+  });
+});
+
+describe("IBPS photo matches CRP RRBs XV (01.09.2026), Annexure III", () => {
+  it("has the verified values, including a minimum-only DPI and preferred dimensions", () => {
+    const photo = getPreset("ibps-photo");
+    expect(photo).toMatchObject({
+      exam: "ibps",
+      documentType: "photo",
+      width: 200,
+      height: 230,
+      preferredDimensions: true,
+      fileSizeKB: { min: 20, max: 50 },
+      dpi: { min: 200, max: null },
+      formats: ["jpeg"],
+    });
+  });
+
+  it("cites its source with URL, version, date, page, checksum and verification date", () => {
+    expect(getPreset("ibps-photo").source).toMatchObject({
+      authority: "IBPS",
+      url: "https://www.ibps.in/wp-content/uploads/CRP-RRBs-XV-notification.pdf",
+      version: "XV",
+      published: "01.09.2026",
+      page: 56,
+      sha256: "105b0652fb7f2564adc452685248734e8546235b332b84c93f81acdb1b760508",
+      verifiedOn: "2026-09-24",
+      status: "verified",
+    });
+    expect(Object.isFrozen(getPreset("ibps-photo").source)).toBe(true);
+  });
+
+  it("does not share CCC's source", () => {
+    expect(getPreset("ibps-photo").source).not.toBe(getPreset("ccc-photo").source);
   });
 });

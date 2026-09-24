@@ -39,6 +39,13 @@ actual-byte enforcement) on the same engine via runtime requirements.
 Guide system with four CCC guides, real `/guides` index, related guides on tools, robots/sitemap/
 canonical/404 audit with raw-HTML e2e checks, Search Console docs, SEO audit.
 
+## Phase 2.9 (P8): First non-CCC verified preset ✅
+
+IBPS photograph (`/ibps-photo-resizer`, `/guides/ibps-photo-size`) from the CRP RRBs XV
+notification, with a full audit trail in `EXAM_REQUIREMENT_VERIFICATION.md`. Next candidates:
+IBPS signature/thumb/declaration (already verified in the same annexure), then others only after
+official verification.
+
 ## Phase 3 — Launch
 
 - Legal review. Analytics decision. Enable indexing.

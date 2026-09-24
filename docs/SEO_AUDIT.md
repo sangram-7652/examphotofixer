@@ -7,7 +7,7 @@ State after P7. No ranking or traffic numbers are included; the site has not lau
 `/`, `/tools`, `/guides`, `/privacy`, `/terms`, `/ccc-photo-resizer`, `/ccc-signature-resizer`,
 `/ccc-thumb-impression-resizer`, `/ccc-complete-pack`, `/image-resizer`, `/image-compressor`,
 `/guides/ccc-photo-size`, `/guides/ccc-signature-size`, `/guides/ccc-thumb-impression-size`,
-`/guides/ccc-photo-upload-problems`.
+`/guides/ccc-photo-upload-problems`, `/ibps-photo-resizer` and `/guides/ibps-photo-size` (P8).
 
 Until launch the whole site is `noindex, nofollow` and robots.txt disallows `/` (site-wide switch).
 

@@ -42,6 +42,8 @@ test("sitemap has exactly the expected live URLs", async ({ request }) => {
     "/guides/ccc-signature-size",
     "/guides/ccc-thumb-impression-size",
     "/guides/ccc-photo-upload-problems",
+    "/ibps-photo-resizer",
+    "/guides/ibps-photo-size",
   ];
   expect([...paths].sort()).toEqual([...expected].sort());
   expect(new Set(paths).size).toBe(paths.length);

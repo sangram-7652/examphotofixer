@@ -1,18 +1,20 @@
-import type { NumericRange } from "@/lib/presets/types";
+import type { DpiRange } from "@/lib/presets/types";
 import { readJpegDpi, writeJpegDpi } from "./jpeg";
 
 /**
  * DPI written into output files when the preset allows it. 150 sits strictly
- * inside every current preset range, so off-by-one checks on portals at the
- * range edges cannot reject it.
+ * inside the bounded CCC ranges, so off-by-one checks at the range edges can't
+ * reject it. For a minimum-only range above 150 (e.g. IBPS "minimum of 200
+ * dpi") the minimum itself is written, which satisfies it exactly.
  */
 export const PREFERRED_OUTPUT_DPI = 150;
 
-export function chooseOutputDpi(range: NumericRange): number {
-  if (!(range.min > 0) || range.max < range.min) {
+export function chooseOutputDpi(range: DpiRange): number {
+  const max = range.max ?? Number.POSITIVE_INFINITY;
+  if (!(range.min > 0) || max < range.min) {
     throw new RangeError("DPI range must satisfy 0 < min <= max");
   }
-  return Math.round(Math.min(range.max, Math.max(range.min, PREFERRED_OUTPUT_DPI)));
+  return Math.round(Math.min(max, Math.max(range.min, PREFERRED_OUTPUT_DPI)));
 }
 
 /**

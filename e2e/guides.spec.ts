@@ -1,6 +1,8 @@
 import { expect, test } from "@playwright/test";
 import { getGuide, listGuides } from "../src/content/guides";
 import { getPreset } from "../src/lib/presets";
+import { dpiText } from "../src/lib/presets/describe";
+import { sourceCitation } from "../src/lib/presets/source";
 import { getTool } from "../src/lib/tools/registry";
 import { hasNoHorizontalOverflow } from "./helpers";
 
@@ -50,13 +52,13 @@ for (const guide of listGuides()) {
       await expect(
         table.getByText(`${preset.fileSizeKB.min}–${preset.fileSizeKB.max} KB`),
       ).toBeVisible();
-      await expect(table.getByText(`${preset.dpi.min}–${preset.dpi.max} DPI`)).toBeVisible();
+      await expect(table.getByText(dpiText(preset.dpi))).toBeVisible();
     }
+    // Citation and page come from the guide's own preset source.
+    const cited = getPreset(guide.presetIds[0]).source;
     const source = page.getByTestId("requirements-source");
-    await expect(source).toContainText(
-      "NIELIT CCC Examination Application Guidelines, Version 1.11 (2023)",
-    );
-    await expect(source).toContainText("page 3");
+    await expect(source).toContainText(sourceCitation(cited));
+    await expect(source).toContainText(`page ${cited.page}`);
     await expect(source.getByRole("link", { name: /^View source/ })).toHaveAttribute(
       "href",
       getPreset(guide.presetIds[0]).source.url!,

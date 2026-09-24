@@ -9,7 +9,7 @@ describe("chooseOutputDpi", () => {
       const { dpi } = getPreset(id);
       const chosen = chooseOutputDpi(dpi);
       expect(chosen).toBeGreaterThan(dpi.min);
-      expect(chosen).toBeLessThan(dpi.max);
+      expect(chosen).toBeLessThan(dpi.max!);
     },
   );
 
@@ -17,6 +17,11 @@ describe("chooseOutputDpi", () => {
     expect(chooseOutputDpi({ min: 300, max: 600 })).toBe(300);
     expect(chooseOutputDpi({ min: 72, max: 96 })).toBe(96);
     expect(chooseOutputDpi({ min: 72, max: 600 })).toBe(PREFERRED_OUTPUT_DPI);
+  });
+
+  it("writes the minimum for a minimum-only range above the default", () => {
+    expect(chooseOutputDpi({ min: 200, max: null })).toBe(200);
+    expect(chooseOutputDpi({ min: 72, max: null })).toBe(PREFERRED_OUTPUT_DPI);
   });
 
   it("rejects invalid ranges", () => {
