@@ -91,6 +91,25 @@ sentence on the page claims affiliation or approval.
 `test.fail` on Firefox and records (not asserts) the Firefox stall for 12 MP, because Firefox
 decodes on the main thread (see IMAGE_PROCESSING.md). All other assertions run on every browser.
 
+## CCC tools and Complete Pack (P5)
+
+Shared helpers live in `e2e/helpers.ts` (in-page image generation, uploads, analytics capture,
+non-GET request recording, overflow check, download bytes).
+
+- `e2e/ccc-signature-thumb.spec.ts` runs the same flow for signature and left thumb: page
+  (H1, preset values, guidance, source link, pack link, canonical, no extra noindex), upload,
+  crop, process, READY checklist, download (filename + bytes re-validated), start again,
+  below-minimum warning with Download Anyway, mobile layout and neutral camera wording.
+- `e2e/ccc-complete-pack.spec.ts`: three steps with their own requirements; valid pack; ZIP
+  entries equal the individual downloads byte-for-byte; warning pack; incomplete pack (a
+  rejected file blocks Download All and is named); start again clears everything; no
+  non-GET requests; analytics; mobile layout. WebKit pack tests are marked `test.slow()`
+  (three images per test; headless WebKit encodes ~6× slower than Chromium). An INVALID asset
+  can't be produced with real CCC inputs (the engine always meets dimensions/format/DPI), so
+  INVALID is covered by `pack.test.ts` and `tool-ui.test.ts`.
+- Unit: `lib/zip/zip.test.ts` (CRC vs `node:zlib`, round-trip with an independent reader, and
+  Python `zipfile.testzip()` when Python is available), `lib/tools/pack.test.ts`.
+
 ## Rules
 
 - Compression tests must be deterministic: inject an encoder or assert ranges, never exact bytes from a real browser encoder.

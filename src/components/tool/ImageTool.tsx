@@ -137,10 +137,22 @@ const RESULT_HEADINGS: Record<ResultState, string> = {
   INVALID: "This doesn't meet the requirements",
 };
 
+/** Snapshot reported to an embedding component (e.g. the Complete Pack). */
+export interface ImageToolStatus {
+  state: ToolUiState | "UNSUPPORTED";
+  /** A file was rejected or processing failed. */
+  hasError: boolean;
+  /** Final file, only when downloadable (READY or READY_WITH_WARNING). */
+  output: { blob: Blob; filename: string } | null;
+}
+
 interface ImageToolProps {
   preset: ImagePreset;
   /** Tool id for analytics. */
   toolId: string;
+  /** Heading level for step headings: 2 on a tool page, 3 when embedded in a section. */
+  headingLevel?: 2 | 3;
+  onStatusChange?: (status: ImageToolStatus) => void;
 }
 
 /**
@@ -148,7 +160,8 @@ interface ImageToolProps {
  * The image never leaves the browser; processing runs in the image worker,
  * which is loaded only when needed.
  */
-export function ImageTool({ preset, toolId }: ImageToolProps) {
+export function ImageTool({ preset, toolId, headingLevel = 2, onStatusChange }: ImageToolProps) {
+  const Heading = (headingLevel === 3 ? "h3" : "h2") as "h2";
   const [state, dispatch] = useReducer(reducer, INITIAL);
   const supported = useSyncExternalStore(noopSubscribe, isImageProcessingSupported, () => true);
   const urls = useRef(new Set<string>());
@@ -158,6 +171,7 @@ export function ImageTool({ preset, toolId }: ImageToolProps) {
   const previousPhase = useRef(state.phase);
 
   const noun = documentNoun(preset);
+  const filename = buildDownloadFilename(preset);
   const target = { width: preset.width, height: preset.height };
   const baseProps = { tool_id: toolId, preset_id: preset.id };
   const uiState = uiStateOf(state);
@@ -184,6 +198,17 @@ export function ImageTool({ preset, toolId }: ImageToolProps) {
   }, [toolId, preset.id]);
 
   useEffect(() => releaseAll, [releaseAll]);
+
+  const resultBlob = state.phase === "result" ? state.result.blob : null;
+  const hasError = state.phase === "select" ? state.error !== null : state.phase === "error";
+  useEffect(() => {
+    const downloadable = uiState === "READY" || uiState === "READY_WITH_WARNING";
+    onStatusChange?.({
+      state: supported ? uiState : "UNSUPPORTED",
+      hasError,
+      output: downloadable && resultBlob ? { blob: resultBlob, filename } : null,
+    });
+  }, [onStatusChange, supported, uiState, hasError, resultBlob, filename]);
 
   // Move focus to the new step's heading (not on first render).
   useEffect(() => {
@@ -331,9 +356,9 @@ export function ImageTool({ preset, toolId }: ImageToolProps) {
         data-state="UNSUPPORTED"
         className="rounded-xl border border-border p-4"
       >
-        <h2 id="tool-unsupported" className={headingClass}>
+        <Heading id="tool-unsupported" className={headingClass}>
           Your browser can&apos;t run this tool
-        </h2>
+        </Heading>
         <p className="mt-2 text-muted">
           {ERROR_COPY.browser} Please update your browser, or open this page in a recent version of
           Chrome, Edge, Firefox or Safari (16.4 or later).
@@ -355,10 +380,10 @@ export function ImageTool({ preset, toolId }: ImageToolProps) {
 
       {state.phase === "select" ? (
         <div className="space-y-4">
-          <h2 ref={headingRef} tabIndex={-1} className="sr-only">
+          <Heading ref={headingRef} tabIndex={-1} className="sr-only">
             Choose your {noun}
-          </h2>
-          <RequirementsSummary preset={preset} />
+          </Heading>
+          <RequirementsSummary preset={preset} headingLevel={headingLevel} />
           <ImageUploader noun={noun} onSelect={handleFile} error={state.error} busy={state.busy} />
         </div>
       ) : null}
@@ -367,9 +392,9 @@ export function ImageTool({ preset, toolId }: ImageToolProps) {
         <div className="space-y-4">
           <div className="flex flex-wrap items-start justify-between gap-2">
             <div className="min-w-0">
-              <h2 ref={headingRef} tabIndex={-1} className={headingClass}>
+              <Heading ref={headingRef} tabIndex={-1} className={headingClass}>
                 Adjust the crop
-              </h2>
+              </Heading>
               <p className="truncate text-sm text-muted" data-testid="selected-file">
                 {state.source.file.name} · {formatBytes(state.source.file.size)}
               </p>
@@ -406,9 +431,9 @@ export function ImageTool({ preset, toolId }: ImageToolProps) {
 
       {state.phase === "processing" ? (
         <div>
-          <h2 ref={headingRef} tabIndex={-1} className={headingClass}>
+          <Heading ref={headingRef} tabIndex={-1} className={headingClass}>
             Processing your {noun}
-          </h2>
+          </Heading>
           <p className="text-sm text-muted">This happens on your device.</p>
           <ProcessingProgress stage={state.stage} />
         </div>
@@ -416,12 +441,17 @@ export function ImageTool({ preset, toolId }: ImageToolProps) {
 
       {state.phase === "result" ? (
         <div className="space-y-4">
-          <h2 ref={headingRef} tabIndex={-1} className={headingClass} data-testid="result-heading">
+          <Heading
+            ref={headingRef}
+            tabIndex={-1}
+            className={headingClass}
+            data-testid="result-heading"
+          >
             <span aria-hidden="true" className="mr-2">
               {state.state === "READY" ? "✓" : state.state === "READY_WITH_WARNING" ? "⚠" : "✕"}
             </span>
             {RESULT_HEADINGS[state.state]}
-          </h2>
+          </Heading>
 
           <ValidationChecklist items={buildChecklist(state.result)} />
 
@@ -471,11 +501,7 @@ export function ImageTool({ preset, toolId }: ImageToolProps) {
 
           <div className="flex flex-col gap-3 sm:flex-row">
             {state.state !== "INVALID" ? (
-              <DownloadButton
-                href={state.resultUrl}
-                filename={buildDownloadFilename(preset)}
-                onDownload={onDownload}
-              >
+              <DownloadButton href={state.resultUrl} filename={filename} onDownload={onDownload}>
                 {state.state === "READY" ? "Download JPG" : "Download Anyway"}
               </DownloadButton>
             ) : null}
@@ -491,9 +517,9 @@ export function ImageTool({ preset, toolId }: ImageToolProps) {
 
       {state.phase === "error" ? (
         <div className="space-y-4">
-          <h2 ref={headingRef} tabIndex={-1} className={headingClass}>
+          <Heading ref={headingRef} tabIndex={-1} className={headingClass}>
             Something went wrong
-          </h2>
+          </Heading>
           <p role="alert" className="rounded-lg border border-danger/40 bg-danger-soft p-4">
             {state.error.message}
           </p>

@@ -19,6 +19,20 @@ export function buildDownloadFilename(preset: ImagePreset): string {
   return `${exam}_${FILE_LABELS[preset.documentType]}_${preset.width}x${preset.height}.jpg`;
 }
 
+/** ZIP filename for a set of files from one exam, e.g. "CCC_Complete_Pack.zip". */
+export function buildPackFilename(exam: ImagePreset["exam"]): string {
+  return `${EXAMS[exam].shortName.replace(/[^A-Za-z0-9]+/g, "_")}_Complete_Pack.zip`;
+}
+
+/** Short title-case label for pack status rows: "Photo", "Signature", "Left thumb impression". */
+export function documentTitle(preset: ImagePreset): string {
+  const noun =
+    preset.documentType === "left-thumb-impression"
+      ? "left thumb impression"
+      : NOUNS[preset.documentType];
+  return noun.charAt(0).toUpperCase() + noun.slice(1);
+}
+
 /** Lower-case noun for UI copy: "photo", "signature", "thumb impression". */
 export function documentNoun(preset: ImagePreset): string {
   return NOUNS[preset.documentType];

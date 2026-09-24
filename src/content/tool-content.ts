@@ -98,11 +98,125 @@ function cccPhotoContent(preset: ImagePreset): ToolContent {
   };
 }
 
-const CONTENT: Partial<Record<ToolDefinition["id"], (preset: ImagePreset) => ToolContent>> = {
-  "ccc-photo": cccPhotoContent,
+/** Signature and left thumb impression share the same flow; wording comes from the preset. */
+function cccInkContent(preset: ImagePreset, kind: "signature" | "thumb"): ToolContent {
+  const d = describe(preset);
+  const noun = kind === "signature" ? "signature" : "left thumb impression";
+  const short = kind === "signature" ? "signature" : "thumb impression";
+  const citation = sourceCitation(preset.source);
+  const guidance = preset.guidance ?? [];
+  return {
+    intro: `Resize your ${noun} to the CCC upload requirements — ${d.size}, ${d.kb}, ${d.format}, ${d.dpi} — and check it before you upload. The image is processed on your device and never uploaded to our servers.`,
+    howItWorks: [
+      `Prepare your ${noun} as the guidelines describe (see “The same guidelines also ask” below), then scan it or capture an image of it.`,
+      `Choose the image and drag or zoom so the ${short} fills the frame. The frame has the required ${preset.width}:${preset.height} shape, so nothing is stretched.`,
+      `Tap “Process ${short}”. We resize to exactly ${d.size}, compress to fit ${d.kb} at the best possible quality, and set the DPI.`,
+      "Check the results list, then download the JPG and upload it to the CCC form.",
+    ],
+    commonProblems: [
+      {
+        title: `${kind === "signature" ? "Signature" : "Thumb impression"} too small in the frame`,
+        body: `Zoom in so the ${short} fills most of the frame. Extra blank paper around it is kept in the image and makes it harder to read.`,
+      },
+      {
+        title: "“Invalid dimensions” on the form",
+        body: `The form checks exact pixel sizes. Scans and camera images are usually thousands of pixels wide; this tool outputs exactly ${d.size}.`,
+      },
+      {
+        title: `File is below ${preset.fileSizeKB.min} KB`,
+        body: `A ${short} on plain white paper is very simple, so it compresses to a small file. We keep the highest-quality version and tell you if it is below ${preset.fileSizeKB.min} KB, instead of adding artificial data.`,
+      },
+    ],
+    faq: [
+      {
+        question: `What size should the CCC ${noun} be?`,
+        answer: `According to the ${citation}: ${d.size} (width × height), between ${d.kb}, in ${d.format} format, at ${d.dpi}. Older versions of the guidelines listed different values, so always check the current version before you upload.`,
+      },
+      ...(guidance.length > 0
+        ? [
+            {
+              question: `How should I prepare the ${noun}?`,
+              answer: `${guidance.join(" ")} This tool fixes the size, file size, format and DPI; it can't change how the ${short} was made.`,
+            },
+          ]
+        : []),
+      {
+        question: `Why is my ${short} below ${preset.fileSizeKB.min} KB?`,
+        answer: `Simple dark-on-white images compress to very small files. If the result is still under ${preset.fileSizeKB.min} KB at maximum quality, we keep that version rather than padding the file. You can still download it; if the form rejects it, try a sharper, higher-resolution scan.`,
+      },
+      {
+        question: "Is my image uploaded to your server?",
+        answer: "No. Everything happens inside your browser; the image never leaves your device.",
+      },
+      {
+        question: "Is ExamPhotoFixer affiliated with NIELIT?",
+        answer:
+          "No. ExamPhotoFixer is an independent tool and is not affiliated with NIELIT or any exam body.",
+      },
+    ],
+  };
+}
+
+function cccPackContent(presets: ImagePreset[]): ToolContent {
+  const list = presets
+    .map((preset) => {
+      const d = describe(preset);
+      return `${preset.label.replace(/^CCC /, "")}: ${d.size}, ${d.kb}, ${d.dpi}`;
+    })
+    .join("; ");
+  const format = describe(presets[0]).format;
+  return {
+    intro: `Prepare all three CCC application images on one page — photo, signature and left thumb impression — check each against the requirements and download them together as a ZIP. Everything is processed on your device.`,
+    howItWorks: [
+      "Work through the three steps on this page: photo, signature, then left thumb impression.",
+      "For each file: choose the image, adjust the crop, and process it. Each file is checked against its own requirements.",
+      "The pack status shows which files are ready, which have a warning and which still need attention.",
+      "When all three are processed, download them together as one ZIP — or download each file on its own.",
+    ],
+    commonProblems: [
+      {
+        title: "Mixing up the photo and signature sizes",
+        body: "The photo is portrait and the signature/thumb are landscape, with different file-size limits. Each step here uses the right requirements automatically.",
+      },
+      {
+        title: "Losing track of which file is ready",
+        body: "The pack status lists every file with its state in words — Ready, Below minimum file size, or needs attention — so nothing is missed.",
+      },
+    ],
+    faq: [
+      {
+        question: "What are the CCC application image requirements?",
+        answer: `According to the ${sourceCitation(presets[0].source)}: ${list}. All three must be ${format}.`,
+      },
+      {
+        question: "What is in the ZIP file?",
+        answer:
+          "Exactly the three processed JPG files shown on this page, named for each document. The ZIP is created in your browser; nothing is uploaded.",
+      },
+      {
+        question: "Can I download the pack if one file is below the minimum size?",
+        answer:
+          "Yes. We keep the highest-quality version instead of adding artificial data, and show a warning. The application website may still enforce its own minimum-size check.",
+      },
+      {
+        question: "Is ExamPhotoFixer affiliated with NIELIT?",
+        answer:
+          "No. ExamPhotoFixer is an independent tool and is not affiliated with NIELIT or any exam body.",
+      },
+    ],
+  };
+}
+
+const CONTENT: Partial<
+  Record<ToolDefinition["id"], (presets: ImagePreset[]) => ToolContent | null>
+> = {
+  "ccc-photo": (presets) => (presets.length === 1 ? cccPhotoContent(presets[0]) : null),
+  "ccc-signature": (presets) =>
+    presets.length === 1 ? cccInkContent(presets[0], "signature") : null,
+  "ccc-thumb": (presets) => (presets.length === 1 ? cccInkContent(presets[0], "thumb") : null),
+  "ccc-pack": (presets) => (presets.length > 1 ? cccPackContent(presets) : null),
 };
 
 export function getToolContent(tool: ToolDefinition, presets: ImagePreset[]): ToolContent | null {
-  const build = CONTENT[tool.id];
-  return build && presets.length === 1 ? build(presets[0]) : null;
+  return CONTENT[tool.id]?.(presets) ?? null;
 }

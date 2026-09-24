@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
+import { useEffect, useId, useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
 import type { Size } from "@/lib/image/geometry";
 import {
   INITIAL_CROP,
@@ -35,6 +35,7 @@ type Gesture =
  */
 export function Cropper({ imageUrl, imageSize, target, value, onChange, label }: CropperProps) {
   const frameRef = useRef<HTMLDivElement>(null);
+  const positionId = useId();
   const [frameWidth, setFrameWidth] = useState(0);
   const pointers = useRef(new Map<number, { x: number; y: number }>());
   const gesture = useRef<Gesture | null>(null);
@@ -144,7 +145,7 @@ export function Cropper({ imageUrl, imageSize, target, value, onChange, label }:
         role="group"
         tabIndex={0}
         aria-label={`${label}. Drag to move. Arrow keys move, plus and minus zoom, 0 resets.`}
-        aria-describedby="crop-position"
+        aria-describedby={positionId}
         data-testid="crop-frame"
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
@@ -172,7 +173,7 @@ export function Cropper({ imageUrl, imageSize, target, value, onChange, label }:
           />
         ) : null}
       </div>
-      <p id="crop-position" className="sr-only" aria-live="polite">
+      <p id={positionId} className="sr-only" aria-live="polite" data-testid="crop-position">
         {position}
       </p>
 

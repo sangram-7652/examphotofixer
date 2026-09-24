@@ -1,20 +1,26 @@
 # SEO URL Map
 
-| Path                            | Page                              | Primary intent                              | Sitemap             | Indexable* |
-| ------------------------------- | --------------------------------- | ------------------------------------------- | ------------------- | ---------- |
-| `/`                             | Home                              | exam photo resizer, brand                   | ✅                  | ✅         |
-| `/ccc-photo-resizer`            | CCC Photo Resizer                 | ccc photo resize / size                     | ✅                  | ✅         |
-| `/ccc-signature-resizer`        | CCC Signature Resizer             | ccc signature resize                        | ✅                  | ✅         |
-| `/ccc-thumb-impression-resizer` | CCC Left Thumb Impression Resizer | ccc thumb impression size                   | ✅                  | ✅         |
-| `/ccc-image-resizer`            | CCC Complete Pack (hub)           | ccc image resizer, ccc photo signature size | ✅                  | ✅         |
-| `/image-resizer`                | Generic Image Resizer             | resize image to pixels                      | ✅                  | ✅         |
-| `/image-compressor`             | Generic Image Compressor          | compress image to KB                        | ✅                  | ✅         |
-| `/tools`                        | All tools                         | —                                           | ✅                  | ✅         |
-| `/guides`                       | Guides index                      | —                                           | ❌ (no content yet) | ❌ noindex |
-| `/privacy`                      | Privacy policy                    | —                                           | ✅                  | ✅         |
-| `/terms`                        | Terms of use                      | —                                           | ✅                  | ✅         |
+| Path                            | Page                                   | Primary intent                                           | Sitemap             | Indexable* |
+| ------------------------------- | -------------------------------------- | -------------------------------------------------------- | ------------------- | ---------- |
+| `/`                             | Home                                   | exam photo resizer, brand                                | ✅                  | ✅         |
+| `/ccc-photo-resizer`            | CCC Photo Resizer                      | ccc photo resize / size                                  | ✅                  | ✅         |
+| `/ccc-signature-resizer`        | CCC Signature Resizer                  | ccc signature resize                                     | ✅                  | ✅         |
+| `/ccc-thumb-impression-resizer` | CCC Left Thumb Impression Resizer      | ccc thumb impression size                                | ✅                  | ✅         |
+| `/ccc-complete-pack`            | CCC Complete Pack (hub)                | ccc photo signature thumb resize, ccc application images | ✅                  | ✅         |
+| `/image-resizer`                | Generic Image Resizer (placeholder)    | resize image to pixels                                   | ❌ until live       | ❌ noindex |
+| `/image-compressor`             | Generic Image Compressor (placeholder) | compress image to KB                                     | ❌ until live       | ❌ noindex |
+| `/tools`                        | All tools                              | —                                                        | ✅                  | ✅         |
+| `/guides`                       | Guides index                           | —                                                        | ❌ (no content yet) | ❌ noindex |
+| `/privacy`                      | Privacy policy                         | —                                                        | ✅                  | ✅         |
+| `/terms`                        | Terms of use                           | —                                                        | ✅                  | ✅         |
 
 \* Only after `NEXT_PUBLIC_SITE_INDEXABLE=true`. Until then the whole site is noindex.
+
+## Redirects
+
+| From                 | To                   | Type                              |
+| -------------------- | -------------------- | --------------------------------- |
+| `/ccc-image-resizer` | `/ccc-complete-pack` | permanent (308), `next.config.ts` |
 
 ## Conventions
 

@@ -63,6 +63,21 @@ describe("CCC source", () => {
   );
 });
 
+describe("CCC source is shared, immutable and carries per-document guidance", () => {
+  it("all CCC presets reference the same frozen source object", () => {
+    const ccc = listPresets().filter((p) => p.exam === "ccc");
+    expect(new Set(ccc.map((p) => p.source)).size).toBe(1);
+    expect(Object.isFrozen(ccc[0].source)).toBe(true);
+  });
+
+  it("signature and thumb guidance come from the same page and differ per document", () => {
+    expect(getPreset("ccc-signature").guidance?.[0]).toMatch(/^Sign on white paper/);
+    expect(getPreset("ccc-left-thumb").guidance?.[0]).toMatch(
+      /left thumb impression on white paper/,
+    );
+  });
+});
+
 describe("CCC presets match Version 1.11 (2023), page 3", () => {
   it("photo", () => {
     const photo = getPreset("ccc-photo");

@@ -83,3 +83,18 @@ the download stays available ("Download Anyway"). `INVALID` hides the download.
 - Validation: the checklist maps the engine's `ValidationReport`; the UI never re-checks values.
 - Object URLs are tracked by `ImageTool` and revoked on "Start again" and unmount. Blobs live in
   component state only.
+
+## Complete Pack (P5)
+
+`PackTool` renders one standard `ImageTool` per preset (heading level 3) and listens to each
+through `onStatusChange` (`{ state, hasError, output }`). No processing, crop or validation code
+is duplicated. `lib/tools/pack-state.ts` maps tool states to asset states
+(`EMPTY · SELECTED · PROCESSING · READY · READY_WITH_WARNING · INVALID · ERROR`) and derives the
+pack state (`EMPTY · IN_PROGRESS · READY · READY_WITH_WARNING · INCOMPLETE`): READY only when all
+assets are READY; READY_WITH_WARNING when all are downloadable and one has a warning;
+INCOMPLETE when any asset is INVALID/ERROR.
+
+"Download All" builds a ZIP on click with `lib/zip/zip.ts` — a ~100-line STORE-only writer
+(JPEGs don't compress further) with CRC-32; entries are the engine's final bytes. No
+dependency was added. "Start again" remounts the tools (their cleanup revokes object URLs) and
+revokes the ZIP URL. Assets are processed only when the user presses each Process button.

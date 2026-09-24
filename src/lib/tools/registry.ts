@@ -41,7 +41,7 @@ export const TOOLS: readonly ToolDefinition[] = [
   {
     id: "ccc-signature",
     path: "/ccc-signature-resizer",
-    status: "coming-soon",
+    status: "live",
     kind: "preset",
     exam: "ccc",
     presetIds: ["ccc-signature"],
@@ -49,13 +49,13 @@ export const TOOLS: readonly ToolDefinition[] = [
     h1: "CCC Signature Resizer",
     metaTitle: "CCC Signature Resizer – Resize Signature for NIELIT CCC Form",
     metaDescription:
-      "Resize and compress your signature image to the CCC upload size and check it before you upload — processed in your browser.",
+      "Resize your signature to the CCC upload size, file size and DPI, check it against the NIELIT guidelines and download a ready JPG — processed in your browser.",
     summary: "Resize and compress your signature for the CCC application form.",
   },
   {
     id: "ccc-thumb",
     path: "/ccc-thumb-impression-resizer",
-    status: "coming-soon",
+    status: "live",
     kind: "preset",
     exam: "ccc",
     presetIds: ["ccc-left-thumb"],
@@ -63,21 +63,21 @@ export const TOOLS: readonly ToolDefinition[] = [
     h1: "CCC Left Thumb Impression Resizer",
     metaTitle: "CCC Thumb Impression Resizer – Left Thumb Image for CCC Form",
     metaDescription:
-      "Resize and compress your left thumb impression image to the CCC upload size and check it before you upload — processed in your browser.",
+      "Resize your left thumb impression (LTI) to the CCC upload size, file size and DPI, check it against the NIELIT guidelines and download a ready JPG — processed in your browser.",
     summary: "Resize and compress your left thumb impression for the CCC form.",
   },
   {
     id: "ccc-pack",
-    path: "/ccc-image-resizer",
-    status: "coming-soon",
+    path: "/ccc-complete-pack",
+    status: "live",
     kind: "pack",
     exam: "ccc",
     presetIds: ["ccc-photo", "ccc-signature", "ccc-left-thumb"],
     name: "CCC Complete Pack",
-    h1: "CCC Image Resizer – Photo, Signature & Thumb Impression",
-    metaTitle: "CCC Image Resizer – Photo, Signature & Thumb in One Place",
+    h1: "CCC Complete Pack: Photo, Signature & Left Thumb Impression",
+    metaTitle: "CCC Complete Pack – Resize Photo, Signature & Thumb Impression",
     metaDescription:
-      "Prepare all three CCC uploads — photo, signature and left thumb impression — with the right size, file size and DPI. Processed in your browser.",
+      "Prepare all three CCC application images — photo, signature and left thumb impression — on one page, check each against the requirements and download them together as a ZIP. Processed in your browser.",
     summary: "Prepare the CCC photo, signature and left thumb impression together.",
   },
   {

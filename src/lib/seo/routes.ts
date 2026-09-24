@@ -21,7 +21,7 @@ export function listSiteRoutes(): SiteRoute[] {
     ...STATIC_ROUTES,
     ...TOOLS.map((tool): SiteRoute => ({
       path: tool.path,
-      inSitemap: true,
+      inSitemap: tool.status === "live",
       priority: tool.exam ? 0.9 : 0.7,
       changeFrequency: "monthly",
     })),

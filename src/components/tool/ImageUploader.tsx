@@ -91,9 +91,13 @@ export function ImageUploader({ onSelect, noun, error, busy = false }: ImageUplo
           onClick={() => cameraRef.current?.click()}
           className="min-h-12 w-full rounded-lg border border-brand bg-background px-6 py-3 font-semibold text-brand focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-brand disabled:opacity-60 sm:hidden"
         >
-          Take a {noun} with camera
+          Capture image
         </button>
       </div>
+      <p className="mt-3 text-sm text-muted sm:hidden">
+        Using the camera? Follow the application&apos;s official image instructions shown on this
+        page.
+      </p>
       <p id={hintId} className="mt-3 text-sm text-muted">
         JPG, PNG or WebP · up to 25 MB ·{" "}
         <span className="hidden sm:inline">drag &amp; drop or </span>

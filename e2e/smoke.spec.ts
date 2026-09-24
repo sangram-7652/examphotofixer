@@ -4,7 +4,7 @@ const TOOL_PAGES = [
   { path: "/ccc-photo-resizer", h1: "CCC Photo Resizer" },
   { path: "/ccc-signature-resizer", h1: "CCC Signature Resizer" },
   { path: "/ccc-thumb-impression-resizer", h1: "CCC Left Thumb Impression Resizer" },
-  { path: "/ccc-image-resizer", h1: "CCC Image Resizer" },
+  { path: "/ccc-complete-pack", h1: "CCC Complete Pack" },
   { path: "/image-resizer", h1: "Image Resizer" },
   { path: "/image-compressor", h1: "Image Compressor" },
 ];
@@ -18,7 +18,7 @@ test("home page shows hero, exam search and tools", async ({ page }) => {
   await expect(search).toBeVisible();
   await search.fill("nielit");
   await page.getByRole("link", { name: "CCC", exact: true }).click();
-  await expect(page).toHaveURL(/\/ccc-image-resizer$/);
+  await expect(page).toHaveURL(/\/ccc-complete-pack$/);
 });
 
 for (const { path, h1 } of TOOL_PAGES) {
@@ -41,12 +41,28 @@ test("CCC photo page shows requirements from the preset", async ({ page }) => {
   await expect(table.getByText("5–50 KB")).toBeVisible();
 });
 
+test("old pack URL permanently redirects to /ccc-complete-pack", async ({ request }) => {
+  const response = await request.get("/ccc-image-resizer", { maxRedirects: 0 });
+  expect(response.status()).toBe(308);
+  expect(response.headers()["location"]).toBe("/ccc-complete-pack");
+});
+
 test("sitemap and robots are served", async ({ request }) => {
   const sitemap = await request.get("/sitemap.xml");
   expect(sitemap.ok()).toBe(true);
   const xml = await sitemap.text();
   expect(xml).toContain("/ccc-photo-resizer</loc>");
   expect(xml).not.toContain("/guides</loc>");
+  for (const live of [
+    "/ccc-photo-resizer",
+    "/ccc-signature-resizer",
+    "/ccc-thumb-impression-resizer",
+    "/ccc-complete-pack",
+  ]) {
+    expect(xml).toContain(`${live}</loc>`);
+  }
+  // Placeholder tools stay out of the sitemap until they work.
+  expect(xml).not.toContain("/image-resizer</loc>");
   expect((await request.get("/robots.txt")).ok()).toBe(true);
 });
 

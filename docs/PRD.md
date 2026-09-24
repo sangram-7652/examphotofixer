@@ -22,7 +22,7 @@ requirement on the first try — in the browser, without uploading the file anyw
 | 1   | CCC Photo Resizer                 | `/ccc-photo-resizer`            | `ccc-photo`             |
 | 2   | CCC Signature Resizer             | `/ccc-signature-resizer`        | `ccc-signature`         |
 | 3   | CCC Left Thumb Impression Resizer | `/ccc-thumb-impression-resizer` | `ccc-left-thumb`        |
-| 4   | CCC Complete Pack                 | `/ccc-image-resizer`            | all three CCC presets   |
+| 4   | CCC Complete Pack                 | `/ccc-complete-pack`            | all three CCC presets   |
 | 5   | Generic Image Resizer             | `/image-resizer`                | user-entered dimensions |
 | 6   | Generic Image Compressor          | `/image-compressor`             | user-entered KB target  |
 

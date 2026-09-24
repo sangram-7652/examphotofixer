@@ -25,7 +25,7 @@
 ## Internal linking architecture
 
 ```
-Home ──▶ exam hubs (/ccc-image-resizer) ──▶ individual tools
+Home ──▶ exam hubs (/ccc-complete-pack) ──▶ individual tools
   │                         ▲                        │
   └──▶ /tools (all) ────────┘◀── related tools ◀──────┘
 Guides (future) ──▶ tools they explain
@@ -45,3 +45,13 @@ screen) → how it works → CCC requirements table → source & verification �
 FAQ (visible `<details>`, mirrored as `FAQPage` JSON-LD) → privacy note → related tools.
 All requirement numbers in the copy are interpolated from the preset (`src/content/tool-content.ts`);
 a unit test fails if they drift. No affiliation is claimed.
+
+## Live CCC tools (P5)
+
+`/ccc-photo-resizer`, `/ccc-signature-resizer`, `/ccc-thumb-impression-resizer` and
+`/ccc-complete-pack` share the same page structure and tool components. Each has a unique
+title/description/canonical, requirement values rendered from presets, the shared
+"Source and verification" section, how-to, common problems, FAQ (+ `FAQPage` JSON-LD) and
+related tools. Single-tool pages link to the Complete Pack; the pack links back through the
+related-tools section. `/ccc-image-resizer` 301s (308) to `/ccc-complete-pack`.
+Placeholder tools (`status: "coming-soon"`) are `noindex` and excluded from the sitemap.

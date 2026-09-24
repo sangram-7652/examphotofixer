@@ -41,7 +41,8 @@ footer reads “Version1.11 (2023)”; the PDF's embedded title still names the 
 The same page also says the photograph should be a colour photo taken professionally (not on a
 mobile phone) within the last six months, with a white background, face clearly visible; and
 that signature/LTI should be on white paper in black/blue ink, not blurred or smudged. These are
-stored as `guidance`.
+stored as `guidance`, worded per document (signature vs. left thumb impression). All CCC presets
+share one frozen `source` object.
 
 **Versions matter.** Older versions of the NIELIT guidelines list different values. Values are
 always shown together with the version and date they come from; never present a historical

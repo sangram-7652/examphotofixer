@@ -12,7 +12,7 @@ import type { ImagePreset, RequirementSource } from "./types";
  * number here without a newer official version; update `source` in the same
  * change. See docs/FORM_PRESETS.md.
  */
-const CCC_SOURCE: RequirementSource = {
+const CCC_SOURCE: RequirementSource = Object.freeze({
   authority: "NIELIT",
   document: "CCC Examination Application Guidelines",
   url: "https://nva.nielit.gov.in/ccc/CCC_ExamGuideLine.pdf",
@@ -27,7 +27,7 @@ const CCC_SOURCE: RequirementSource = {
     "Form (OEAF) and Examination Fee for Examination of Digital Literacy Courses (DLC). Every " +
     "page footer reads 'Version1.11 (2023)'; PDF created 2023-06-14 (its embedded title still " +
     "names the Version 1.10 Word file).",
-};
+});
 
 export const CCC_PHOTO: ImagePreset = {
   id: "ccc-photo",
@@ -58,7 +58,7 @@ export const CCC_SIGNATURE: ImagePreset = {
   dpi: { min: 96, max: 200 },
   formats: ["jpeg"],
   guidance: [
-    "Sign or take the thumb impression on white paper using black or blue ink.",
+    "Sign on white paper using black or blue ink.",
     "The image must not be blurred or smudged.",
   ],
   source: CCC_SOURCE,
@@ -75,7 +75,7 @@ export const CCC_LEFT_THUMB: ImagePreset = {
   dpi: { min: 96, max: 200 },
   formats: ["jpeg"],
   guidance: [
-    "Sign or take the thumb impression on white paper using black or blue ink.",
+    "Take the left thumb impression on white paper using black or blue ink.",
     "The image must not be blurred or smudged.",
   ],
   source: CCC_SOURCE,

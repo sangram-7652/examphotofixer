@@ -17,7 +17,12 @@ export type AnalyticsEventName =
   | "validation_failed"
   | "download_clicked"
   | "download_completed"
-  | "tool_reset";
+  | "tool_reset"
+  // Complete Pack. Per-asset steps reuse the events above (tool_id = the pack's id).
+  | "pack_open"
+  | "pack_download_clicked"
+  | "pack_download_completed"
+  | "pack_reset";
 
 /** Allowed property values: short, non-identifying primitives only. */
 export type AnalyticsProps = Record<string, string | number | boolean>;

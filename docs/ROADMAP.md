@@ -24,6 +24,11 @@ Official CCC source recorded (NIELIT guidelines Version 1.11 (2023), page 3, SHA
 Source & verification section; guidance from the source shown; WebKit run and passing; JPEG
 integrity check hardened (DQT required) after a WebKit difference.
 
+## Phase 2.6 (P5): All CCC tools ✅
+
+`/ccc-signature-resizer`, `/ccc-thumb-impression-resizer` and `/ccc-complete-pack` (three
+steps, pack status, local ZIP) live on the shared tool architecture.
+
 ## Phase 3 — Launch
 
 - Legal review. Analytics decision. Enable indexing.

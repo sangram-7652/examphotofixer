@@ -66,7 +66,9 @@ FORM_PRESETS, SEO_STRATEGY, SEO_URL_MAP, ANALYTICS, TESTING, PRIVACY, DEPLOYMENT
 
 - Tool UI lives in `src/components/tool/` and is driven by a preset; no exam-specific components.
   Exam-specific wording belongs in `src/content/tool-content.ts`, built from preset values.
-- A tool goes live via `status: "live"` in the registry; `ToolPage` then mounts `ImageTool`.
+- A tool goes live via `status: "live"` in the registry; `ToolPage` then mounts `ImageTool`
+  (single preset) or `PackTool` (pack). Coming-soon tools are noindex and not in the sitemap.
+- Packs compose `ImageTool`s via `onStatusChange`; never add per-document uploaders/croppers.
 - Never duplicate engine logic in React: crop geometry via `resolveCropRect` (see
   `lib/tools/cropper.ts`), pass/fail from the engine's `ValidationReport`.
 - `below_minimum` is a warning (`READY_WITH_WARNING`), never an error; download stays available.

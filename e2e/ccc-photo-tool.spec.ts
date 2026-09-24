@@ -1,8 +1,14 @@
-import { readFile } from "node:fs/promises";
 import { expect, test, type Page } from "@playwright/test";
 import { readJpegFacts } from "../src/lib/image/inspect";
 import { CCC_PHOTO } from "../src/lib/presets/ccc";
 import { buildDownloadFilename } from "../src/lib/tools/preset-labels";
+import {
+  downloadBytes,
+  makeImage,
+  recordAnalytics,
+  upload as uploadTo,
+  type Pattern,
+} from "./helpers";
 
 /**
  * End-to-end: /ccc-photo-resizer on Chromium, Firefox, WebKit and a phone.
@@ -15,56 +21,10 @@ const SIZE = `${CCC_PHOTO.width} × ${CCC_PHOTO.height} px`;
 const KB = `${CCC_PHOTO.fileSizeKB.min}–${CCC_PHOTO.fileSizeKB.max} KB`;
 const DPI = `${CCC_PHOTO.dpi.min}–${CCC_PHOTO.dpi.max}`;
 
-type Pattern = "noise" | "flat";
-
-/** Encodes a test image in the page and returns its bytes. */
-async function makeImage(
-  page: Page,
-  pattern: Pattern,
-  width: number,
-  height: number,
-  type = "image/jpeg",
-): Promise<Buffer> {
-  const base64 = await page.evaluate(
-    async ({ pattern, width, height, type }) => {
-      const canvas = new OffscreenCanvas(width, height);
-      const ctx = canvas.getContext("2d")!;
-      if (pattern === "flat") {
-        ctx.fillStyle = "#d0d0d0";
-        ctx.fillRect(0, 0, width, height);
-      } else {
-        let seed = 7;
-        const random = () => {
-          seed = (seed * 1103515245 + 12345) & 0x7fffffff;
-          return seed / 0x7fffffff;
-        };
-        const image = ctx.createImageData(width, height);
-        for (let i = 0; i < image.data.length; i += 4) {
-          image.data[i] = random() * 256;
-          image.data[i + 1] = random() * 256;
-          image.data[i + 2] = random() * 256;
-          image.data[i + 3] = 255;
-        }
-        ctx.putImageData(image, 0, 0);
-      }
-      const blob = await canvas.convertToBlob({ type, quality: 0.92 });
-      const bytes = new Uint8Array(await blob.arrayBuffer());
-      let binary = "";
-      for (let i = 0; i < bytes.length; i += 0x8000) {
-        binary += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
-      }
-      return btoa(binary);
-    },
-    { pattern, width, height, type },
-  );
-  return Buffer.from(base64, "base64");
-}
-
 const tool = (page: Page) => page.getByTestId("image-tool");
 
-async function upload(page: Page, buffer: Buffer, name = "my-photo.jpg", mimeType = "image/jpeg") {
-  await page.getByTestId("file-input").setInputFiles({ name, mimeType, buffer });
-}
+const upload = (page: Page, buffer: Buffer, name = "my-photo.jpg", mimeType = "image/jpeg") =>
+  uploadTo(page, buffer, name, mimeType);
 
 async function toCrop(page: Page, pattern: Pattern = "noise") {
   await upload(page, await makeImage(page, pattern, 600, 800));
@@ -94,17 +54,6 @@ async function recordProgressStages(page: Page) {
       attributes: true,
       attributeFilter: ["data-stage"],
     });
-  });
-}
-
-/** Captures provider-independent analytics events. */
-async function recordAnalytics(page: Page) {
-  await page.addInitScript(() => {
-    const events: string[] = [];
-    (window as unknown as { __events: string[] }).__events = events;
-    window.addEventListener("epf:analytics", (event) =>
-      events.push((event as CustomEvent<{ name: string }>).detail.name),
-    );
   });
 }
 
@@ -180,7 +129,7 @@ test("happy path: upload → crop → real progress → READY → download → s
 
   // Crop: drag, zoom, keyboard, reset
   const frame = page.getByTestId("crop-frame");
-  const position = page.locator("#crop-position");
+  const position = page.getByTestId("crop-position");
   const initial = await position.textContent();
   await page.getByRole("button", { name: "Zoom in" }).click();
   await expect(page.getByRole("slider", { name: "Zoom" })).toHaveValue("1.25");
@@ -240,7 +189,7 @@ test("happy path: upload → crop → real progress → READY → download → s
   await page.getByRole("link", { name: "Download JPG" }).click();
   const download = await downloadPromise;
   expect(download.suggestedFilename()).toBe(buildDownloadFilename(CCC_PHOTO));
-  const bytes = new Uint8Array(await readFile((await download.path())!));
+  const bytes = await downloadBytes(download);
   const facts = readJpegFacts(bytes)!;
   expect(facts).toMatchObject({
     width: CCC_PHOTO.width,
@@ -297,7 +246,7 @@ test("below minimum KB: warning, not an error, and still downloadable", async ({
   await page.getByRole("link", { name: "Download Anyway" }).click();
   const download = await downloadPromise;
   expect(download.suggestedFilename()).toBe(buildDownloadFilename(CCC_PHOTO));
-  const bytes = new Uint8Array(await readFile((await download.path())!));
+  const bytes = await downloadBytes(download);
   expect(bytes.length).toBeLessThan(CCC_PHOTO.fileSizeKB.min * 1024);
   expect(readJpegFacts(bytes)?.metadata).toEqual([]); // no padding segments
 });
@@ -349,7 +298,7 @@ test("mobile layout: tool is in the first screen, no horizontal scroll", async (
   const box = (await choose.boundingBox())!;
   expect(box.y + box.height).toBeLessThanOrEqual(page.viewportSize()!.height);
   expect(box.height).toBeGreaterThanOrEqual(44); // comfortable touch target
-  await expect(page.getByRole("button", { name: "Take a photo with camera" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Capture image" })).toBeVisible();
 
   const noOverflow = () =>
     page.evaluate(

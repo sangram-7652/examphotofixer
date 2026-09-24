@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { getToolContent } from "@/content/tool-content";
 import type { OutputFacts } from "@/lib/image/pipeline";
+import { getPreset } from "@/lib/presets";
 import { CCC_LEFT_THUMB, CCC_PHOTO, CCC_SIGNATURE } from "@/lib/presets/ccc";
 import type { ValidationCheck } from "@/lib/validation/types";
 import { validateAgainstPreset } from "@/lib/validation/validate";
@@ -120,11 +121,45 @@ describe("error copy", () => {
 });
 
 describe("tool registry and content", () => {
-  it("live tools have exactly one preset", () => {
+  it("live single tools have one preset; live packs combine presets of one exam", () => {
     for (const tool of TOOLS.filter((t) => t.status === "live")) {
-      expect(tool.presetIds, tool.id).toHaveLength(1);
+      if (tool.kind === "pack") {
+        expect(tool.presetIds.length, tool.id).toBeGreaterThan(1);
+        expect(new Set(tool.presetIds.map((id) => getPreset(id).exam)).size).toBe(1);
+      } else {
+        expect(tool.presetIds, tool.id).toHaveLength(1);
+      }
     }
-    expect(getTool("ccc-photo").status).toBe("live");
+    expect(
+      ["ccc-photo", "ccc-signature", "ccc-thumb", "ccc-pack"]
+        .map((id) => getTool(id as Parameters<typeof getTool>[0]))
+        .every((tool) => tool.status === "live"),
+    ).toBe(true);
+    expect(getTool("ccc-pack").path).toBe("/ccc-complete-pack");
+  });
+
+  it.each([
+    ["ccc-signature", CCC_SIGNATURE],
+    ["ccc-thumb", CCC_LEFT_THUMB],
+  ] as const)("%s content is built from its preset and cites the source", (id, preset) => {
+    const tool = getTool(id);
+    const changed = { ...preset, width: 181, height: 141, fileSizeKB: { min: 7, max: 23 } };
+    const text = JSON.stringify(getToolContent(tool, [changed]));
+    expect(text).toContain("181 × 141");
+    expect(text).toContain("7–23 KB");
+    expect(text).not.toMatch(/170 × 132|5–20 KB/);
+    expect(text).toContain("Version 1.11 (2023)");
+    for (const line of preset.guidance ?? []) expect(text).toContain(line);
+  });
+
+  it("pack content lists every preset's values", () => {
+    const text = JSON.stringify(
+      getToolContent(getTool("ccc-pack"), [CCC_PHOTO, CCC_SIGNATURE, CCC_LEFT_THUMB]),
+    );
+    for (const preset of [CCC_PHOTO, CCC_SIGNATURE, CCC_LEFT_THUMB]) {
+      expect(text).toContain(`${preset.width} × ${preset.height} pixels`);
+      expect(text).toContain(`${preset.fileSizeKB.min}–${preset.fileSizeKB.max} KB`);
+    }
   });
 
   it("content numbers come from the preset", () => {

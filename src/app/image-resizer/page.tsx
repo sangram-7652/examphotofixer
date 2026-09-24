@@ -1,15 +1,11 @@
 import type { Metadata } from "next";
 import { ToolPage } from "@/components/ToolPage";
-import { buildPageMetadata } from "@/lib/seo/metadata";
+import { buildToolMetadata } from "@/lib/seo/metadata";
 import { getTool } from "@/lib/tools/registry";
 
 const tool = getTool("image-resizer");
 
-export const metadata: Metadata = buildPageMetadata({
-  title: tool.metaTitle,
-  description: tool.metaDescription,
-  path: tool.path,
-});
+export const metadata: Metadata = buildToolMetadata(tool);
 
 export default function Page() {
   return <ToolPage toolId={tool.id} />;

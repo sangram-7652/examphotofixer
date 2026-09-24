@@ -5,6 +5,7 @@ import { RequirementsTable } from "@/components/RequirementsTable";
 import { ToolCard } from "@/components/ToolCard";
 import { UploadPlaceholder } from "@/components/UploadPlaceholder";
 import { ImageTool } from "@/components/tool/ImageTool";
+import { PackTool } from "@/components/tool/PackTool";
 import { getToolContent } from "@/content/tool-content";
 import { EXAMS, getPreset } from "@/lib/presets";
 import { formatIsoDate, isVerifiedSource, sourceCitation } from "@/lib/presets/source";
@@ -77,7 +78,20 @@ export function ToolPage({ toolId }: { toolId: ToolId }) {
   const tool = getTool(toolId);
   const presets = tool.presetIds.map(getPreset);
   const content = getToolContent(tool, presets);
-  const livePreset = tool.status === "live" && presets.length === 1 ? presets[0] : null;
+  const live = tool.status === "live";
+  const livePreset = live && presets.length === 1 ? presets[0] : null;
+  const livePack = live && tool.kind === "pack" && presets.length > 1;
+  // One source section when every preset cites the same (shared) source object.
+  const sharedSource =
+    live && presets.length > 0 && presets.every((preset) => preset.source === presets[0].source)
+      ? presets[0]
+      : null;
+  const pack =
+    tool.kind !== "pack" && tool.exam
+      ? TOOLS.find(
+          (other) => other.kind === "pack" && other.exam === tool.exam && other.status === "live",
+        )
+      : undefined;
   const steps =
     content?.howItWorks ??
     (tool.kind === "preset" || tool.kind === "pack" ? PRESET_STEPS : GENERIC_STEPS[tool.kind]);
@@ -103,10 +117,22 @@ export function ToolPage({ toolId }: { toolId: ToolId }) {
       <div className="mt-5">
         {livePreset ? (
           <ImageTool preset={livePreset} toolId={tool.id} />
+        ) : livePack ? (
+          <PackTool presets={presets} toolId={tool.id} />
         ) : (
           <UploadPlaceholder label={tool.kind === "pack" ? "Select files" : "Select image"} />
         )}
       </div>
+
+      {pack ? (
+        <p className="mt-6 rounded-lg border border-border p-4 text-sm">
+          Need the other {EXAMS[tool.exam!].shortName} application images too?{" "}
+          <Link href={pack.path} className="font-medium underline underline-offset-2">
+            Use the {pack.name}
+          </Link>{" "}
+          to prepare the photo, signature and left thumb impression on one page.
+        </p>
+      ) : null}
 
       <section aria-labelledby="how-it-works" className="mt-10">
         <h2 id="how-it-works" className="text-xl font-semibold">
@@ -131,7 +157,7 @@ export function ToolPage({ toolId }: { toolId: ToolId }) {
               <RequirementsTable key={preset.id} preset={preset} />
             ))}
           </div>
-          {livePreset ? <SourceSection preset={livePreset} /> : null}
+          {sharedSource ? <SourceSection preset={sharedSource} /> : null}
         </section>
       ) : null}
 
