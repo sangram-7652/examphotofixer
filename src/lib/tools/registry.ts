@@ -83,30 +83,30 @@ export const TOOLS: readonly ToolDefinition[] = [
   {
     id: "image-resizer",
     path: "/image-resizer",
-    status: "coming-soon",
+    status: "live",
     kind: "generic-resize",
     exam: null,
     presetIds: [],
     name: "Image Resizer",
     h1: "Image Resizer",
-    metaTitle: "Image Resizer – Resize to Exact Pixels Online",
+    metaTitle: "Image Resizer – Resize JPG, PNG & WebP to Custom Dimensions",
     metaDescription:
-      "Resize any photo to exact pixel dimensions without stretching it. Crop to shape, resize and download — processed in your browser.",
-    summary: "Resize any image to exact pixel dimensions without stretching.",
+      "Resize JPG, PNG or WebP images to exact pixel dimensions online. Crop or fit without stretching, choose the format and quality, and download — without uploading your image.",
+    summary: "Resize JPG, PNG or WebP to custom dimensions — crop or fit, never stretched.",
   },
   {
     id: "image-compressor",
     path: "/image-compressor",
-    status: "coming-soon",
+    status: "live",
     kind: "generic-compress",
     exam: null,
     presetIds: [],
     name: "Image Compressor",
     h1: "Image Compressor",
-    metaTitle: "Image Compressor – Reduce Image Size in KB Online",
+    metaTitle: "Image Compressor – Compress JPG, PNG & WebP to 100 KB, 500 KB or Less",
     metaDescription:
-      "Reduce your image file size to a target KB while keeping it readable. Processed in your browser — your file is not uploaded.",
-    summary: "Reduce an image to a target file size in KB.",
+      "Compress an image under a maximum file size such as 100 KB, 200 KB or 500 KB. Keeps the dimensions, uses the best quality that fits, and checks the real file size — in your browser.",
+    summary: "Reduce an image's file size under a maximum like 100 KB or 500 KB.",
   },
 ];
 

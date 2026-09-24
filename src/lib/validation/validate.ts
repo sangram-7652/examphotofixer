@@ -1,8 +1,7 @@
 import { FORMAT_LABELS, SUPPORTED_INPUT_FORMATS, type ImageFormat } from "@/lib/image/formats";
 import { MAX_INPUT_BYTES } from "@/lib/image/limits";
 import type { MetadataKind } from "@/lib/image/jpeg";
-import type { OutputFacts, OutputRequirements } from "@/lib/image/pipeline";
-import { kbRangeToByteWindow } from "@/lib/image/size-target";
+import { byteWindowFor, type OutputFacts, type OutputRequirements } from "@/lib/image/pipeline";
 import type { ValidationCheck, ValidationReport } from "./types";
 
 const EXPECTED_METADATA = "No personal metadata (EXIF, GPS, camera)";
@@ -10,9 +9,18 @@ const EXPECTED_METADATA = "No personal metadata (EXIF, GPS, camera)";
 /** Aspect-ratio tolerance; exact dimensions are checked separately. */
 const ASPECT_TOLERANCE = 0.01;
 
+/** Human-readable size using 1 KB = 1024 bytes and 1 MB = 1024 KB. */
 export function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
-  return `${(bytes / 1024).toFixed(1)} KB`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+}
+
+/** A byte limit written for people: "500 KB", "1 MB" (1024-based, never rounded down). */
+export function formatByteLimit(bytes: number): string {
+  if (bytes % (1024 * 1024) === 0) return `${bytes / (1024 * 1024)} MB`;
+  if (bytes % 1024 === 0) return `${bytes / 1024} KB`;
+  return `${bytes.toLocaleString("en-US")} bytes`;
 }
 
 const METADATA_LABELS: Readonly<Record<MetadataKind, string>> = {
@@ -47,8 +55,23 @@ export function validateAgainstPreset(
   const expectedDimensions = `${preset.width} × ${preset.height} px`;
   const expectedRatio = `${preset.width}:${preset.height}`;
   const expectedFormat = formatList(preset.formats);
-  const expectedSize = `${preset.fileSizeKB.min}–${preset.fileSizeKB.max} KB`;
-  const expectedDpi = `${preset.dpi.min}–${preset.dpi.max} DPI`;
+  const window = byteWindowFor(preset);
+  // Presets show the source's own KB wording; runtime limits show exact 1024-based limits.
+  const expectedSize = preset.fileSizeBytes
+    ? preset.fileSizeBytes.minBytes > 0
+      ? `${formatByteLimit(preset.fileSizeBytes.minBytes)}–${formatByteLimit(preset.fileSizeBytes.maxBytes)}`
+      : `Up to ${formatByteLimit(preset.fileSizeBytes.maxBytes)}`
+    : preset.fileSizeKB
+      ? `${preset.fileSizeKB.min}–${preset.fileSizeKB.max} KB`
+      : null;
+  const minText = preset.fileSizeBytes
+    ? formatByteLimit(preset.fileSizeBytes.minBytes)
+    : `${preset.fileSizeKB?.min} KB`;
+  const maxText = preset.fileSizeBytes
+    ? formatByteLimit(preset.fileSizeBytes.maxBytes)
+    : `${preset.fileSizeKB?.max} KB`;
+  const dpiRange = preset.dpi;
+  const expectedDpi = dpiRange ? `${dpiRange.min}–${dpiRange.max} DPI` : null;
 
   if (!facts || error) {
     return {
@@ -66,8 +89,8 @@ export function validateAgainstPreset(
         skipped("dimensions", "Dimensions", expectedDimensions),
         skipped("aspect-ratio", "Aspect ratio", expectedRatio),
         skipped("format", "Format", expectedFormat),
-        skipped("file-size", "File size", expectedSize),
-        skipped("dpi", "DPI", expectedDpi),
+        ...(expectedSize ? [skipped("file-size", "File size", expectedSize)] : []),
+        ...(expectedDpi ? [skipped("dpi", "DPI", expectedDpi)] : []),
         skipped("metadata", "Metadata", EXPECTED_METADATA),
       ],
     };
@@ -110,41 +133,44 @@ export function validateAgainstPreset(
     message: formatOk ? null : `File must be ${expectedFormat}.`,
   });
 
-  const window = kbRangeToByteWindow(preset.fileSizeKB);
-  const tooSmall = facts.byteLength < window.minBytes;
-  const tooLarge = facts.byteLength > window.maxBytes;
-  checks.push({
-    id: "file-size",
-    label: "File size",
-    expected: expectedSize,
-    actual: formatBytes(facts.byteLength),
-    status: tooSmall || tooLarge ? "fail" : "pass",
-    message: tooSmall
-      ? `File is too small; it must be at least ${preset.fileSizeKB.min} KB.`
-      : tooLarge
-        ? `File is too large; it must be at most ${preset.fileSizeKB.max} KB.`
-        : null,
-  });
+  if (window && expectedSize) {
+    const tooSmall = facts.byteLength < window.minBytes;
+    const tooLarge = facts.byteLength > window.maxBytes;
+    checks.push({
+      id: "file-size",
+      label: "File size",
+      expected: expectedSize,
+      actual: formatBytes(facts.byteLength),
+      status: tooSmall || tooLarge ? "fail" : "pass",
+      message: tooSmall
+        ? `File is too small; it must be at least ${minText}.`
+        : tooLarge
+          ? `File is too large; it must be at most ${maxText}.`
+          : null,
+    });
+  }
 
-  const dpiOk =
-    facts.dpi !== null &&
-    [facts.dpi.x, facts.dpi.y].every((value) => value >= preset.dpi.min && value <= preset.dpi.max);
-  checks.push({
-    id: "dpi",
-    label: "DPI",
-    expected: expectedDpi,
-    actual: facts.dpi
-      ? facts.dpi.x === facts.dpi.y
-        ? `${facts.dpi.x} DPI`
-        : `${facts.dpi.x} × ${facts.dpi.y} DPI`
-      : "Not set",
-    status: dpiOk ? "pass" : "fail",
-    message: dpiOk
-      ? null
-      : facts.dpi === null
-        ? `File has no DPI information; it must be ${expectedDpi}.`
-        : `DPI must be between ${preset.dpi.min} and ${preset.dpi.max}.`,
-  });
+  if (dpiRange && expectedDpi) {
+    const dpiOk =
+      facts.dpi !== null &&
+      [facts.dpi.x, facts.dpi.y].every((value) => value >= dpiRange.min && value <= dpiRange.max);
+    checks.push({
+      id: "dpi",
+      label: "DPI",
+      expected: expectedDpi,
+      actual: facts.dpi
+        ? facts.dpi.x === facts.dpi.y
+          ? `${facts.dpi.x} DPI`
+          : `${facts.dpi.x} × ${facts.dpi.y} DPI`
+        : "Not set",
+      status: dpiOk ? "pass" : "fail",
+      message: dpiOk
+        ? null
+        : facts.dpi === null
+          ? `File has no DPI information; it must be ${expectedDpi}.`
+          : `DPI must be between ${dpiRange.min} and ${dpiRange.max}.`,
+    });
+  }
 
   const metadataOk = facts.metadata.length === 0;
   const found = facts.metadata.map((kind) => METADATA_LABELS[kind]).join(", ");

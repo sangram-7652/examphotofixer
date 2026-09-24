@@ -55,3 +55,11 @@ title/description/canonical, requirement values rendered from presets, the share
 related tools. Single-tool pages link to the Complete Pack; the pack links back through the
 related-tools section. `/ccc-image-resizer` 301s (308) to `/ccc-complete-pack`.
 Placeholder tools (`status: "coming-soon"`) are `noindex` and excluded from the sitemap.
+
+## Generic tools (P6)
+
+`/image-resizer` and `/image-compressor` are live and indexable, in the sitemap, with their own
+titles, descriptions, canonicals, one H1, how-to, common problems and FAQs whose `FAQPage`
+JSON-LD is built from the same visible list (asserted in e2e). They link contextually to the CCC
+tools without implying official status. `/tools` is grouped into Exam & Application Tools,
+General Image Tools and Coming Soon (SSC, Railway, UPSC as plain text — no pages).

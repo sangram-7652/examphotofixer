@@ -98,3 +98,23 @@ INCOMPLETE when any asset is INVALID/ERROR.
 (JPEGs don't compress further) with CRC-32; entries are the engine's final bytes. No
 dependency was added. "Start again" remounts the tools (their cleanup revokes object URLs) and
 revokes the ZIP URL. Assets are processed only when the user presses each Process button.
+
+## Verified presets vs runtime requirements (P6)
+
+```
+                    Image engine (one worker, one pipeline)
+                                 ↑  OutputRequirements + EncodingOptions
+              ┌──────────────────┴──────────────────┐
+     Verified presets (lib/presets)        Runtime settings (lib/tools/generic)
+     CCC tools, source-cited               Image Resizer, Image Compressor
+```
+
+- Presets are never used by generic tools, and generic settings never become presets.
+  `lib/tools/generic/resize.ts` and `compress.ts` turn user settings into
+  `OutputRequirements` (`fileSizeKB: null`, optional exact `fileSizeBytes`, `dpi: null`,
+  one output format) plus `EncodingOptions`.
+- UI: `components/tool/generic/ImageResizerTool` and `ImageCompressorTool` reuse
+  `ImageUploader`, `Cropper`, `ProcessingProgress`, `ValidationChecklist`, `ResultPreview`
+  and `DownloadButton`. Shared client plumbing (`components/tool/image-job.ts`): file
+  inspection, object-URL registry, one-job-at-a-time runner with lazy engine import.
+  `ImageTool` uses the same file inspection.

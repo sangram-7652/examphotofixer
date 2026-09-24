@@ -38,7 +38,7 @@ scope.onmessage = async (event) => {
   try {
     const result = await runImagePipeline(
       request.file,
-      { requirements: request.requirements, crop: request.crop },
+      { requirements: request.requirements, crop: request.crop, encoding: request.encoding },
       (stage) => scope.postMessage({ type: "progress", jobId, progress: progressFor(stage) }),
     );
     scope.postMessage({ type: "result", jobId, result });

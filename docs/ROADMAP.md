@@ -29,6 +29,11 @@ integrity check hardened (DQT required) after a WebKit difference.
 `/ccc-signature-resizer`, `/ccc-thumb-impression-resizer` and `/ccc-complete-pack` (three
 steps, pack status, local ZIP) live on the shared tool architecture.
 
+## Phase 2.7 (P6): Generic tools ✅
+
+`/image-resizer` (crop/fit, JPG/PNG/WebP, quality) and `/image-compressor` (maximum size,
+actual-byte enforcement) on the same engine via runtime requirements.
+
 ## Phase 3 — Launch
 
 - Legal review. Analytics decision. Enable indexing.

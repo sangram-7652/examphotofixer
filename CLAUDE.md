@@ -76,6 +76,10 @@ FORM_PRESETS, SEO_STRATEGY, SEO_URL_MAP, ANALYTICS, TESTING, PRIVACY, DEPLOYMENT
   state and revoke URLs on reset/unmount.
 - Status must never rely on colour alone; announce state changes via the live region.
 - Analytics via `track()` only; no file names or image-derived data.
+- Generic tools build runtime `OutputRequirements` in `lib/tools/generic/`; never add generic
+  settings to presets or preset values to generic tools. 1 KB = 1024 bytes in generic tools.
+- Compressor success is decided from actual output bytes; never offer an over-limit file as
+  the result.
 
 ## SEO rules
 

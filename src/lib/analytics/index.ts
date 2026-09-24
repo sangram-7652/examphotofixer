@@ -18,6 +18,9 @@ export type AnalyticsEventName =
   | "download_clicked"
   | "download_completed"
   | "tool_reset"
+  // Generic tools: which setting changed (never values tied to the user's file).
+  | "resize_settings_changed"
+  | "compression_settings_changed"
   // Complete Pack. Per-asset steps reuse the events above (tool_id = the pack's id).
   | "pack_open"
   | "pack_download_clicked"

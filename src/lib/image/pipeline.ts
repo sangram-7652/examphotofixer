@@ -6,9 +6,10 @@
  *       → size-window compression → DPI → strip metadata → validate → Blob + metadata
  */
 
-import type { AcceptedFormat, NumericRange } from "@/lib/presets/types";
+import type { NumericRange } from "@/lib/presets/types";
 import type { ImageFormat } from "./formats";
 import type { MetadataKind } from "./jpeg";
+import { kbRangeToByteWindow, type ByteWindow } from "./size-target";
 
 /** Progress stages, in the order the worker reports them. */
 export const PROGRESS_STAGES = [
@@ -38,6 +39,7 @@ export type ProcessingErrorCode =
   | "image-too-large"
   | "decode-failed"
   | "encode-failed"
+  | "unsupported-output-format"
   | "unsupported-browser"
   | "worker-failed"
   | "timeout"
@@ -55,6 +57,8 @@ export const PROCESSING_ERROR_MESSAGES: Readonly<Record<ProcessingErrorCode, str
   "image-too-large": "This image has too many pixels to process safely. Use a smaller photo.",
   "decode-failed": "This image couldn't be opened. Try a different JPG or PNG file.",
   "encode-failed": "The image couldn't be saved as JPG in this browser. Try another browser.",
+  "unsupported-output-format":
+    "This browser can't save images in the selected format. Choose another format.",
   "unsupported-browser": "Your browser can't process images here. Update it or try Chrome.",
   "worker-failed": "Processing stopped unexpectedly. Please try again.",
   timeout: "Processing took too long. Try a smaller photo.",
@@ -74,17 +78,44 @@ export class ImageProcessingError extends Error {
   }
 }
 
+/** Formats the engine can write. JPEG is always available; WebP depends on the browser. */
+export type OutputFormat = "jpeg" | "png" | "webp";
+
+export const OUTPUT_MIME_TYPES: Readonly<Record<OutputFormat, string>> = {
+  jpeg: "image/jpeg",
+  png: "image/png",
+  webp: "image/webp",
+};
+
 /**
- * What an output file must satisfy. Generic: presets satisfy this shape, and
- * generic tools can build one from user input. No exam-specific values here.
+ * What an output file must satisfy. Two sources build this shape:
+ * verified presets (e.g. CCC) and runtime settings from generic tools.
+ * No exam-specific values here. `null` means "not required" and the
+ * corresponding validation check is omitted.
  */
 export interface OutputRequirements {
   id: string;
   width: number;
   height: number;
-  fileSizeKB: NumericRange;
-  dpi: NumericRange;
-  formats: readonly AcceptedFormat[];
+  /** KB range exactly as written by a source (presets); converted conservatively. */
+  fileSizeKB: NumericRange | null;
+  /** Exact byte limits (generic tools, 1 KB = 1024 bytes). Takes precedence over `fileSizeKB`. */
+  fileSizeBytes?: ByteWindow | null;
+  dpi: NumericRange | null;
+  formats: readonly OutputFormat[];
+}
+
+/** How to encode. Defaults: the first allowed format; quality found by the size search or 92. */
+export interface EncodingOptions {
+  format: OutputFormat;
+  /** 1–100 for JPEG/WebP when there is no size limit. Ignored for PNG (lossless). */
+  quality?: number;
+}
+
+/** The byte window a requirement set implies, or `null` when file size is unconstrained. */
+export function byteWindowFor(requirements: OutputRequirements): ByteWindow | null {
+  if (requirements.fileSizeBytes) return requirements.fileSizeBytes;
+  return requirements.fileSizeKB ? kbRangeToByteWindow(requirements.fileSizeKB) : null;
 }
 
 /** Facts read back from the final encoded bytes; consumed by validation. */

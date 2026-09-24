@@ -465,6 +465,116 @@ test.describe("image engine (browser + worker)", () => {
     expect(outcome.error?.code).toBe("invalid-request");
   });
 
+  /** Runtime requirements as a generic tool builds them (no size/DPI requirement). */
+  const runtime = (width: number, height: number, format: "jpeg" | "png" | "webp") => ({
+    id: "runtime-test",
+    width,
+    height,
+    fileSizeKB: null,
+    fileSizeBytes: null,
+    dpi: null,
+    formats: [format] as const,
+  });
+
+  test("PNG output keeps transparency (no background invented)", async ({ page }) => {
+    const outcome = await run(page, {
+      input: { fixture: { pattern: "transparent", width: 300, height: 300, type: "image/png" } },
+      requirements: { ...runtime(100, 100, "png"), formats: ["png"] },
+      encoding: { format: "png" },
+      samples: [
+        [5, 5],
+        [50, 50],
+      ],
+    });
+    expect(outcome.error).toBeNull();
+    expect(outcome.result?.blobType).toBe("image/png");
+    expect(outcome.result?.magic).toBe("89504e47");
+    expect(outcome.result?.facts).toMatchObject({ width: 100, height: 100, format: "png" });
+    expect(outcome.result?.facts.metadata).toEqual([]);
+    expect(outcome.result?.compression).toMatchObject({ status: "no_size_limit", quality: null });
+    expect(outcome.samples[0].rgba[3]).toBe(0); // transparent corner stays transparent
+    expectColor(outcome.samples[1].rgba, BLACK, 20);
+    expect(outcome.samples[1].rgba[3]).toBe(255);
+    // No size/DPI requirement → those checks are omitted, not faked.
+    expect(outcome.result?.validation.checks.map((c) => c.id)).toEqual([
+      "dimensions",
+      "aspect-ratio",
+      "format",
+      "metadata",
+    ]);
+  });
+
+  test("WebP output where the browser can encode it; structured error where it can't", async ({
+    page,
+  }) => {
+    const encodable = await page.evaluate(() => window.__engineHarness!.encodableFormats());
+    const outcome = await run(page, {
+      input: { fixture: { pattern: "transparent", width: 300, height: 300, type: "image/png" } },
+      requirements: { ...runtime(100, 100, "webp"), formats: ["webp"] },
+      encoding: { format: "webp", quality: 80 },
+      samples: [[5, 5]],
+    });
+    if (encodable.webp) {
+      expect(outcome.result?.blobType).toBe("image/webp");
+      expect(outcome.result?.facts).toMatchObject({ width: 100, height: 100, format: "webp" });
+      expect(outcome.samples[0].rgba[3]).toBe(0);
+    } else {
+      expect(outcome.error).toMatchObject({ code: "unsupported-output-format", stage: "encoding" });
+    }
+  });
+
+  test("fixed quality without a size limit: one encode at the requested quality", async ({
+    page,
+  }) => {
+    const sizes: number[] = [];
+    for (const quality of [40, 95]) {
+      const outcome = await run(page, {
+        input: { fixture: { pattern: "noise", width: 800, height: 600, type: "image/png" } },
+        requirements: { ...runtime(400, 300, "jpeg"), formats: ["jpeg"] },
+        encoding: { format: "jpeg", quality },
+      });
+      expect(outcome.result?.compression).toMatchObject({
+        status: "no_size_limit",
+        quality,
+        attempts: 1,
+      });
+      expect(outcome.result?.facts).toMatchObject({ width: 400, height: 300, format: "jpeg" });
+      sizes.push(outcome.result!.facts.byteLength);
+    }
+    expect(sizes[0]).toBeLessThan(sizes[1]);
+  });
+
+  test("byte limit is enforced on actual output bytes (1 KB = 1024 bytes)", async ({ page }) => {
+    const maxBytes = 200 * 1024;
+    const outcome = await run(page, {
+      input: { fixture: { pattern: "noise", width: 1200, height: 900, type: "image/png" } },
+      requirements: {
+        ...runtime(1200, 900, "jpeg"),
+        formats: ["jpeg"],
+        fileSizeBytes: { minBytes: 0, maxBytes },
+      },
+      encoding: { format: "jpeg" },
+    });
+    const result = outcome.result!;
+    // Pure noise can't reach 200 KB at 1200×900 even at the lowest quality: reported, not hidden.
+    expect(result.compression.status).toBe("above_maximum");
+    expect(result.facts.byteLength).toBeGreaterThan(maxBytes);
+    expect(result.validation.checks.find((c) => c.id === "file-size")?.status).toBe("fail");
+
+    const reachable = await run(page, {
+      input: { fixture: { pattern: "quadrants", width: 1200, height: 900, type: "image/png" } },
+      requirements: {
+        ...runtime(1200, 900, "jpeg"),
+        formats: ["jpeg"],
+        fileSizeBytes: { minBytes: 0, maxBytes: 20 * 1024 },
+      },
+      encoding: { format: "jpeg" },
+    });
+    expect(reachable.result!.compression.status).toBe("within_range");
+    expect(reachable.result!.facts.byteLength).toBeLessThanOrEqual(20 * 1024);
+    expect(reachable.result!.validation.ready).toBe(true);
+  });
+
   test("progress events arrive in pipeline order", async ({ page }) => {
     const outcome = await run(page, {
       input: { fixture: { pattern: "noise", width: 500, height: 500, type: "image/jpeg" } },

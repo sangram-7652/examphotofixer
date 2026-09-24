@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useReducer, useRef, useSyncExternalStore } from "react";
 import { track, sizeBucket } from "@/lib/analytics";
-import { FORMAT_SNIFF_BYTES, detectImageFormat } from "@/lib/image/formats";
 import type { ProgressStage } from "@/lib/image/pipeline";
 import { isImageProcessingSupported } from "@/lib/image/support";
 import type { ImageProcessingResult } from "@/lib/image/worker/protocol";
@@ -16,9 +15,10 @@ import {
   type ResultState,
   type ToolUiState,
 } from "@/lib/tools/result-state";
-import { checkInputFile, formatBytes } from "@/lib/validation/validate";
+import { formatBytes } from "@/lib/validation/validate";
 import { Cropper } from "./Cropper";
 import { DownloadButton } from "./DownloadButton";
+import { readSelectedImage } from "./image-job";
 import { ImageUploader } from "./ImageUploader";
 import { ProcessingProgress } from "./ProcessingProgress";
 import { RequirementsSummary } from "./RequirementsSummary";
@@ -124,13 +124,6 @@ function uiStateOf(state: State): ToolUiState {
 
 const noopSubscribe = () => () => {};
 
-function loadImageSize(url: string): Promise<{ width: number; height: number }> {
-  const image = new Image();
-  image.decoding = "async";
-  image.src = url;
-  return image.decode().then(() => ({ width: image.naturalWidth, height: image.naturalHeight }));
-}
-
 const RESULT_HEADINGS: Record<ResultState, string> = {
   READY: "Ready to upload",
   READY_WITH_WARNING: "Ready — with a warning",
@@ -221,35 +214,33 @@ export function ImageTool({ preset, toolId, headingLevel = 2, onStatusChange }: 
   const handleFile = async (file: File) => {
     const token = ++selection.current;
     dispatch({ type: "opening" });
-    const head = new Uint8Array(await file.slice(0, FORMAT_SNIFF_BYTES).arrayBuffer());
-    const format = detectImageFormat(head);
-    const rejection = checkInputFile({ byteLength: file.size, format });
-    if (token !== selection.current) return;
-    if (rejection) {
-      track("image_selected", { ...baseProps, accepted: false, reason: rejection });
-      dispatch({ type: "rejected", error: errorMessageFor(rejection) });
+    const selected = await readSelectedImage(file, createUrl, releaseUrl);
+    if (token !== selection.current) {
+      if (selected.ok) releaseUrl(selected.image.url);
       return;
     }
-    const url = createUrl(file);
-    try {
-      const size = await loadImageSize(url);
-      if (token !== selection.current) return;
-      dispatch({ type: "selected", source: { file, url, ...size } });
-      track("image_selected", {
-        ...baseProps,
-        accepted: true,
-        input_format: format ?? "unknown",
-        size_bucket: sizeBucket(file.size),
+    if (!selected.ok) {
+      track("image_selected", { ...baseProps, accepted: false, reason: selected.reason });
+      dispatch({
+        type: "rejected",
+        error:
+          selected.reason === "unreadable"
+            ? ERROR_COPY.unreadable
+            : errorMessageFor(selected.reason),
       });
-      track("crop_started", baseProps);
-      // Warm up the engine client while the user crops.
-      void import("@/lib/image/worker/client");
-    } catch {
-      releaseUrl(url);
-      if (token !== selection.current) return;
-      track("image_selected", { ...baseProps, accepted: false, reason: "decode-failed" });
-      dispatch({ type: "rejected", error: ERROR_COPY.unreadable });
+      return;
     }
+    const { url, width, height, format } = selected.image;
+    dispatch({ type: "selected", source: { file, url, width, height } });
+    track("image_selected", {
+      ...baseProps,
+      accepted: true,
+      input_format: format,
+      size_bucket: sizeBucket(file.size),
+    });
+    track("crop_started", baseProps);
+    // Warm up the engine client while the user crops.
+    void import("@/lib/image/worker/client");
   };
 
   const startProcessing = async () => {
@@ -305,7 +296,7 @@ export function ImageTool({ preset, toolId, headingLevel = 2, onStatusChange }: 
       ...baseProps,
       ok: true,
       duration_ms: durationMs,
-      quality: result.compression.quality,
+      quality: result.compression.quality ?? "lossless",
     });
     const resultState = deriveResultState(result);
     if (resultState === "READY") track("validation_passed", baseProps);

@@ -126,8 +126,12 @@ describe("tool registry and content", () => {
       if (tool.kind === "pack") {
         expect(tool.presetIds.length, tool.id).toBeGreaterThan(1);
         expect(new Set(tool.presetIds.map((id) => getPreset(id).exam)).size).toBe(1);
-      } else {
+      } else if (tool.kind === "preset") {
         expect(tool.presetIds, tool.id).toHaveLength(1);
+      } else {
+        // Generic tools take runtime requirements from the user, never verified presets.
+        expect(tool.presetIds, tool.id).toEqual([]);
+        expect(tool.exam, tool.id).toBeNull();
       }
     }
     expect(
@@ -150,6 +154,32 @@ describe("tool registry and content", () => {
     expect(text).not.toMatch(/170 × 132|5–20 KB/);
     expect(text).toContain("Version 1.11 (2023)");
     for (const line of preset.guidance ?? []) expect(text).toContain(line);
+  });
+
+  it("generic tools are live, preset-free, and their FAQ has the required questions", () => {
+    const resizer = getToolContent(getTool("image-resizer"), [])!;
+    const compressor = getToolContent(getTool("image-compressor"), [])!;
+    expect(getTool("image-resizer").status).toBe("live");
+    expect(getTool("image-compressor").status).toBe("live");
+    expect(resizer.faq.map((q) => q.question)).toEqual([
+      "How do I resize an image?",
+      "Can I resize JPG, PNG and WebP?",
+      "What is crop vs fit?",
+      "Can I lock the aspect ratio?",
+      "Does the image get uploaded?",
+    ]);
+    expect(compressor.faq.map((q) => q.question)).toEqual([
+      "How do I compress an image?",
+      "Can I compress an image to 100 KB?",
+      "Can I compress an image to 500 KB?",
+      "Does compression reduce quality?",
+      "Are image dimensions preserved?",
+      "Is my image uploaded?",
+    ]);
+    // No CCC requirement values leak into generic copy, and no official claims.
+    const text = JSON.stringify([resizer, compressor]);
+    expect(text).not.toMatch(/132|170 ×|5–50|5–20|NIELIT/);
+    expect(text.toLowerCase()).not.toContain("guaranteed target");
   });
 
   it("pack content lists every preset's values", () => {

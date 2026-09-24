@@ -6,6 +6,8 @@ import { ToolCard } from "@/components/ToolCard";
 import { UploadPlaceholder } from "@/components/UploadPlaceholder";
 import { ImageTool } from "@/components/tool/ImageTool";
 import { PackTool } from "@/components/tool/PackTool";
+import { ImageCompressorTool } from "@/components/tool/generic/ImageCompressorTool";
+import { ImageResizerTool } from "@/components/tool/generic/ImageResizerTool";
 import { getToolContent } from "@/content/tool-content";
 import { EXAMS, getPreset } from "@/lib/presets";
 import { formatIsoDate, isVerifiedSource, sourceCitation } from "@/lib/presets/source";
@@ -119,10 +121,24 @@ export function ToolPage({ toolId }: { toolId: ToolId }) {
           <ImageTool preset={livePreset} toolId={tool.id} />
         ) : livePack ? (
           <PackTool presets={presets} toolId={tool.id} />
+        ) : live && tool.kind === "generic-resize" ? (
+          <ImageResizerTool />
+        ) : live && tool.kind === "generic-compress" ? (
+          <ImageCompressorTool />
         ) : (
           <UploadPlaceholder label={tool.kind === "pack" ? "Select files" : "Select image"} />
         )}
       </div>
+
+      {content?.callout ? (
+        <p className="mt-6 rounded-lg border border-border p-4 text-sm">
+          {content.callout.text}{" "}
+          <Link href={content.callout.href} className="font-medium underline underline-offset-2">
+            {content.callout.linkText}
+          </Link>
+          .
+        </p>
+      ) : null}
 
       {pack ? (
         <p className="mt-6 rounded-lg border border-border p-4 text-sm">

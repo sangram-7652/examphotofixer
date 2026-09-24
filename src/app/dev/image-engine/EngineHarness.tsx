@@ -1,9 +1,10 @@
 "use client";
 
+import { detectEncodableFormats } from "@/lib/image/support";
 import { dpiRoundTrip, runScenario } from "./scenarios";
 
 if (typeof window !== "undefined") {
-  window.__engineHarness = { runScenario, dpiRoundTrip };
+  window.__engineHarness = { runScenario, dpiRoundTrip, encodableFormats: detectEncodableFormats };
 }
 
 export function EngineHarness() {

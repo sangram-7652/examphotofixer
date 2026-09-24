@@ -8,7 +8,8 @@ import type { CropSpec } from "@/lib/image/crop";
 import { readDpi, writeDpi } from "@/lib/image/dpi";
 import { detectImageFormat } from "@/lib/image/formats";
 import { listJpegMetadata } from "@/lib/image/jpeg";
-import type { OutputRequirements } from "@/lib/image/pipeline";
+import type { EncodingOptions, OutputRequirements } from "@/lib/image/pipeline";
+import type { EncodableFormats } from "@/lib/image/support";
 import { insertExif, type ExifFixture } from "@/lib/image/testing/exif-builder";
 import { processImage, type ImageProcessingErrorInfo } from "@/lib/image/worker/client";
 import type { ImageProcessingResult } from "@/lib/image/worker/protocol";
@@ -16,7 +17,11 @@ import type { ImageProcessingResult } from "@/lib/image/worker/protocol";
 declare global {
   interface Window {
     /** Installed by EngineHarness; driven by Playwright. */
-    __engineHarness?: { runScenario: typeof runScenario; dpiRoundTrip: typeof dpiRoundTrip };
+    __engineHarness?: {
+      runScenario: typeof runScenario;
+      dpiRoundTrip: typeof dpiRoundTrip;
+      encodableFormats: () => Promise<EncodableFormats>;
+    };
   }
 }
 
@@ -40,6 +45,7 @@ export interface Scenario {
   input: InputSpec;
   requirements: OutputRequirements;
   crop?: CropSpec;
+  encoding?: EncodingOptions;
   /** Output pixel coordinates to sample. */
   samples?: [number, number][];
   timeoutMs?: number;
@@ -168,6 +174,7 @@ export async function runScenario(scenario: Scenario): Promise<ScenarioOutcome> 
   const outcome = await processImage(file, {
     requirements: scenario.requirements,
     crop: scenario.crop,
+    encoding: scenario.encoding,
     timeoutMs: scenario.timeoutMs,
     onProgress: (p) => progress.push(p.stage),
   });

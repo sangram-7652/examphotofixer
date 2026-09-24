@@ -11,3 +11,6 @@ export const MAX_INPUT_PIXELS = 100_000_000;
 
 /** Working canvas budget; iOS Safari fails above ~16.7 MP. */
 export const MAX_CANVAS_PIXELS = 16_777_216;
+
+/** Largest output side (px) the engine accepts from a request. */
+export const MAX_OUTPUT_SIDE = 10_000;

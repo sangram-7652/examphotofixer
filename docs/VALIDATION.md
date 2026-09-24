@@ -54,3 +54,12 @@ The engine additionally rejects animated images and truncated files (see IMAGE_P
 When the highest-quality output is still under the minimum KB, the engine returns it with
 `compression.status = "below_minimum"`; the `file-size` check fails and `ready` is false.
 The file is never padded or altered.
+
+## Runtime requirements (P6)
+
+Checks are included only for requirements that exist: with `fileSizeKB`/`fileSizeBytes`
+both absent there is no file-size check, and with `dpi: null` no DPI check. Exact byte
+windows are shown as "Up to 500 KB" (1024-based). The compressor decides its outcome from the
+actual output bytes: `SUCCESS` (≤ limit and smaller than the original), `LIMIT_NOT_REACHED`,
+`LARGER_THAN_ORIGINAL` or `INVALID` (`lib/tools/generic/compress.ts`). Only `SUCCESS` offers a
+download.

@@ -5,24 +5,35 @@ interface PreviewImage {
   width: number;
   height: number;
   byteLength: number;
+  /** Shown in the caption when given, e.g. "JPG". */
+  formatLabel?: string;
 }
 
-/** Original vs final. Stacked on mobile, side by side from `sm`. */
+/**
+ * Original vs final. Side by side (compact) by default; `stackOnMobile` puts
+ * them one above the other below `sm` for larger comparisons.
+ */
 export function ResultPreview({
   original,
   final,
+  finalTitle = "Final",
+  stackOnMobile = false,
 }: {
   original: PreviewImage;
   final: PreviewImage;
+  finalTitle?: string;
+  stackOnMobile?: boolean;
 }) {
   // Both previews fill the same box (letterboxed, never distorted), so the small
   // final image is shown enlarged enough to inspect.
   const figures = [
     { key: "original", title: "Original", image: original },
-    { key: "final", title: "Final", image: final },
+    { key: "final", title: finalTitle, image: final },
   ];
   return (
-    <div className="grid grid-cols-2 gap-3 sm:gap-6">
+    <div
+      className={`grid gap-3 sm:grid-cols-2 sm:gap-6 ${stackOnMobile ? "grid-cols-1" : "grid-cols-2"}`}
+    >
       {figures.map(({ key, title, image }) => (
         <figure
           key={key}
@@ -37,6 +48,7 @@ export function ResultPreview({
             <span className="block font-semibold">{title}</span>
             <span className="block tabular-nums text-muted">
               {image.width} × {image.height} px · {formatBytes(image.byteLength)}
+              {image.formatLabel ? ` · ${image.formatLabel}` : ""}
             </span>
           </figcaption>
         </figure>

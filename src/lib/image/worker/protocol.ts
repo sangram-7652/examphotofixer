@@ -9,6 +9,7 @@ import type { CompressionSummary, SourceInfo } from "../engine";
 import type { Rect } from "../geometry";
 import {
   PROGRESS_STAGES,
+  type EncodingOptions,
   type OutputFacts,
   type OutputRequirements,
   type ProcessingErrorCode,
@@ -22,6 +23,7 @@ export interface ImageProcessingRequest {
   file: Blob;
   requirements: OutputRequirements;
   crop?: CropSpec;
+  encoding?: EncodingOptions;
 }
 
 export interface ImageProcessingProgress {

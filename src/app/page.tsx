@@ -53,7 +53,7 @@ export default function HomePage() {
 
         <section aria-labelledby="image-tools" className="mt-12">
           <h2 id="image-tools" className="text-xl font-semibold">
-            Image tools
+            General image tools
           </h2>
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
             {genericTools().map((tool) => (

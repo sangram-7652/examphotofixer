@@ -19,6 +19,8 @@ export interface ToolContent {
   howItWorks: string[];
   commonProblems: { title: string; body: string }[];
   faq: QA[];
+  /** Optional contextual link shown near the tool. */
+  callout?: { text: string; linkText: string; href: string };
 }
 
 function describe(preset: ImagePreset) {
@@ -207,6 +209,129 @@ function cccPackContent(presets: ImagePreset[]): ToolContent {
   };
 }
 
+function imageResizerContent(): ToolContent {
+  return {
+    intro:
+      "Resize JPG, PNG or WebP images to the exact width and height you need. Crop to the new shape or fit the whole image inside it — nothing is stretched, and your image never leaves your device.",
+    howItWorks: [
+      "Choose an image (JPG, PNG or WebP). You'll see its current width, height, file size and format.",
+      "Enter the new width and height. With “Lock aspect ratio” on, changing one updates the other.",
+      "Choose “Crop to exact dimensions” and position the frame, or “Fit inside dimensions” to keep the whole image.",
+      "Pick the output format (and quality for JPG/WebP), press “Resize Image”, check the result and download it.",
+    ],
+    commonProblems: [
+      {
+        title: "Stretched or squashed images",
+        body: "Changing width and height independently usually distorts a picture. Here, crop trims the edges to the new shape and fit scales the whole image, so proportions are always kept.",
+      },
+      {
+        title: "Transparent background turns black or white",
+        body: "JPG can't store transparency. Keep PNG or WebP to preserve it; if you choose JPG, transparent areas are filled with white and the tool tells you before you resize.",
+      },
+      {
+        title: "Uploading private photos to a website",
+        body: "Resizing happens in your browser, so the image is never uploaded to a server.",
+      },
+    ],
+    faq: [
+      {
+        question: "How do I resize an image?",
+        answer:
+          "Choose your image, enter the width and height in pixels, pick crop or fit, and press “Resize Image”. Check the result, then download it.",
+      },
+      {
+        question: "Can I resize JPG, PNG and WebP?",
+        answer:
+          "Yes. You can open JPG, PNG and WebP images and save the result as JPG, PNG or WebP. WebP output is offered when your browser supports saving it.",
+      },
+      {
+        question: "What is crop vs fit?",
+        answer:
+          "Crop makes the image exactly the size you enter and trims whatever falls outside the frame. Fit keeps the whole image and scales it to fit inside the size you enter, so one side can be smaller than requested. Neither option stretches the image or adds a background.",
+      },
+      {
+        question: "Can I lock the aspect ratio?",
+        answer:
+          "Yes. With “Lock aspect ratio” on, changing the width updates the height (and the other way round) using the original proportions. Turn it off to enter both sides freely.",
+      },
+      {
+        question: "Does the image get uploaded?",
+        answer:
+          "No. The image is processed inside your browser and is never uploaded to our servers. Location and camera details (EXIF) are not included in the resized file.",
+      },
+    ],
+    callout: {
+      text: "Preparing an exam image?",
+      linkText: "Try the CCC image tools",
+      href: "/ccc-complete-pack",
+    },
+  };
+}
+
+function imageCompressorContent(): ToolContent {
+  return {
+    intro:
+      "Compress a JPG, PNG or WebP image under a maximum file size such as 100 KB, 200 KB or 500 KB. The tool keeps the dimensions, uses the best quality that fits, and checks the real size of the file you download — all in your browser.",
+    howItWorks: [
+      "Choose an image (JPG, PNG or WebP).",
+      "Pick a maximum file size — 100 KB, 200 KB, 500 KB, 1 MB — or enter your own. 1 KB means 1024 bytes.",
+      "Choose JPG or WebP output and press “Compress Image”. The tool finds the highest quality whose actual file size fits your limit.",
+      "Compare before and after, then download. If the limit can't be reached, you'll be told instead of getting an oversized file.",
+    ],
+    commonProblems: [
+      {
+        title: "“File too large” on an upload form",
+        body: "Set the form's limit as the maximum file size. The result is checked against that limit using its actual size before you can download it.",
+      },
+      {
+        title: "Limit can't be reached",
+        body: "Very large or very detailed photos may not fit a small limit even at the lowest quality we allow. Reduce the dimensions with the Image Resizer, then compress again.",
+      },
+      {
+        title: "Compressed file is bigger than the original",
+        body: "Some images are already heavily compressed. When no smaller version is possible, the tool says so and suggests keeping your original.",
+      },
+    ],
+    faq: [
+      {
+        question: "How do I compress an image?",
+        answer:
+          "Choose your image, pick a maximum file size, choose JPG or WebP and press “Compress Image”. Compare the sizes and download the result.",
+      },
+      {
+        question: "Can I compress an image to 100 KB?",
+        answer:
+          "Choose the 100 KB maximum. Many photos fit; very large or detailed ones may not reach 100 KB without reducing their dimensions. If the limit can't be reached, the tool tells you and doesn't offer an oversized file.",
+      },
+      {
+        question: "Can I compress an image to 500 KB?",
+        answer:
+          "Yes — choose the 500 KB maximum. The downloaded file is at most 500 × 1024 = 512,000 bytes, checked on the actual file.",
+      },
+      {
+        question: "Does compression reduce quality?",
+        answer:
+          "Smaller files need stronger compression, which can reduce fine detail. The tool uses the highest quality that fits your limit, so the image looks as good as possible at that size.",
+      },
+      {
+        question: "Are image dimensions preserved?",
+        answer:
+          "Yes, the width and height stay the same. Only images above the browser's processing limit (about 16.8 megapixels) are scaled down, and the tool tells you when that happens.",
+      },
+      {
+        question: "Is my image uploaded?",
+        answer:
+          "No. Compression happens inside your browser and the image is never uploaded to our servers. Location and camera details (EXIF) are removed from the result.",
+      },
+    ],
+    callout: {
+      text: "Need a specific CCC file size?",
+      linkText: "Use the CCC Photo Resizer",
+      href: "/ccc-photo-resizer",
+    },
+  };
+}
+
 const CONTENT: Partial<
   Record<ToolDefinition["id"], (presets: ImagePreset[]) => ToolContent | null>
 > = {
@@ -215,6 +340,8 @@ const CONTENT: Partial<
     presets.length === 1 ? cccInkContent(presets[0], "signature") : null,
   "ccc-thumb": (presets) => (presets.length === 1 ? cccInkContent(presets[0], "thumb") : null),
   "ccc-pack": (presets) => (presets.length > 1 ? cccPackContent(presets) : null),
+  "image-resizer": () => imageResizerContent(),
+  "image-compressor": () => imageCompressorContent(),
 };
 
 export function getToolContent(tool: ToolDefinition, presets: ImagePreset[]): ToolContent | null {

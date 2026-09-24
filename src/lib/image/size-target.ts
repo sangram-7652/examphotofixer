@@ -34,6 +34,16 @@ export function kbRangeToByteWindow(range: NumericRange): ByteWindow {
   return { minBytes, maxBytes };
 }
 
+/** Status of a single output measured against a window. */
+export function statusForBytes(
+  byteLength: number,
+  window: ByteWindow,
+): Exclude<CompressionStatus, "unable_to_process"> {
+  if (byteLength > window.maxBytes) return "above_maximum";
+  if (byteLength < window.minBytes) return "below_minimum";
+  return "within_range";
+}
+
 export interface EncodeResult {
   byteLength: number;
 }

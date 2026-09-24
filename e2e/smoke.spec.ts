@@ -61,8 +61,9 @@ test("sitemap and robots are served", async ({ request }) => {
   ]) {
     expect(xml).toContain(`${live}</loc>`);
   }
-  // Placeholder tools stay out of the sitemap until they work.
-  expect(xml).not.toContain("/image-resizer</loc>");
+  for (const generic of ["/image-resizer", "/image-compressor"]) {
+    expect(xml).toContain(`${generic}</loc>`);
+  }
   expect((await request.get("/robots.txt")).ok()).toBe(true);
 });
 

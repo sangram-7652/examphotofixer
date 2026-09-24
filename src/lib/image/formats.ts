@@ -167,3 +167,105 @@ export function isCompletePngOrWebp(bytes: Uint8Array, format: "png" | "webp"): 
   const riffSize = (bytes[4] | (bytes[5] << 8) | (bytes[6] << 16) | (bytes[7] << 24)) >>> 0;
   return bytes.length >= 12 && riffSize + 8 <= bytes.length;
 }
+
+/**
+ * Whether the file declares an alpha channel (it *may* contain transparency).
+ * Header-level only, so it's cheap: PNG colour types 4/6 or a tRNS chunk;
+ * WebP VP8X alpha flag or a VP8L alpha hint. JPEG never has alpha.
+ */
+export function mayHaveTransparency(bytes: Uint8Array, format: ImageFormat): boolean {
+  if (format === "png") {
+    const colorType = bytes.length > 25 ? bytes[25] : 0;
+    if (colorType === 4 || colorType === 6) return true;
+    for (const chunk of pngChunks(bytes)) {
+      if (chunk.type === "tRNS") return true;
+      if (chunk.type === "IDAT") return false;
+    }
+    return false;
+  }
+  if (format === "webp") {
+    for (const chunk of webpChunks(bytes)) {
+      const p = chunk.offset + 8;
+      if (chunk.id === "VP8X") return (bytes[p] & 0x10) !== 0;
+      if (chunk.id === "VP8L" && p + 5 <= bytes.length) return (bytes[p + 4] & 0x10) !== 0;
+      if (chunk.id === "VP8 ") return false;
+    }
+  }
+  return false;
+}
+
+/** Non-essential metadata chunks in a PNG or WebP file (same vocabulary as JPEG). */
+export function listPngOrWebpMetadata(
+  bytes: Uint8Array,
+  format: "png" | "webp",
+): ("exif" | "xmp" | "icc" | "comment" | "other-app")[] {
+  const found = new Set<"exif" | "xmp" | "icc" | "comment" | "other-app">();
+  if (format === "png") {
+    for (const chunk of pngChunks(bytes)) {
+      if (chunk.type === "eXIf") found.add("exif");
+      else if (chunk.type === "iCCP") found.add("icc");
+      else if (
+        chunk.type === "iTXt" &&
+        ascii(bytes, chunk.offset + 8, 17) === "XML:com.adobe.xmp"
+      ) {
+        found.add("xmp");
+      } else if (chunk.type === "tEXt" || chunk.type === "zTXt" || chunk.type === "iTXt") {
+        found.add("comment");
+      } else if (chunk.type === "tIME") found.add("other-app");
+    }
+  } else {
+    for (const chunk of webpChunks(bytes)) {
+      if (chunk.id === "EXIF") found.add("exif");
+      else if (chunk.id === "XMP ") found.add("xmp");
+      else if (chunk.id === "ICCP") found.add("icc");
+    }
+  }
+  return [...found].sort();
+}
+
+const PNG_METADATA_CHUNKS = new Set(["eXIf", "iCCP", "tEXt", "zTXt", "iTXt", "tIME"]);
+const WEBP_METADATA_CHUNKS = new Set(["EXIF", "XMP ", "ICCP"]);
+/** VP8X flag bits for ICC (0x20), EXIF (0x08) and XMP (0x04). */
+const VP8X_METADATA_FLAGS = 0x20 | 0x08 | 0x04;
+
+/**
+ * PNG/WebP counterpart of `finalizeJpeg`: removes EXIF, XMP, colour-profile,
+ * text and time chunks (browser encoders add an sRGB profile; canvas pixels are
+ * already sRGB). Image data chunks are copied byte-for-byte.
+ */
+export function stripPngOrWebpMetadata(
+  bytes: Uint8Array,
+  format: "png" | "webp",
+): Uint8Array<ArrayBuffer> {
+  const parts: Uint8Array[] = [];
+  if (format === "png") {
+    parts.push(bytes.subarray(0, 8));
+    for (const chunk of pngChunks(bytes)) {
+      if (!PNG_METADATA_CHUNKS.has(chunk.type)) {
+        parts.push(bytes.subarray(chunk.offset, chunk.offset + 12 + chunk.length));
+      }
+    }
+  } else {
+    parts.push(bytes.subarray(0, 12));
+    for (const chunk of webpChunks(bytes)) {
+      if (WEBP_METADATA_CHUNKS.has(chunk.id)) continue;
+      const end = Math.min(bytes.length, chunk.offset + 8 + chunk.size + (chunk.size % 2));
+      parts.push(bytes.subarray(chunk.offset, end));
+    }
+  }
+  const out = new Uint8Array(parts.reduce((sum, part) => sum + part.length, 0));
+  let pos = 0;
+  for (const part of parts) {
+    out.set(part, pos);
+    pos += part.length;
+  }
+  if (format === "webp") {
+    const riffSize = out.length - 8;
+    out[4] = riffSize & 0xff;
+    out[5] = (riffSize >> 8) & 0xff;
+    out[6] = (riffSize >> 16) & 0xff;
+    out[7] = (riffSize >>> 24) & 0xff;
+    if (ascii(out, 12, 4) === "VP8X") out[20] &= ~VP8X_METADATA_FLAGS;
+  }
+  return out;
+}

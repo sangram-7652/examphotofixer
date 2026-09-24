@@ -110,6 +110,21 @@ non-GET request recording, overflow check, download bytes).
 - Unit: `lib/zip/zip.test.ts` (CRC vs `node:zlib`, round-trip with an independent reader, and
   Python `zipfile.testzip()` when Python is available), `lib/tools/pack.test.ts`.
 
+## Generic tools (P6)
+
+- Unit: `lib/tools/generic/resize.test.ts` (defaults, lock, crop/fit, formats, transparency,
+  validation, filenames, engine limits), `compress.test.ts` (presets in KiB, custom maximum,
+  window capped at the original, byte enforcement on encoder output incl. the 500 × 1024
+  boundary, impossible limits, outcomes, saved %, filenames), PNG/WebP metadata stripping in
+  `formats.test.ts`.
+- Engine (browser): PNG output keeps alpha; WebP output or `unsupported-output-format`;
+  fixed quality = one encode; byte limits on actual output (reachable and impossible).
+- `e2e/image-resizer.spec.ts` / `image-compressor.spec.ts`: meta/canonical/OG/H1, FAQ equals
+  its JSON-LD, upload details, lock/unlock, crop/fit, formats, transparency, download read back
+  with `readOutputFacts` (compressor asserts `bytes <= limit × 1024`), impossible and
+  larger-than-original states without a download, reset, unsupported input, mobile, no non-GET
+  requests, analytics. Processing waits allow 30 s (large images, slow headless WebKit encoder).
+
 ## Rules
 
 - Compression tests must be deterministic: inject an encoder or assert ranges, never exact bytes from a real browser encoder.

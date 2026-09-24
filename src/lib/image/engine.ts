@@ -12,17 +12,18 @@
 import { validateAgainstPreset } from "@/lib/validation/validate";
 import type { ValidationReport } from "@/lib/validation/types";
 import { resolveCropRect, type CropSpec } from "./crop";
-import { chooseOutputDpi } from "./dpi";
+import { PREFERRED_OUTPUT_DPI, chooseOutputDpi } from "./dpi";
 import {
   SUPPORTED_INPUT_FORMATS,
   detectImageFormat,
   isAnimatedImage,
   isCompletePngOrWebp,
   readPngOrWebpDimensions,
+  stripPngOrWebpMetadata,
   type ImageFormat,
 } from "./formats";
 import type { Rect, Size } from "./geometry";
-import { readJpegFacts } from "./inspect";
+import { readOutputFacts } from "./inspect";
 import {
   finalizeJpeg,
   isCompleteJpeg,
@@ -30,7 +31,7 @@ import {
   readJpegOrientation,
   removeExifSegments,
 } from "./jpeg";
-import { MAX_CANVAS_PIXELS, MAX_INPUT_BYTES, MAX_INPUT_PIXELS } from "./limits";
+import { MAX_CANVAS_PIXELS, MAX_INPUT_BYTES, MAX_INPUT_PIXELS, MAX_OUTPUT_SIDE } from "./limits";
 import {
   normalizeOrientation,
   orientationMatrix,
@@ -40,6 +41,9 @@ import {
 } from "./orientation";
 import {
   ImageProcessingError,
+  OUTPUT_MIME_TYPES,
+  byteWindowFor,
+  type EncodingOptions,
   type OutputFacts,
   type OutputRequirements,
   type ProgressStage,
@@ -47,25 +51,32 @@ import {
 import { chooseDecodeScale, planResizeSteps } from "./resize";
 import {
   findQualityForByteWindow,
-  kbRangeToByteWindow,
+  statusForBytes,
+  type ByteWindow,
   type CompressionStatus,
 } from "./size-target";
 
-/** Largest output side accepted from a request. */
-export const MAX_OUTPUT_SIDE = 10_000;
+export { MAX_OUTPUT_SIDE } from "./limits";
 
-const BACKGROUND = "#ffffff";
+/** JPEG has no alpha; transparent areas are composited onto white (stated in the UI). */
+const JPEG_BACKGROUND = "#ffffff";
+
+/** Quality used for JPEG/WebP when there is no size limit and none was requested. */
+export const DEFAULT_QUALITY = 92;
 
 export interface ProcessOptions {
   requirements: OutputRequirements;
   /** Default: centred automatic crop. */
   crop?: CropSpec;
+  /** Default: first allowed format; quality from the size search or DEFAULT_QUALITY. */
+  encoding?: EncodingOptions;
 }
 
 export interface CompressionSummary {
-  status: Exclude<CompressionStatus, "unable_to_process">;
-  /** JPEG quality used (1–100). */
-  quality: number;
+  /** `no_size_limit` when the requirements set no file-size window. */
+  status: Exclude<CompressionStatus, "unable_to_process"> | "no_size_limit";
+  /** Encoder quality used (1–100); `null` for PNG (lossless). */
+  quality: number | null;
   attempts: number;
   /** Explanation for the UI when the status is not `within_range`. */
   message: string | null;
@@ -99,19 +110,26 @@ export function isEngineSupported(): boolean {
   return typeof createImageBitmap === "function" && typeof OffscreenCanvas === "function";
 }
 
-function assertRequirements(requirements: OutputRequirements): void {
+function assertRequirements(requirements: OutputRequirements, encoding: EncodingOptions): void {
   const { width, height } = requirements;
   const validSide = (side: number) =>
     Number.isInteger(side) && side >= 1 && side <= MAX_OUTPUT_SIDE;
   if (!validSide(width) || !validSide(height) || width * height > MAX_CANVAS_PIXELS) {
     throw new ImageProcessingError("invalid-request", "loading", "Invalid output dimensions");
   }
-  if (!requirements.formats.includes("jpeg")) {
-    throw new ImageProcessingError("invalid-request", "loading", "Only JPEG output is supported");
+  if (!(encoding.format in OUTPUT_MIME_TYPES) || !requirements.formats.includes(encoding.format)) {
+    throw new ImageProcessingError("invalid-request", "loading", "Output format not allowed");
+  }
+  const { quality } = encoding;
+  if (quality !== undefined && !(Number.isInteger(quality) && quality >= 1 && quality <= 100)) {
+    throw new ImageProcessingError("invalid-request", "loading", "Quality must be 1–100");
   }
   try {
-    kbRangeToByteWindow(requirements.fileSizeKB);
-    chooseOutputDpi(requirements.dpi);
+    const window = byteWindowFor(requirements);
+    if (window && !(window.minBytes >= 0 && window.maxBytes > window.minBytes)) {
+      throw new RangeError("File-size window must satisfy 0 <= min < max");
+    }
+    if (requirements.dpi) chooseOutputDpi(requirements.dpi);
   } catch (error) {
     throw new ImageProcessingError("invalid-request", "loading", (error as Error).message);
   }
@@ -213,15 +231,16 @@ function release(context: OffscreenCanvasRenderingContext2D): void {
 }
 
 /**
- * Draws the raw crop region, oriented and composited on white, through the
- * resize steps. Returns a canvas of exactly `target` size. Transparency is
- * flattened onto white in the first step, so later steps are fully opaque.
+ * Draws the raw crop region, oriented, through the resize steps. Returns a
+ * canvas of exactly `target` size. With `flatten` (JPEG), transparency is
+ * composited onto white in the first step; otherwise alpha is kept.
  */
 function render(
   bitmap: ImageBitmap,
   rawCrop: Rect,
   orientation: ExifOrientation,
   target: Size,
+  flatten: boolean,
 ): OffscreenCanvasRenderingContext2D {
   const orientedCrop = swapsDimensions(orientation)
     ? { width: rawCrop.height, height: rawCrop.width }
@@ -229,8 +248,10 @@ function render(
   const [first, ...rest] = planResizeSteps(orientedCrop, target);
 
   let current = createCanvas(first);
-  current.fillStyle = BACKGROUND;
-  current.fillRect(0, 0, first.width, first.height);
+  if (flatten) {
+    current.fillStyle = JPEG_BACKGROUND;
+    current.fillRect(0, 0, first.width, first.height);
+  }
   const rawDrawn = swapsDimensions(orientation)
     ? { width: first.height, height: first.width }
     : first;
@@ -261,19 +282,25 @@ function compressionMessage(
   status: CompressionSummary["status"],
   byteLength: number,
   requirements: OutputRequirements,
+  window: ByteWindow | null,
 ): string | null {
   const kb = (byteLength / 1024).toFixed(1);
-  if (status === "below_minimum") {
+  const limit = (bytes: number, kbValue: number | undefined) =>
+    requirements.fileSizeBytes || kbValue === undefined
+      ? `${(bytes / 1024).toFixed(bytes % 1024 === 0 ? 0 : 1)} KB`
+      : `${kbValue} KB`;
+  if (status === "below_minimum" && window) {
     return (
-      `At the highest quality this image is ${kb} KB, below the ${requirements.fileSizeKB.min} KB ` +
+      `At the highest quality this image is ${kb} KB, below the ` +
+      `${limit(window.minBytes, requirements.fileSizeKB?.min)} ` +
       `minimum. It was not padded or altered. An image with more detail (for example a ` +
       `higher-resolution scan) produces a larger file.`
     );
   }
-  if (status === "above_maximum") {
+  if (status === "above_maximum" && window) {
     return (
       `Even at the lowest allowed quality this image is ${kb} KB, above the ` +
-      `${requirements.fileSizeKB.max} KB maximum.`
+      `${limit(window.maxBytes, requirements.fileSizeKB?.max)} maximum.`
     );
   }
   return null;
@@ -293,7 +320,8 @@ export async function runImagePipeline(
 
   report("loading");
   if (!isEngineSupported()) throw new ImageProcessingError("unsupported-browser", "loading");
-  assertRequirements(requirements);
+  const encoding: EncodingOptions = options.encoding ?? { format: requirements.formats[0] };
+  assertRequirements(requirements, encoding);
   const input = await inspectInput(file);
   if (input.stored.width * input.stored.height > MAX_INPUT_PIXELS) {
     throw new ImageProcessingError("image-too-large", "loading");
@@ -346,7 +374,7 @@ export async function runImagePipeline(
     const rawCrop = orientedToRawRect(decodedCrop, orientation, decodedRaw);
 
     report("resizing");
-    canvas = render(bitmap, rawCrop, orientation, target);
+    canvas = render(bitmap, rawCrop, orientation, target, encoding.format === "jpeg");
     source = {
       format: input.format,
       orientation,
@@ -360,31 +388,63 @@ export async function runImagePipeline(
   }
 
   report("encoding");
-  const dpi = chooseOutputDpi(requirements.dpi);
-  const window = kbRangeToByteWindow(requirements.fileSizeKB);
+  const { format } = encoding;
+  const mime = OUTPUT_MIME_TYPES[format];
+  // JPEG always carries JFIF density; generic tools without a DPI range get the default.
+  const dpi = requirements.dpi ? chooseOutputDpi(requirements.dpi) : PREFERRED_OUTPUT_DPI;
+  const window = byteWindowFor(requirements);
   const encode = async (quality: number) => {
-    const blob = await canvas.canvas.convertToBlob({ type: "image/jpeg", quality: quality / 100 });
-    if (blob.type !== "image/jpeg") {
-      throw new ImageProcessingError("encode-failed", "encoding");
+    const blob = await canvas.canvas.convertToBlob({ type: mime, quality: quality / 100 });
+    if (blob.type !== mime) {
+      // Browsers fall back to PNG for types they can't encode (e.g. WebP in Safari).
+      throw new ImageProcessingError(
+        format === "jpeg" ? "encode-failed" : "unsupported-output-format",
+        "encoding",
+      );
     }
-    // Size is measured on the final bytes: metadata stripped, DPI written.
-    const bytes = finalizeJpeg(new Uint8Array(await blob.arrayBuffer()), dpi);
+    const raw = new Uint8Array(await blob.arrayBuffer());
+    // Size is measured on the final bytes: metadata stripped (and DPI written for JPEG).
+    const bytes = format === "jpeg" ? finalizeJpeg(raw, dpi) : stripPngOrWebpMetadata(raw, format);
     return { byteLength: bytes.length, bytes };
   };
-  const compression = await findQualityForByteWindow(encode, window);
-  release(canvas);
-  if (compression.status === "unable_to_process") {
-    throw compression.error instanceof ImageProcessingError
-      ? compression.error
-      : new ImageProcessingError("encode-failed", "encoding");
-  }
-  const { bytes } = compression.output;
 
-  // DPI and metadata were applied by finalizeJpeg during encoding; these stages
-  // read them back from the final bytes.
+  let bytes: Uint8Array<ArrayBuffer>;
+  let summary: Omit<CompressionSummary, "message">;
+  try {
+    if (window && format !== "png") {
+      // Highest quality whose final bytes fit the window (existing search).
+      const compression = await findQualityForByteWindow(encode, window);
+      if (compression.status === "unable_to_process") throw compression.error;
+      bytes = compression.output.bytes;
+      summary = {
+        status: compression.status,
+        quality: compression.quality,
+        attempts: compression.attempts,
+      };
+    } else {
+      // No size limit, or PNG (lossless: quality has no effect): one encode.
+      const quality = format === "png" ? 100 : (encoding.quality ?? DEFAULT_QUALITY);
+      const output = await encode(quality);
+      bytes = output.bytes;
+      summary = {
+        status: window ? statusForBytes(bytes.length, window) : "no_size_limit",
+        quality: format === "png" ? null : quality,
+        attempts: 1,
+      };
+    }
+  } catch (error) {
+    throw error instanceof ImageProcessingError
+      ? error
+      : new ImageProcessingError("encode-failed", "encoding");
+  } finally {
+    release(canvas);
+  }
+
+  // DPI and metadata were applied during encoding; these stages read them back
+  // from the final bytes.
   report("dpi");
   report("metadata");
-  const facts = readJpegFacts(bytes);
+  const facts = readOutputFacts(bytes);
   if (!facts) throw new ImageProcessingError("internal-error", "metadata");
 
   report("validation");
@@ -392,13 +452,11 @@ export async function runImagePipeline(
 
   report("complete");
   return {
-    blob: new Blob([bytes], { type: "image/jpeg" }),
+    blob: new Blob([bytes], { type: mime }),
     facts,
     compression: {
-      status: compression.status,
-      quality: compression.quality,
-      attempts: compression.attempts,
-      message: compressionMessage(compression.status, bytes.length, requirements),
+      ...summary,
+      message: compressionMessage(summary.status, bytes.length, requirements, window),
     },
     validation,
     source,

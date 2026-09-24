@@ -10,6 +10,7 @@ import type { CropSpec } from "../crop";
 import { isImageProcessingSupported } from "../support";
 import {
   PROCESSING_ERROR_MESSAGES,
+  type EncodingOptions,
   type OutputRequirements,
   type ProcessingErrorCode,
   type ProcessingStage,
@@ -43,6 +44,7 @@ export interface WorkerLike {
 export interface ProcessImageOptions {
   requirements: OutputRequirements;
   crop?: CropSpec;
+  encoding?: EncodingOptions;
   onProgress?: (progress: ImageProcessingProgress) => void;
   signal?: AbortSignal;
   /** Default 60 s. */
@@ -130,6 +132,7 @@ export function processImage(
         jobId,
         file,
         requirements: options.requirements,
+        encoding: options.encoding,
         crop: options.crop,
       });
     } catch {

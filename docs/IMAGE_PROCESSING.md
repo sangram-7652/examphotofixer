@@ -1,6 +1,6 @@
 # Image Processing
 
-Status: **engine implemented (P2).** Runs in a Web Worker; not yet wired to the tool UI.
+Status: **engine implemented (P2), used by CCC tools (P3–P5) and generic tools (P6).**
 
 ## Pipeline
 
@@ -147,3 +147,24 @@ full size (a plain decode is faster there than a decode-time resize) and the wor
 does the downscaling. Measured stalls (idle machine): 2000×1500 ≈ 50 ms, 12 MP ≈ 165–180 ms,
 48 MP ≈ 0.6–1 s. Chromium stays at ~10 ms for all sizes. A JS/WASM decoder in the worker would
 remove the stall at a large size/speed cost; not done.
+
+## Output formats, quality and size limits (P6)
+
+- `EncodingOptions.format`: `jpeg` (always), `png`, `webp` (where the browser can encode it;
+  `detectEncodableFormats()` checks, and the engine rejects a silent PNG fallback with
+  `unsupported-output-format`).
+- Transparency: only JPEG is flattened onto white. PNG/WebP keep alpha; no background is added.
+- Quality: with a size window the existing search picks the highest quality that fits; without
+  one, a single encode at `EncodingOptions.quality` (default 92). PNG is lossless in the
+  browser encoder, so it has no quality and is encoded once.
+- Size windows: presets use `fileSizeKB` (source wording, conservative KB conversion);
+  generic tools pass exact `fileSizeBytes` with **1 KB = 1024 bytes**. `byteWindowFor()`
+  resolves either. `null` means no size requirement, and the file-size check is omitted.
+- DPI: JPEG always carries JFIF density (the preset range, or 150 when none is required).
+  PNG/WebP outputs carry no DPI.
+- Metadata: JPEG via `finalizeJpeg`; PNG/WebP via `stripPngOrWebpMetadata` (removes EXIF,
+  XMP, ICC profile, text and time chunks; browser WebP encoders add an sRGB ICC profile).
+  Sizes are always measured on these final bytes.
+- Limits reused, not invented: `MAX_OUTPUT_SIDE` (10,000 px) and `MAX_CANVAS_PIXELS`
+  (16.7 MP, iOS Safari's canvas limit) now live in `limits.ts`; the compressor reduces only
+  images beyond them and says so; inputs above `MAX_INPUT_PIXELS` (100 MP) are rejected.
