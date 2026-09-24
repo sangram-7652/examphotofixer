@@ -32,3 +32,9 @@ All events carry `tool_id` and `preset_id`.
 
 Event names and allowed properties will live in one typed module (`src/lib/analytics/`) so
 nothing else can send ad-hoc data.
+
+## Guides (P7)
+
+No guide event was added: guides are server-rendered without page JavaScript, and a page view
+from the analytics provider covers "guide opened". Search Console metrics are described in
+`SEO_SEARCH_CONSOLE.md`.

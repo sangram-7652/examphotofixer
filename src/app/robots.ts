@@ -6,7 +6,8 @@ export default function robots(): MetadataRoute.Robots {
     return { rules: { userAgent: "*", disallow: "/" } };
   }
   return {
-    rules: { userAgent: "*", allow: "/" },
+    // /dev/ holds the engine test harness (404 in production); keep crawlers away anyway.
+    rules: { userAgent: "*", allow: "/", disallow: "/dev/" },
     sitemap: absoluteUrl("/sitemap.xml"),
   };
 }

@@ -3,7 +3,7 @@
  * the preset — never typed into copy — so content can't drift from the data.
  */
 
-import { FORMAT_LABELS } from "@/lib/image/formats";
+import { describePreset } from "@/lib/presets/describe";
 import { sourceCitation } from "@/lib/presets/source";
 import type { ImagePreset } from "@/lib/presets/types";
 import type { ToolDefinition } from "@/lib/tools/registry";
@@ -23,14 +23,7 @@ export interface ToolContent {
   callout?: { text: string; linkText: string; href: string };
 }
 
-function describe(preset: ImagePreset) {
-  return {
-    size: `${preset.width} × ${preset.height} pixels`,
-    kb: `${preset.fileSizeKB.min}–${preset.fileSizeKB.max} KB`,
-    format: preset.formats.map((f) => FORMAT_LABELS[f]).join(", "),
-    dpi: `${preset.dpi.min}–${preset.dpi.max} DPI`,
-  };
-}
+const describe = describePreset;
 
 function cccPhotoContent(preset: ImagePreset): ToolContent {
   const d = describe(preset);

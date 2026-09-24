@@ -8,11 +8,10 @@ import { ImageTool } from "@/components/tool/ImageTool";
 import { PackTool } from "@/components/tool/PackTool";
 import { ImageCompressorTool } from "@/components/tool/generic/ImageCompressorTool";
 import { ImageResizerTool } from "@/components/tool/generic/ImageResizerTool";
+import { guidePath, guidesForTool } from "@/content/guides";
 import { getToolContent } from "@/content/tool-content";
 import { EXAMS, getPreset } from "@/lib/presets";
-import { formatIsoDate, isVerifiedSource, sourceCitation } from "@/lib/presets/source";
-import type { ImagePreset } from "@/lib/presets/types";
-import { SourceLink } from "@/components/SourceLink";
+import { SourceVerification } from "@/components/SourceVerification";
 import {
   breadcrumbJsonLd,
   faqJsonLd,
@@ -44,43 +43,12 @@ const GENERIC_STEPS: Record<"generic-resize" | "generic-compress", string[]> = {
   ],
 };
 
-function SourceSection({ preset }: { preset: ImagePreset }) {
-  const { source } = preset;
-  const verified = isVerifiedSource(source);
-  return (
-    <section
-      aria-labelledby="source"
-      data-testid="requirements-source"
-      className="mt-6 rounded-lg bg-surface p-4 text-sm"
-    >
-      <h3 id="source" className="font-semibold">
-        Source and verification
-      </h3>
-      <p className="mt-1">Requirements based on {sourceCitation(source)}.</p>
-      {verified && source.verifiedOn ? (
-        <p className="mt-1">
-          Values verified against the source on{" "}
-          <time dateTime={source.verifiedOn}>{formatIsoDate(source.verifiedOn)}</time>
-          {source.page ? ` (page ${source.page})` : ""}.{" "}
-          <SourceLink source={source}>View source</SourceLink>
-        </p>
-      ) : (
-        <p className="mt-1">The official source link has not been recorded yet.</p>
-      )}
-      <p className="mt-2 text-muted">
-        ExamPhotoFixer is an independent tool and is not affiliated with {source.authority}. We only
-        reference their published requirements. Guidelines can change — check the current version
-        before you upload.
-      </p>
-    </section>
-  );
-}
-
 export function ToolPage({ toolId }: { toolId: ToolId }) {
   const tool = getTool(toolId);
   const presets = tool.presetIds.map(getPreset);
   const content = getToolContent(tool, presets);
   const live = tool.status === "live";
+  const guides = live ? guidesForTool(tool.id) : [];
   const livePreset = live && presets.length === 1 ? presets[0] : null;
   const livePack = live && tool.kind === "pack" && presets.length > 1;
   // One source section when every preset cites the same (shared) source object.
@@ -173,7 +141,7 @@ export function ToolPage({ toolId }: { toolId: ToolId }) {
               <RequirementsTable key={preset.id} preset={preset} />
             ))}
           </div>
-          {sharedSource ? <SourceSection preset={sharedSource} /> : null}
+          {sharedSource ? <SourceVerification preset={sharedSource} /> : null}
         </section>
       ) : null}
 
@@ -209,6 +177,23 @@ export function ToolPage({ toolId }: { toolId: ToolId }) {
             </div>
           </section>
         </>
+      ) : null}
+
+      {guides.length > 0 ? (
+        <section aria-labelledby="related-guides" className="mt-10">
+          <h2 id="related-guides" className="text-xl font-semibold">
+            Related guides
+          </h2>
+          <ul className="mt-3 space-y-2">
+            {guides.map((guide) => (
+              <li key={guide.slug}>
+                <Link href={guidePath(guide)} className="font-medium underline underline-offset-2">
+                  {guide.title}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
       ) : null}
 
       <section aria-labelledby="privacy-note" className="mt-10 rounded-lg bg-surface p-4">

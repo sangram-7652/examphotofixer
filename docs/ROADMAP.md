@@ -34,6 +34,11 @@ steps, pack status, local ZIP) live on the shared tool architecture.
 `/image-resizer` (crop/fit, JPG/PNG/WebP, quality) and `/image-compressor` (maximum size,
 actual-byte enforcement) on the same engine via runtime requirements.
 
+## Phase 2.8 (P7): SEO & content system ✅
+
+Guide system with four CCC guides, real `/guides` index, related guides on tools, robots/sitemap/
+canonical/404 audit with raw-HTML e2e checks, Search Console docs, SEO audit.
+
 ## Phase 3 — Launch
 
 - Legal review. Analytics decision. Enable indexing.

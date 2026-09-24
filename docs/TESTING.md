@@ -125,6 +125,18 @@ non-GET request recording, overflow check, download bytes).
   larger-than-original states without a download, reset, unsupported input, mobile, no non-GET
   requests, analytics. Processing waits allow 30 s (large images, slow headless WebKit encoder).
 
+## SEO and guides (P7)
+
+- Unit: `content/guides.test.ts` (registry, slugs, unique metadata, live tool links, values from
+  presets incl. change propagation, no approval/guarantee claims), `lib/seo/seo-rules.test.ts`
+  (sitemap inclusion/exclusion, noindex rules, canonicals, host), `app/robots.test.ts`.
+- `e2e/guides.spec.ts` (all projects): index, each guide's H1/meta/canonical/OG, preset values,
+  source, tool links, guide ↔ tool navigation, phone layout.
+- `e2e/seo.spec.ts` (Chromium only — HTTP, no browser): exact sitemap list; for every sitemap
+  URL on **raw server HTML**: 200, one self canonical, title, description, OG, one H1, no extra
+  noindex, one valid JSON-LD block, no duplicate/forbidden schema types, FAQ schema = visible FAQ;
+  crawl of all internal links (200, no redirects); robots, 308 redirects, trailing slash, 404s.
+
 ## Rules
 
 - Compression tests must be deterministic: inject an encoder or assert ranges, never exact bytes from a real browser encoder.

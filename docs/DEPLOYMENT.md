@@ -12,6 +12,9 @@ runtime features, no env secrets.
 | `NEXT_PUBLIC_SITE_URL`       | production | Canonical origin, no trailing slash. Falls back to `https://examphotofixer.com`. |
 | `NEXT_PUBLIC_SITE_INDEXABLE` | launch     | Exactly `true` to allow indexing. Leave unset on previews and until tools work.  |
 
+Optional: `GOOGLE_SITE_VERIFICATION` renders the Search Console meta tag (see
+`SEO_SEARCH_CONSOLE.md`); set it in the hosting env only.
+
 Never set `ENGINE_HARNESS` in production: it enables the `/dev/image-engine` test page
 (Playwright sets it for e2e only).
 

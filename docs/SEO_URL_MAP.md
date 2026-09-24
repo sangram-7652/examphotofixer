@@ -1,18 +1,22 @@
 # SEO URL Map
 
-| Path                            | Page                                   | Primary intent                                           | Sitemap             | Indexable* |
-| ------------------------------- | -------------------------------------- | -------------------------------------------------------- | ------------------- | ---------- |
-| `/`                             | Home                                   | exam photo resizer, brand                                | ✅                  | ✅         |
-| `/ccc-photo-resizer`            | CCC Photo Resizer                      | ccc photo resize / size                                  | ✅                  | ✅         |
-| `/ccc-signature-resizer`        | CCC Signature Resizer                  | ccc signature resize                                     | ✅                  | ✅         |
-| `/ccc-thumb-impression-resizer` | CCC Left Thumb Impression Resizer      | ccc thumb impression size                                | ✅                  | ✅         |
-| `/ccc-complete-pack`            | CCC Complete Pack (hub)                | ccc photo signature thumb resize, ccc application images | ✅                  | ✅         |
-| `/image-resizer`                | Generic Image Resizer (placeholder)    | resize image to pixels                                   | ❌ until live       | ❌ noindex |
-| `/image-compressor`             | Generic Image Compressor (placeholder) | compress image to KB                                     | ❌ until live       | ❌ noindex |
-| `/tools`                        | All tools                              | —                                                        | ✅                  | ✅         |
-| `/guides`                       | Guides index                           | —                                                        | ❌ (no content yet) | ❌ noindex |
-| `/privacy`                      | Privacy policy                         | —                                                        | ✅                  | ✅         |
-| `/terms`                        | Terms of use                           | —                                                        | ✅                  | ✅         |
+| Path                                | Page                                   | Primary intent                                           | Sitemap       | Indexable* |
+| ----------------------------------- | -------------------------------------- | -------------------------------------------------------- | ------------- | ---------- |
+| `/`                                 | Home                                   | exam photo resizer, brand                                | ✅            | ✅         |
+| `/ccc-photo-resizer`                | CCC Photo Resizer                      | ccc photo resize / size                                  | ✅            | ✅         |
+| `/ccc-signature-resizer`            | CCC Signature Resizer                  | ccc signature resize                                     | ✅            | ✅         |
+| `/ccc-thumb-impression-resizer`     | CCC Left Thumb Impression Resizer      | ccc thumb impression size                                | ✅            | ✅         |
+| `/ccc-complete-pack`                | CCC Complete Pack (hub)                | ccc photo signature thumb resize, ccc application images | ✅            | ✅         |
+| `/image-resizer`                    | Generic Image Resizer (placeholder)    | resize image to pixels                                   | ❌ until live | ❌ noindex |
+| `/image-compressor`                 | Generic Image Compressor (placeholder) | compress image to KB                                     | ❌ until live | ❌ noindex |
+| `/tools`                            | All tools                              | —                                                        | ✅            | ✅         |
+| `/guides`                           | Guides index                           | ccc guides, upload help                                  | ✅            | ✅         |
+| `/guides/ccc-photo-size`            | CCC Photo Size guide                   | ccc photo size, 132x170, KB, DPI                         | ✅            | ✅         |
+| `/guides/ccc-signature-size`        | CCC Signature Size guide               | ccc signature size                                       | ✅            | ✅         |
+| `/guides/ccc-thumb-impression-size` | CCC Thumb Impression Size guide        | ccc thumb impression size                                | ✅            | ✅         |
+| `/guides/ccc-photo-upload-problems` | CCC Photo Upload Problems              | ccc photo upload error                                   | ✅            | ✅         |
+| `/privacy`                          | Privacy policy                         | —                                                        | ✅            | ✅         |
+| `/terms`                            | Terms of use                           | —                                                        | ✅            | ✅         |
 
 \* Only after `NEXT_PUBLIC_SITE_INDEXABLE=true`. Until then the whole site is noindex.
 

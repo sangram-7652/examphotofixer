@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { listGuides } from "../src/content/guides";
 
 const TOOL_PAGES = [
   { path: "/ccc-photo-resizer", h1: "CCC Photo Resizer" },
@@ -52,7 +53,10 @@ test("sitemap and robots are served", async ({ request }) => {
   expect(sitemap.ok()).toBe(true);
   const xml = await sitemap.text();
   expect(xml).toContain("/ccc-photo-resizer</loc>");
-  expect(xml).not.toContain("/guides</loc>");
+  // /guides has published guides since P7, so it and each guide are listed.
+  for (const guide of ["/guides", ...listGuides().map((g) => `/guides/${g.slug}`)]) {
+    expect(xml).toContain(`${guide}</loc>`);
+  }
   for (const live of [
     "/ccc-photo-resizer",
     "/ccc-signature-resizer",

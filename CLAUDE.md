@@ -81,6 +81,12 @@ FORM_PRESETS, SEO_STRATEGY, SEO_URL_MAP, ANALYTICS, TESTING, PRIVACY, DEPLOYMENT
 - Compressor success is decided from actual output bytes; never offer an over-limit file as
   the result.
 
+## Guide rules
+
+- Guides live in `src/content/guides.ts`; values via `describePreset()`, sources via
+  `SourceVerification` — never typed into copy. Publish a guide only when it answers a distinct,
+  real question; no programmatic pages, no pages for unverified exams.
+
 ## SEO rules
 
 - Metadata via `buildPageMetadata` (canonical, OG, Twitter). Titles use the root template.

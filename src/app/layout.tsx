@@ -19,6 +19,10 @@ export const metadata: Metadata = {
   description: siteConfig.description,
   applicationName: siteConfig.name,
   robots: siteConfig.indexable ? { index: true, follow: true } : { index: false, follow: false },
+  // Search Console HTML-tag verification; the token lives in the deployment env, never in git.
+  ...(process.env.GOOGLE_SITE_VERIFICATION
+    ? { verification: { google: process.env.GOOGLE_SITE_VERIFICATION } }
+    : {}),
 };
 
 export const viewport: Viewport = {

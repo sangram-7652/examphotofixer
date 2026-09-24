@@ -63,3 +63,10 @@ titles, descriptions, canonicals, one H1, how-to, common problems and FAQs whose
 JSON-LD is built from the same visible list (asserted in e2e). They link contextually to the CCC
 tools without implying official status. `/tools` is grouped into Exam & Application Tools,
 General Image Tools and Coming Soon (SSC, Railway, UPSC as plain text — no pages).
+
+## Guides (P7)
+
+Four CCC guides under `/guides/[slug]` (registry: `src/content/guides.ts`), statically generated,
+server-rendered, no page JavaScript. Values come from presets; sources from the shared
+`SourceVerification`. See `SEO_AUDIT.md` for the full technical audit and
+`SEO_SEARCH_CONSOLE.md` for Search Console setup.

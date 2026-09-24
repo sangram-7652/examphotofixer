@@ -1,3 +1,4 @@
+import { guidePath, listGuides } from "@/content/guides";
 import { TOOLS } from "@/lib/tools/registry";
 
 export interface SiteRoute {
@@ -11,7 +12,7 @@ export interface SiteRoute {
 const STATIC_ROUTES: readonly SiteRoute[] = [
   { path: "/", inSitemap: true, priority: 1, changeFrequency: "weekly" },
   { path: "/tools", inSitemap: true, priority: 0.8, changeFrequency: "monthly" },
-  { path: "/guides", inSitemap: false, priority: 0.5, changeFrequency: "weekly" },
+  { path: "/guides", inSitemap: true, priority: 0.6, changeFrequency: "monthly" },
   { path: "/privacy", inSitemap: true, priority: 0.2, changeFrequency: "yearly" },
   { path: "/terms", inSitemap: true, priority: 0.2, changeFrequency: "yearly" },
 ];
@@ -23,6 +24,12 @@ export function listSiteRoutes(): SiteRoute[] {
       path: tool.path,
       inSitemap: tool.status === "live",
       priority: tool.exam ? 0.9 : 0.7,
+      changeFrequency: "monthly",
+    })),
+    ...listGuides().map((guide): SiteRoute => ({
+      path: guidePath(guide),
+      inSitemap: true,
+      priority: 0.6,
       changeFrequency: "monthly",
     })),
   ];
