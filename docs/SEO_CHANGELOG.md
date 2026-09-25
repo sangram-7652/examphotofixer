@@ -77,3 +77,18 @@ Template:
 - Reason: accuracy. IBPS guides existed since P8 but the index described only CCC.
 - Data source: content audit (no data).
 - Expected behaviour: accurate snippet. Review date: 4 weeks after launch. Review: pending.
+
+## 2026-09-25 — UI polish (P12.1): visible copy only
+
+- Titles, meta descriptions, H1s, canonicals, structured data and URLs: **unchanged**.
+- `/` supporting line under the H1: was the site description; now "Resize, compress and prepare
+  application images to match verified requirements — directly in your browser." New sections:
+  four-step workflow, privacy band, exam cards with requirement values from presets.
+- Tool pages: an eyebrow above the H1 ("CCC · NIELIT", "IBPS · IBPS", "Image tool").
+- Guides: requirement section heading was the hard-coded "Requirements stated in the referenced
+  NIELIT guideline" on every guide (wrong on IBPS guides); now names the guide's own source
+  authority.
+- Result heading for below-minimum results: "Ready — with a warning" → "Review before
+  downloading".
+- Reason: product UI polish and one accuracy fix. Data source: design review (no data).
+- Review date: 4 weeks after launch. Review: pending.

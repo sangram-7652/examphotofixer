@@ -11,8 +11,8 @@ export const metadata: Metadata = buildPageMetadata({
 // DRAFT: requires legal review before public launch. Keep in sync with docs/PRIVACY.md.
 export default function PrivacyPage() {
   return (
-    <article className="mx-auto max-w-3xl px-4 py-8 [&_h2]:mt-8 [&_h2]:text-xl [&_h2]:font-semibold [&_p]:mt-3">
-      <h1 className="text-3xl font-bold tracking-tight">Privacy Policy</h1>
+    <article className="mx-auto max-w-3xl px-4 py-8 [&_h2]:mt-8 [&_h2]:font-display [&_h2]:text-xl [&_h2]:font-semibold [&_p]:mt-3">
+      <h1 className="font-display text-3xl font-bold tracking-tight sm:text-4xl">Privacy Policy</h1>
 
       <h2>Your files</h2>
       <p>

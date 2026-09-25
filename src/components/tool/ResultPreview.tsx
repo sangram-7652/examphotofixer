@@ -1,3 +1,4 @@
+import { CropMarks } from "@/components/CropMarks";
 import { formatBytes } from "@/lib/validation/validate";
 
 interface PreviewImage {
@@ -37,16 +38,17 @@ export function ResultPreview({
       {figures.map(({ key, title, image }) => (
         <figure
           key={key}
-          className="flex flex-col items-center rounded-lg bg-surface p-3"
+          className="flex flex-col items-center rounded-lg border border-border bg-surface p-3"
           data-testid={`preview-${key}`}
         >
-          <div className="h-40 w-full sm:h-56">
+          <div className="relative h-40 w-full sm:h-56">
+            {key === "final" ? <CropMarks inset="0" /> : null}
             {/* eslint-disable-next-line @next/next/no-img-element -- local object URL */}
             <img src={image.url} alt={`${title} image`} className="h-full w-full object-contain" />
           </div>
           <figcaption className="mt-2 text-center text-xs sm:text-sm">
             <span className="block font-semibold">{title}</span>
-            <span className="block tabular-nums text-muted">
+            <span className="spec-value block text-muted">
               {image.width} × {image.height} px · {formatBytes(image.byteLength)}
               {image.formatLabel ? ` · ${image.formatLabel}` : ""}
             </span>

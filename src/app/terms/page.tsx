@@ -11,8 +11,8 @@ export const metadata: Metadata = buildPageMetadata({
 // DRAFT: requires legal review before public launch.
 export default function TermsPage() {
   return (
-    <article className="mx-auto max-w-3xl px-4 py-8 [&_h2]:mt-8 [&_h2]:text-xl [&_h2]:font-semibold [&_p]:mt-3">
-      <h1 className="text-3xl font-bold tracking-tight">Terms of Use</h1>
+    <article className="mx-auto max-w-3xl px-4 py-8 [&_h2]:mt-8 [&_h2]:font-display [&_h2]:text-xl [&_h2]:font-semibold [&_p]:mt-3">
+      <h1 className="font-display text-3xl font-bold tracking-tight sm:text-4xl">Terms of Use</h1>
 
       <h2>Not affiliated</h2>
       <p>

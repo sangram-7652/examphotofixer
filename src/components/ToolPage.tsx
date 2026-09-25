@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
+import { CropMarks } from "@/components/CropMarks";
 import { JsonLd } from "@/components/JsonLd";
 import { RequirementsTable } from "@/components/RequirementsTable";
 import { ToolCard } from "@/components/ToolCard";
@@ -89,8 +90,15 @@ export function ToolPage({ toolId }: { toolId: ToolId }) {
       <JsonLd data={jsonLd} />
       <Breadcrumbs crumbs={crumbs} />
 
-      <h1 className="mt-3 text-3xl font-bold tracking-tight">{tool.h1}</h1>
-      <p className="mt-2 text-muted">{content?.intro ?? tool.summary}</p>
+      <p className="eyebrow mt-6">
+        {tool.exam
+          ? `${EXAMS[tool.exam].shortName} · ${EXAMS[tool.exam].conductingBody}`
+          : "Image tool"}
+      </p>
+      <h1 className="mt-2 font-display text-3xl font-bold tracking-tight text-balance sm:text-4xl">
+        {tool.h1}
+      </h1>
+      <p className="mt-3 text-muted sm:text-lg">{content?.intro ?? tool.summary}</p>
 
       <div className="mt-5">
         {livePreset ? (
@@ -107,9 +115,9 @@ export function ToolPage({ toolId }: { toolId: ToolId }) {
       </div>
 
       {content?.callout ? (
-        <p className="mt-6 rounded-lg border border-border p-4 text-sm">
+        <p className="mt-6 rounded-xl border border-brand/20 bg-brand-soft/60 p-4 text-sm">
           {content.callout.text}{" "}
-          <Link href={content.callout.href} className="font-medium underline underline-offset-2">
+          <Link href={content.callout.href} className="text-link">
             {content.callout.linkText}
           </Link>
           .
@@ -117,20 +125,20 @@ export function ToolPage({ toolId }: { toolId: ToolId }) {
       ) : null}
 
       {pack ? (
-        <p className="mt-6 rounded-lg border border-border p-4 text-sm">
+        <p className="mt-6 rounded-xl border border-brand/20 bg-brand-soft/60 p-4 text-sm">
           Need the other {EXAMS[tool.exam!].shortName} application images too?{" "}
-          <Link href={pack.path} className="font-medium underline underline-offset-2">
+          <Link href={pack.path} className="text-link">
             Use the {pack.name}
           </Link>{" "}
           to prepare the {packDocuments} on one page.
         </p>
       ) : null}
 
-      <section aria-labelledby="how-it-works" className="mt-10">
-        <h2 id="how-it-works" className="text-xl font-semibold">
+      <section aria-labelledby="how-it-works" className="mt-14">
+        <h2 id="how-it-works" className="section-title">
           How it works
         </h2>
-        <ol className="mt-4 list-decimal space-y-2 pl-5">
+        <ol className="mt-4 list-decimal space-y-3 pl-5 marker:font-semibold marker:text-brand">
           {steps.map((step) => (
             <li key={step}>{step}</li>
           ))}
@@ -138,8 +146,8 @@ export function ToolPage({ toolId }: { toolId: ToolId }) {
       </section>
 
       {presets.length > 0 ? (
-        <section aria-labelledby="requirements" className="mt-10">
-          <h2 id="requirements" className="text-xl font-semibold">
+        <section aria-labelledby="requirements" className="mt-14">
+          <h2 id="requirements" className="section-title">
             {tool.exam
               ? `${EXAMS[tool.exam].shortName} upload requirements`
               : "Upload requirements"}
@@ -155,8 +163,8 @@ export function ToolPage({ toolId }: { toolId: ToolId }) {
 
       {content ? (
         <>
-          <section aria-labelledby="common-problems" className="mt-10">
-            <h2 id="common-problems" className="text-xl font-semibold">
+          <section aria-labelledby="common-problems" className="mt-14">
+            <h2 id="common-problems" className="section-title">
               Common problems this fixes
             </h2>
             <dl className="mt-4 space-y-4">
@@ -169,15 +177,18 @@ export function ToolPage({ toolId }: { toolId: ToolId }) {
             </dl>
           </section>
 
-          <section aria-labelledby="faq" className="mt-10">
-            <h2 id="faq" className="text-xl font-semibold">
+          <section aria-labelledby="faq" className="mt-14">
+            <h2 id="faq" className="section-title">
               Frequently asked questions
             </h2>
-            <div className="mt-4 divide-y divide-border rounded-lg border border-border">
+            <div className="card mt-4 divide-y divide-border">
               {content.faq.map((item) => (
                 <details key={item.question} className="group px-4 py-3">
-                  <summary className="min-h-11 cursor-pointer py-2 font-medium">
-                    {item.question}
+                  <summary
+                    data-faq=""
+                    className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-4 py-2 font-medium after:text-lg after:text-brand after:transition-transform after:content-['+'] group-open:after:rotate-45 [&::-webkit-details-marker]:hidden"
+                  >
+                    <span>{item.question}</span>
                   </summary>
                   <p className="pb-2 text-muted">{item.answer}</p>
                 </details>
@@ -188,14 +199,14 @@ export function ToolPage({ toolId }: { toolId: ToolId }) {
       ) : null}
 
       {guides.length > 0 ? (
-        <section aria-labelledby="related-guides" className="mt-10">
-          <h2 id="related-guides" className="text-xl font-semibold">
+        <section aria-labelledby="related-guides" className="mt-14">
+          <h2 id="related-guides" className="section-title">
             Related guides
           </h2>
           <ul className="mt-3 space-y-2">
             {guides.map((guide) => (
               <li key={guide.slug}>
-                <Link href={guidePath(guide)} className="font-medium underline underline-offset-2">
+                <Link href={guidePath(guide)} className="text-link">
                   {guide.title}
                 </Link>
               </li>
@@ -204,21 +215,25 @@ export function ToolPage({ toolId }: { toolId: ToolId }) {
         </section>
       ) : null}
 
-      <section aria-labelledby="privacy-note" className="mt-10 rounded-lg bg-surface p-4">
+      <section
+        aria-labelledby="privacy-note"
+        className="relative mt-14 rounded-xl border border-border bg-surface px-7 py-6"
+      >
+        <CropMarks inset="0.5rem" />
         <h2 id="privacy-note" className="font-semibold">
           Your files stay on your device
         </h2>
         <p className="mt-1 text-sm text-muted">
           Images are processed in your browser. They are not uploaded to or stored on our servers.{" "}
-          <Link href="/privacy" className="underline">
+          <Link href="/privacy" className="text-link">
             Privacy policy
           </Link>
         </p>
       </section>
 
       {related.length > 0 ? (
-        <section aria-labelledby="related-tools" className="mt-10">
-          <h2 id="related-tools" className="text-xl font-semibold">
+        <section aria-labelledby="related-tools" className="mt-14">
+          <h2 id="related-tools" className="section-title">
             Related tools
           </h2>
           <div className="mt-4 grid gap-3 sm:grid-cols-2">

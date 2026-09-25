@@ -66,6 +66,8 @@ FORM_PRESETS, SEO_STRATEGY, SEO_URL_MAP, ANALYTICS, TESTING, PRIVACY, DEPLOYMENT
 - TypeScript strict; no `any`; prefer pure functions and explicit types at module boundaries.
 - Server Components by default; `"use client"` only where interaction needs it.
 - Tailwind with theme tokens from `globals.css` (`bg-brand`, `text-muted`, …) — no raw hex in components.
+  Shared classes there (`btn-primary`, `btn-secondary`, `card`, `eyebrow`, `spec-value`, `text-link`,
+  `section-title`) are the design system; the crop-mark motif is `CropMarks`/`SpecFrame`.
 - Accessible by default: labels for inputs, one `h1` per page, landmarks, visible focus.
 - Prettier formatting (100 cols, double quotes). Match surrounding style and comment density.
 - Next.js 16: consult `node_modules/next/dist/docs/` for APIs (see AGENTS.md).

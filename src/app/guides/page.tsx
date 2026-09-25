@@ -27,24 +27,24 @@ export default function GuidesPage() {
     <div className="mx-auto max-w-3xl px-4 py-6 sm:py-8">
       <JsonLd data={breadcrumbJsonLd(crumbs)} />
       <Breadcrumbs crumbs={crumbs} />
-      <h1 className="mt-3 text-3xl font-bold tracking-tight">Guides</h1>
+      <h1 className="mt-3 font-display text-3xl font-bold tracking-tight sm:text-4xl">Guides</h1>
       <p className="mt-2 text-muted">
         Clear answers about image requirements and upload problems, each linked to the tool that
         fixes it.
       </p>
       {categories.map((category) => (
         <section key={category} aria-labelledby={`cat-${category}`} className="mt-8">
-          <h2 id={`cat-${category}`} className="text-xl font-semibold">
+          <h2 id={`cat-${category}`} className="section-title">
             {category}
           </h2>
           <ul className="mt-3 space-y-3">
             {guides
               .filter((guide) => guide.category === category)
               .map((guide) => (
-                <li key={guide.slug} className="rounded-lg border border-border p-4">
+                <li key={guide.slug} className="card p-5">
                   <Link
                     href={guidePath(guide)}
-                    className="text-lg font-semibold underline-offset-2 hover:underline"
+                    className="text-lg font-semibold text-foreground underline-offset-4 hover:text-brand hover:underline"
                   >
                     {guide.title}
                   </Link>

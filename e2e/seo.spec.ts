@@ -99,9 +99,14 @@ test("every sitemap URL: 200, one canonical to itself, title, description, one H
       expect(types, path).not.toContain(forbidden);
     }
     const faq = entries.find((e) => e["@type"] === "FAQPage");
-    const visibleQuestions = [...html.matchAll(/<summary[^>]*>([\s\S]*?)<\/summary>/g)].map((m) =>
-      decode(m[1]),
+    // Every disclosure in the page content is a marked FAQ item (the header menu is outside <main>).
+    const main = html.slice(html.indexOf("<main"), html.indexOf("</main>"));
+    expect(count(main, /<summary[\s>]/g), `${path} unmarked <summary> in main`).toBe(
+      count(main, /<summary[^>]*data-faq/g),
     );
+    const visibleQuestions = [
+      ...html.matchAll(/<summary[^>]*data-faq[^>]*>([\s\S]*?)<\/summary>/g),
+    ].map((m) => decode(m[1]));
     if (faq) {
       expect(
         faq.mainEntity!.map((q) => q.name),

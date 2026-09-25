@@ -1,14 +1,23 @@
 import type { Metadata, Viewport } from "next";
-import { Geist } from "next/font/google";
+import { Bricolage_Grotesque, IBM_Plex_Mono, Instrument_Sans } from "next/font/google";
 import { AnalyticsRoot } from "@/components/AnalyticsRoot";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { siteConfig } from "@/config/site";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+// Self-hosted at build time by next/font: no requests to Google at runtime (CSP font-src 'self').
+const body = Instrument_Sans({ variable: "--font-body", subsets: ["latin"] });
+const display = Bricolage_Grotesque({
+  variable: "--font-display-face",
   subsets: ["latin"],
+  weight: ["600", "700"],
+});
+const spec = IBM_Plex_Mono({
+  variable: "--font-spec",
+  subsets: ["latin"],
+  weight: ["500"],
+  preload: false,
 });
 
 export const metadata: Metadata = {
@@ -33,7 +42,10 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en-IN" className={`${geistSans.variable} h-full antialiased`}>
+    <html
+      lang="en-IN"
+      className={`${body.variable} ${display.variable} ${spec.variable} h-full antialiased`}
+    >
       <body className="flex min-h-full flex-col font-sans">
         <SiteHeader />
         <main id="main" className="flex-1">

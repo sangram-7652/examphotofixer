@@ -1,6 +1,7 @@
 "use client";
 
 import { useId, useRef, useState, type DragEvent } from "react";
+import { CropMarks } from "@/components/CropMarks";
 
 /** Accepted inputs (also enforced by content sniffing in the tool and engine). */
 export const IMAGE_ACCEPT = "image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp";
@@ -45,10 +46,11 @@ export function ImageUploader({ onSelect, noun, error, busy = false }: ImageUplo
       }}
       onDragLeave={() => setDragging(false)}
       onDrop={onDrop}
-      className={`rounded-xl border-2 border-dashed px-4 py-8 text-center transition-colors ${
-        dragging ? "border-brand bg-brand-soft" : "border-brand/40 bg-brand-soft/60"
+      className={`relative rounded-xl border-2 border-dashed px-5 py-8 text-center transition-colors sm:py-10 ${
+        dragging ? "border-brand bg-brand-soft" : "border-border-strong bg-surface"
       }`}
     >
+      <CropMarks inset="0.625rem" />
       <input
         ref={browseRef}
         type="file"
@@ -75,13 +77,17 @@ export function ImageUploader({ onSelect, noun, error, busy = false }: ImageUplo
           event.target.value = "";
         }}
       />
-      <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
+      <p className="font-semibold">
+        <span className="hidden sm:inline">Drop your {noun} here, or choose a file</span>
+        <span className="sm:hidden">Choose your {noun}</span>
+      </p>
+      <div className="mt-4 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
         <button
           type="button"
           disabled={busy}
           aria-describedby={describedBy}
           onClick={() => browseRef.current?.click()}
-          className="min-h-12 w-full rounded-lg bg-brand px-6 py-3 text-lg font-semibold text-brand-foreground shadow-sm hover:opacity-90 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-brand disabled:opacity-60 sm:w-auto"
+          className="btn-primary w-full sm:w-auto"
         >
           {busy ? "Opening…" : `Choose ${noun}`}
         </button>
@@ -89,7 +95,7 @@ export function ImageUploader({ onSelect, noun, error, busy = false }: ImageUplo
           type="button"
           disabled={busy}
           onClick={() => cameraRef.current?.click()}
-          className="min-h-12 w-full rounded-lg border border-brand bg-background px-6 py-3 font-semibold text-brand focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-brand disabled:opacity-60 sm:hidden"
+          className="btn-secondary w-full sm:hidden"
         >
           Capture image
         </button>
@@ -103,8 +109,15 @@ export function ImageUploader({ onSelect, noun, error, busy = false }: ImageUplo
         <span className="hidden sm:inline">drag &amp; drop or </span>
         choose a file · stays on your device
       </p>
+      <p className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-background px-3 py-1 text-xs font-medium text-success">
+        <span aria-hidden="true">●</span> Processed in your browser — never uploaded
+      </p>
       {error ? (
-        <p id={errorId} role="alert" className="mt-3 text-sm font-medium text-danger">
+        <p
+          id={errorId}
+          role="alert"
+          className="mx-auto mt-4 max-w-md rounded-lg border border-danger/40 bg-danger-soft px-3 py-2 text-sm font-medium text-danger"
+        >
           {error}
         </p>
       ) : null}

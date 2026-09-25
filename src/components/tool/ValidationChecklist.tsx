@@ -17,7 +17,7 @@ export function ValidationChecklist({ items }: { items: ChecklistItem[] }) {
             key={item.id}
             data-check={item.id}
             data-status={item.status}
-            className="flex items-start gap-3 px-4 py-3"
+            className="flex items-start gap-3 px-4 py-2.5"
           >
             <span
               aria-hidden="true"
@@ -31,7 +31,7 @@ export function ValidationChecklist({ items }: { items: ChecklistItem[] }) {
                   {item.label}
                   <span className="sr-only">: {mark.text}.</span>
                 </span>
-                <span className="font-semibold tabular-nums">{item.value}</span>
+                <span className="spec-value">{item.value}</span>
               </div>
               {item.status !== "pass" ? (
                 <p className="text-sm text-muted">Required: {item.expected}</p>

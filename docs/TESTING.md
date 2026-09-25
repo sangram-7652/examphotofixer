@@ -194,3 +194,12 @@ non-GET request recording, overflow check, download bytes).
   re-validated incl. EXIF/GPS stripped and nothing uploaded; below-minimum warning; mobile) and
   the IBPS Complete Pack (four steps, shared source citing pages 56–58, ZIP with four validated
   files, analytics without file data).
+
+## UI polish (P12.1)
+
+- FAQ items render `<summary data-faq>`; `seo.spec.ts` and the generic-tool specs compare only
+  those with the FAQ JSON-LD, and `seo.spec.ts` asserts every `<summary>` inside `<main>` is
+  marked (the header's mobile menu is a `<details>` outside `<main>`). The "+" indicator is CSS
+  (`::after`), so it is not part of the question text.
+- Visual QA and axe (light and dark, desktop and Pixel 7) are run by hand with throwaway specs;
+  see the P12.1 commit message for results.

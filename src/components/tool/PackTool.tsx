@@ -29,6 +29,27 @@ const MARKS: Record<AssetState, string> = {
   ERROR: "✕",
 };
 
+/** Progress segment and step pill colours; state is also given in words next to them. */
+const SEGMENT: Record<AssetState, string> = {
+  EMPTY: "bg-surface-strong",
+  SELECTED: "bg-brand/40",
+  PROCESSING: "bg-brand/60",
+  READY: "bg-success",
+  READY_WITH_WARNING: "bg-warning",
+  INVALID: "bg-danger",
+  ERROR: "bg-danger",
+};
+
+const PILL: Record<AssetState, string> = {
+  EMPTY: "bg-surface text-muted",
+  SELECTED: "bg-brand-soft text-brand",
+  PROCESSING: "bg-brand-soft text-brand",
+  READY: "bg-success-soft text-success",
+  READY_WITH_WARNING: "bg-warning-soft text-warning",
+  INVALID: "bg-danger-soft text-danger",
+  ERROR: "bg-danger-soft text-danger",
+};
+
 const COUNT_WORDS = ["zero", "one", "two", "three", "four", "five", "six"];
 
 const PACK_TEXT: Record<Exclude<PackState, "EMPTY">, string> = {
@@ -64,6 +85,9 @@ export function PackTool({ presets, toolId }: { presets: readonly ImagePreset[];
   const states = presets.map((preset) => assets[preset.id]?.state ?? "EMPTY");
   const packState = derivePackState(states);
   const downloadable = packState === "READY" || packState === "READY_WITH_WARNING";
+  // READY and READY_WITH_WARNING are counted separately, never merged into one "ready" number.
+  const readyCount = states.filter((state) => state === "READY").length;
+  const reviewCount = states.filter((state) => state === "READY_WITH_WARNING").length;
 
   const releaseZips = useCallback(() => {
     zipUrls.current.forEach((url) => URL.revokeObjectURL(url));
@@ -179,8 +203,50 @@ export function PackTool({ presets, toolId }: { presets: readonly ImagePreset[];
   const blockedAssets = presets.filter((_, i) => states[i] === "INVALID" || states[i] === "ERROR");
 
   return (
-    <div data-testid="pack-tool" data-pack-state={packState} className="space-y-6">
-      <ol className="space-y-6">
+    <div data-testid="pack-tool" data-pack-state={packState} className="space-y-8">
+      {/* Overall progress appears once the pack has started; before that it carries no information. */}
+      {packState !== "EMPTY" ? (
+        <div className="card p-4 sm:p-5" data-testid="pack-progress">
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <p className="font-semibold">
+              <span className="spec-value text-lg">
+                {readyCount} of {presets.length}
+              </span>{" "}
+              ready
+              {reviewCount > 0 ? (
+                <span className="text-warning">
+                  {" "}
+                  · <span className="spec-value">{reviewCount}</span> to review
+                </span>
+              ) : null}
+            </p>
+            <p className="text-sm text-muted">
+              {downloadable
+                ? "Download the pack at the end of this page."
+                : "Each file is checked against its own requirement."}
+            </p>
+          </div>
+          <ol
+            className="mt-3 grid gap-1.5"
+            style={{ gridTemplateColumns: `repeat(${presets.length}, 1fr)` }}
+          >
+            {presets.map((preset, index) => (
+              <li key={preset.id} className="min-w-0">
+                <span
+                  aria-hidden="true"
+                  className={`block h-1.5 rounded-full ${SEGMENT[states[index]]}`}
+                />
+                <span className="mt-1.5 block truncate text-xs text-muted">
+                  {documentTitle(preset)}
+                  <span className="sr-only">: {ASSET_STATE_TEXT[states[index]]}</span>
+                </span>
+              </li>
+            ))}
+          </ol>
+        </div>
+      ) : null}
+
+      <ol className="space-y-8">
         {presets.map((preset, index) => (
           <li key={preset.id}>
             <section
@@ -188,9 +254,23 @@ export function PackTool({ presets, toolId }: { presets: readonly ImagePreset[];
               data-testid={`pack-asset-${preset.id}`}
               className="space-y-3"
             >
-              <h2 id={`pack-${preset.id}`} className="text-xl font-semibold">
-                {index + 1}. {documentTitle(preset)}
-              </h2>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <h2
+                  id={`pack-${preset.id}`}
+                  className="flex items-center gap-3 font-display text-xl font-semibold"
+                >
+                  <span className="spec-value flex size-8 items-center justify-center rounded-full bg-brand-soft text-sm text-brand">
+                    {index + 1}.
+                  </span>
+                  {documentTitle(preset)}
+                </h2>
+                <span
+                  aria-hidden="true"
+                  className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${PILL[states[index]]}`}
+                >
+                  {MARKS[states[index]]} {ASSET_STATE_TEXT[states[index]]}
+                </span>
+              </div>
               <ImageTool
                 key={`${generation}-${preset.id}`}
                 preset={preset}
@@ -207,9 +287,9 @@ export function PackTool({ presets, toolId }: { presets: readonly ImagePreset[];
       <section
         aria-labelledby="pack-status"
         data-testid="pack-status"
-        className="rounded-xl border-2 border-brand/40 p-4 sm:p-6"
+        className="card border-2 border-brand/40 p-4 sm:p-6"
       >
-        <h2 id="pack-status" className="text-xl font-semibold">
+        <h2 id="pack-status" className="font-display text-xl font-semibold">
           Pack status
         </h2>
         <p role="status" aria-live="polite" className="mt-1 text-muted">
@@ -269,16 +349,12 @@ export function PackTool({ presets, toolId }: { presets: readonly ImagePreset[];
               type="button"
               onClick={downloadAll}
               disabled={building}
-              className="min-h-12 w-full rounded-lg bg-brand px-6 py-3 text-lg font-semibold text-brand-foreground shadow-sm hover:opacity-90 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-brand disabled:opacity-60 sm:w-auto"
+              className="btn-primary w-full text-lg sm:w-auto"
             >
               {building ? "Preparing ZIP…" : "Download All (ZIP)"}
             </button>
           ) : null}
-          <button
-            type="button"
-            onClick={reset}
-            className="inline-flex min-h-12 w-full items-center justify-center rounded-lg border border-border bg-background px-5 py-3 font-semibold focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-brand sm:w-auto"
-          >
+          <button type="button" onClick={reset} className="btn-secondary w-full sm:w-auto">
             Start again<span className="sr-only"> with all files</span>
           </button>
         </div>

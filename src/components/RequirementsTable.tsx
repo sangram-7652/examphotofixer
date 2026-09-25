@@ -19,13 +19,10 @@ export function RequirementsTable({ preset }: { preset: ImagePreset }) {
   const pages = formatPages(presetSourcePages(preset));
 
   return (
-    <section
-      aria-labelledby={`${preset.id}-requirements`}
-      className="rounded-lg border border-border"
-    >
+    <section aria-labelledby={`${preset.id}-requirements`} className="card overflow-hidden">
       <h3
         id={`${preset.id}-requirements`}
-        className="border-b border-border px-4 py-3 font-semibold"
+        className="border-b border-border bg-surface px-4 py-3 font-semibold"
       >
         {preset.label} requirements
       </h3>
@@ -33,10 +30,10 @@ export function RequirementsTable({ preset }: { preset: ImagePreset }) {
         <tbody>
           {rows.map(([label, value]) => (
             <tr key={label} className="border-b border-border last:border-0">
-              <th scope="row" className="w-1/3 px-4 py-2 text-left font-medium text-muted">
+              <th scope="row" className="w-1/3 px-4 py-2.5 text-left font-medium text-muted">
                 {label}
               </th>
-              <td className="px-4 py-2">{value}</td>
+              <td className="px-4 py-2.5">{value}</td>
             </tr>
           ))}
         </tbody>
@@ -44,7 +41,7 @@ export function RequirementsTable({ preset }: { preset: ImagePreset }) {
       {preset.guidance && preset.guidance.length > 0 ? (
         <div className="border-t border-border px-4 py-3 text-sm">
           <p className="font-medium">The same guidelines also ask:</p>
-          <ul className="mt-1 list-disc space-y-1 pl-5 text-muted">
+          <ul className="mt-1.5 list-disc space-y-1 pl-5 text-muted marker:text-brand">
             {preset.guidance.map((line) => (
               <li key={line}>{line}</li>
             ))}

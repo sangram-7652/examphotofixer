@@ -38,7 +38,7 @@ export function ExamSearch({ entries }: { entries: ExamSearchEntry[] }) {
         onChange={(event) => setQuery(event.target.value)}
         placeholder="Search your exam"
         autoComplete="off"
-        className="w-full rounded-lg border border-border bg-background px-4 py-3 text-base shadow-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/30"
+        className="min-h-12 w-full rounded-lg border border-border-strong bg-background px-4 py-3 text-base shadow-sm outline-none placeholder:text-muted focus:border-brand focus:ring-3 focus:ring-brand/25"
       />
       <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
         <span className="text-muted">{query ? "Results:" : "Popular:"}</span>
@@ -56,14 +56,14 @@ export function ExamSearch({ entries }: { entries: ExamSearchEntry[] }) {
                   source_page_category: "home",
                 })
               }
-              className="rounded-full border border-brand bg-brand-soft px-3 py-1 font-medium text-brand"
+              className="inline-flex min-h-9 items-center rounded-full border border-brand/40 bg-brand-soft px-3.5 font-semibold text-brand transition-colors hover:border-brand focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-brand"
             >
               {exam.shortName}
             </Link>
           ) : (
             <span
               key={exam.id}
-              className="rounded-full border border-border px-3 py-1 text-muted"
+              className="inline-flex min-h-9 items-center gap-1 rounded-full border border-dashed border-border-strong px-3.5 text-muted"
               title="Coming soon"
             >
               {exam.shortName} <span className="text-xs">(soon)</span>

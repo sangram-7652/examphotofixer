@@ -128,8 +128,24 @@ const noopSubscribe = () => () => {};
 
 const RESULT_HEADINGS: Record<ResultState, string> = {
   READY: "Ready to upload",
-  READY_WITH_WARNING: "Ready — with a warning",
+  READY_WITH_WARNING: "Review before downloading",
   INVALID: "This doesn't meet the requirements",
+};
+
+/** Status band under each result heading: colour plus symbol and words, never colour alone. */
+const RESULT_BANNER: Record<ResultState, { className: string; text: string }> = {
+  READY: {
+    className: "border-success/30 bg-success-soft text-success",
+    text: "Every check passed. Download the file and upload it to the form.",
+  },
+  READY_WITH_WARNING: {
+    className: "border-warning/30 bg-warning-soft text-warning",
+    text: "One check needs your attention. Read why below before you download.",
+  },
+  INVALID: {
+    className: "border-danger/30 bg-danger-soft text-danger",
+    text: "This file doesn't meet the requirements, so it can't be downloaded here.",
+  },
 };
 
 /** Snapshot reported to an embedding component (e.g. the Complete Pack). */
@@ -357,8 +373,7 @@ export function ImageTool({
             : "";
 
   const headingClass = "text-lg font-semibold outline-none";
-  const secondaryButton =
-    "inline-flex min-h-12 w-full items-center justify-center rounded-lg border border-border bg-background px-5 py-3 font-semibold focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-brand sm:w-auto";
+  const secondaryButton = "btn-secondary w-full sm:w-auto";
 
   if (!supported) {
     return (
@@ -383,7 +398,7 @@ export function ImageTool({
       aria-label={`${preset.label} tool`}
       data-testid="image-tool"
       data-state={uiState}
-      className="rounded-xl border border-border p-4 shadow-sm sm:p-6"
+      className="card p-4 sm:p-6"
     >
       <p role="status" aria-live="polite" className="sr-only">
         {announcement}
@@ -430,11 +445,7 @@ export function ImageTool({
             onChange={(crop) => dispatch({ type: "crop", crop })}
             label={`Crop area for your ${noun}`}
           />
-          <button
-            type="button"
-            onClick={startProcessing}
-            className="min-h-12 w-full rounded-lg bg-brand px-6 py-3 text-lg font-semibold text-brand-foreground shadow-sm hover:opacity-90 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-brand"
-          >
+          <button type="button" onClick={startProcessing} className="btn-primary w-full text-lg">
             Process {noun}
           </button>
         </div>
@@ -452,17 +463,25 @@ export function ImageTool({
 
       {state.phase === "result" ? (
         <div className="space-y-4">
-          <Heading
-            ref={headingRef}
-            tabIndex={-1}
-            className={headingClass}
-            data-testid="result-heading"
+          <div
+            className={`-mx-4 -mt-4 border-b px-4 py-4 sm:-mx-6 sm:-mt-6 sm:rounded-t-xl sm:px-6 ${RESULT_BANNER[state.state].className}`}
           >
-            <span aria-hidden="true" className="mr-2">
-              {state.state === "READY" ? "✓" : state.state === "READY_WITH_WARNING" ? "⚠" : "✕"}
-            </span>
-            {RESULT_HEADINGS[state.state]}
-          </Heading>
+            <Heading
+              ref={headingRef}
+              tabIndex={-1}
+              className="flex items-center gap-2.5 font-display text-xl font-semibold outline-none"
+              data-testid="result-heading"
+            >
+              <span
+                aria-hidden="true"
+                className="flex size-7 shrink-0 items-center justify-center rounded-full bg-background text-base"
+              >
+                {state.state === "READY" ? "✓" : state.state === "READY_WITH_WARNING" ? "⚠" : "✕"}
+              </span>
+              {RESULT_HEADINGS[state.state]}
+            </Heading>
+            <p className="mt-1 text-sm text-foreground/80">{RESULT_BANNER[state.state].text}</p>
+          </div>
 
           <ValidationChecklist items={buildChecklist(state.result)} />
 

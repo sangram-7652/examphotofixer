@@ -61,7 +61,7 @@ test("page: title, description, canonical, OG, one H1, FAQ matches its structure
   );
   await expect(page.getByRole("heading", { level: 1 })).toHaveCount(1);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Image Resizer");
-  const visible = await page.locator("details summary").allTextContents();
+  const visible = await page.locator("details summary[data-faq]").allTextContents();
   const ld = await page.locator('script[type="application/ld+json"]').textContent();
   const faq = (JSON.parse(ld!) as { "@type": string; mainEntity?: { name: string }[] }[]).find(
     (entry) => entry["@type"] === "FAQPage",

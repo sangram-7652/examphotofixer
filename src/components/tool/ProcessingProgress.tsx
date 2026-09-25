@@ -19,9 +19,12 @@ export function ProcessingProgress({ stage }: { stage: ProgressStage | null }) {
         aria-valuemax={100}
         aria-valuenow={percent}
         aria-valuetext={label}
-        className="mt-3 h-2 overflow-hidden rounded-full bg-surface"
+        className="mt-3 h-2 overflow-hidden rounded-full bg-surface-strong"
       >
-        <div className="h-full bg-brand transition-[width]" style={{ width: `${percent}%` }} />
+        <div
+          className="h-full rounded-full bg-brand transition-[width] duration-300"
+          style={{ width: `${percent}%` }}
+        />
       </div>
       <ol className="mt-4 space-y-1 text-sm">
         {PROGRESS_STEPS.map((step, index) => {

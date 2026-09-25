@@ -1,57 +1,125 @@
 @import "tailwindcss";
 
+/*
+ * Design tokens (P12.1). Ink-on-paper palette: deep navy text, "form ink" ultramarine for
+ * actions, green reserved for verified/ready states, amber for warnings, red for failures.
+ * Components use these tokens only — no raw hex in components.
+ */
 :root {
   --background: #ffffff;
-  --surface: #f5f7fa;
-  --foreground: #111827;
-  --muted: #4b5563;
-  --border: #e5e7eb;
-  --brand: #0b5cad;
+  --surface: #f3f5f8;
+  --surface-strong: #e9edf3;
+  --foreground: #0f1b2d;
+  --muted: #4a5568;
+  --border: #dce2ea;
+  --border-strong: #b9c3d1;
+  --brand: #1f3fbf;
+  --brand-strong: #17309a;
   --brand-foreground: #ffffff;
-  --brand-soft: #e8f1fb;
-  --success: #15803d;
-  --danger: #b91c1c;
-  --danger-soft: #fdecec;
-  --warning: #9a4a05;
-  --warning-soft: #fff6e0;
+  --brand-soft: #eaeefb;
+  --success: #0e7445;
+  --success-soft: #e5f3eb;
+  --danger: #b42318;
+  --danger-soft: #fdecea;
+  --warning: #8a4a00;
+  --warning-soft: #fff3d6;
+  --shadow-card: 0 1px 2px rgb(15 27 45 / 0.05), 0 4px 16px -8px rgb(15 27 45 / 0.12);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0b0f14;
-    --surface: #131a22;
-    --foreground: #e5e7eb;
-    --muted: #9ca3af;
-    --border: #243040;
-    --brand: #4d9be6;
-    --brand-foreground: #0b0f14;
-    --brand-soft: #132638;
-    --success: #4ade80;
-    --danger: #f87171;
-    --danger-soft: #3a1717;
-    --warning: #fbbf24;
-    --warning-soft: #33280f;
+    --background: #0b111b;
+    --surface: #121a26;
+    --surface-strong: #1a2433;
+    --foreground: #e6ebf2;
+    --muted: #9aa6b8;
+    --border: #243043;
+    --border-strong: #37465e;
+    --brand: #8fa6ff;
+    --brand-strong: #b3c2ff;
+    --brand-foreground: #0b111b;
+    --brand-soft: #16203d;
+    --success: #5ad196;
+    --success-soft: #10271c;
+    --danger: #f5877d;
+    --danger-soft: #36161a;
+    --warning: #f4c15a;
+    --warning-soft: #33270f;
+    --shadow-card: 0 1px 2px rgb(0 0 0 / 0.4);
   }
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-surface: var(--surface);
+  --color-surface-strong: var(--surface-strong);
   --color-foreground: var(--foreground);
   --color-muted: var(--muted);
   --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
   --color-brand: var(--brand);
+  --color-brand-strong: var(--brand-strong);
   --color-brand-foreground: var(--brand-foreground);
   --color-brand-soft: var(--brand-soft);
   --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
   --color-danger: var(--danger);
   --color-danger-soft: var(--danger-soft);
   --color-warning: var(--warning);
   --color-warning-soft: var(--warning-soft);
-  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-body), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-display-face), var(--font-body), ui-sans-serif, sans-serif;
+  --font-mono: var(--font-spec), ui-monospace, SFMono-Regular, Menlo, monospace;
+  --shadow-card: var(--shadow-card);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
+}
+
+/* Anchor targets clear the sticky header. */
+[id],
+[tabindex="-1"] {
+  scroll-margin-top: 5rem;
+}
+
+/* Shared component classes: one definition per pattern, used across pages. */
+@layer components {
+  .btn-primary {
+    @apply inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-brand px-6 py-3 text-base font-semibold text-brand-foreground shadow-sm transition-colors hover:bg-brand-strong focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-brand disabled:opacity-60;
+  }
+  .btn-secondary {
+    @apply inline-flex min-h-12 items-center justify-center gap-2 rounded-lg border border-border-strong bg-background px-5 py-3 font-semibold text-foreground transition-colors hover:border-foreground focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-brand disabled:opacity-60;
+  }
+  .card {
+    @apply rounded-xl border border-border bg-background shadow-card;
+  }
+  .eyebrow {
+    @apply text-xs font-semibold tracking-[0.12em] text-brand uppercase;
+  }
+  .spec-value {
+    @apply font-mono text-[0.95em] font-medium tabular-nums;
+  }
+  .text-link {
+    @apply font-medium text-brand underline decoration-brand/40 underline-offset-3 hover:decoration-brand;
+  }
+  .section-title {
+    @apply font-display text-2xl font-semibold tracking-tight;
+  }
+  /* Crop marks: four corner brackets, the site's signature motif (see CropMarks). */
+  .crop-mark {
+    @apply pointer-events-none absolute size-4 border-brand;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

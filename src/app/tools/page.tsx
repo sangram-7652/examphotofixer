@@ -24,10 +24,10 @@ export default function ToolsPage() {
     <div className="mx-auto max-w-5xl px-4 py-8">
       <JsonLd data={breadcrumbJsonLd(crumbs)} />
       <Breadcrumbs crumbs={crumbs} />
-      <h1 className="mt-4 text-3xl font-bold tracking-tight">All tools</h1>
+      <h1 className="mt-4 font-display text-3xl font-bold tracking-tight sm:text-4xl">All tools</h1>
 
       <section aria-labelledby="exam-tools" className="mt-8">
-        <h2 id="exam-tools" className="text-xl font-semibold">
+        <h2 id="exam-tools" className="section-title">
           Exam &amp; Application Tools
         </h2>
         {listExams()
@@ -45,7 +45,7 @@ export default function ToolsPage() {
       </section>
 
       <section aria-labelledby="generic" className="mt-10">
-        <h2 id="generic" className="text-xl font-semibold">
+        <h2 id="generic" className="section-title">
           General Image Tools
         </h2>
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
@@ -56,7 +56,7 @@ export default function ToolsPage() {
       </section>
 
       <section aria-labelledby="coming-soon" className="mt-10">
-        <h2 id="coming-soon" className="text-xl font-semibold">
+        <h2 id="coming-soon" className="section-title">
           Coming Soon
         </h2>
         <p className="mt-2 text-muted">

@@ -23,7 +23,7 @@ function InlineText({ content }: { content: Inline[] }) {
         typeof part === "string" ? (
           <span key={index}>{part}</span>
         ) : (
-          <Link key={index} href={part.href} className="font-medium underline underline-offset-2">
+          <Link key={index} href={part.href} className="text-link">
             {part.text}
           </Link>
         ),
@@ -35,7 +35,7 @@ function InlineText({ content }: { content: Inline[] }) {
 function Block({ block }: { block: GuideBlock }) {
   if (block.kind === "p") {
     return (
-      <p className="mt-3">
+      <p className="mt-3 leading-7">
         <InlineText content={block.content} />
       </p>
     );
@@ -43,7 +43,7 @@ function Block({ block }: { block: GuideBlock }) {
   const List = block.kind === "steps" ? "ol" : "ul";
   return (
     <List
-      className={`mt-3 space-y-2 pl-5 ${block.kind === "steps" ? "list-decimal" : "list-disc"}`}
+      className={`mt-4 space-y-2.5 pl-5 leading-7 marker:text-brand ${block.kind === "steps" ? "list-decimal marker:font-semibold" : "list-disc"}`}
     >
       {block.items.map((item, index) => (
         <li key={index}>
@@ -77,12 +77,17 @@ export function GuidePage({ guide }: { guide: Guide }) {
   );
 
   return (
-    <article className="mx-auto max-w-3xl px-4 py-6 sm:py-8" data-analytics-guide-id={guide.slug}>
+    <article className="mx-auto max-w-3xl px-4 py-6 sm:py-10" data-analytics-guide-id={guide.slug}>
       <JsonLd data={jsonLd} />
       <Breadcrumbs crumbs={crumbs} />
-      <p className="mt-3 text-sm font-medium text-brand">{guide.category}</p>
-      <h1 className="mt-1 text-3xl font-bold tracking-tight">{guide.title}</h1>
-      <p className="mt-3 text-lg" data-testid="short-answer">
+      <p className="eyebrow mt-6">{guide.category} guide</p>
+      <h1 className="mt-2 font-display text-3xl font-bold tracking-tight text-balance sm:text-4xl">
+        {guide.title}
+      </h1>
+      <p
+        className="mt-5 rounded-xl border-l-4 border-brand bg-brand-soft/60 px-5 py-4 text-lg"
+        data-testid="short-answer"
+      >
         {body.shortAnswer}
       </p>
       <p className="mt-2 text-sm text-muted">
@@ -109,9 +114,10 @@ export function GuidePage({ guide }: { guide: Guide }) {
       </nav>
 
       {presets.length > 0 ? (
-        <section aria-labelledby="requirements" className="mt-10">
-          <h2 id="requirements" className="text-xl font-semibold">
-            Requirements stated in the referenced NIELIT guideline
+        <section aria-labelledby="requirements" className="mt-14">
+          <h2 id="requirements" className="section-title">
+            Requirements stated in the referenced {presets[0].source.authority}{" "}
+            {presets[0].source.document ? "document" : "source"}
           </h2>
           <div className="mt-4 space-y-4">
             {presets.map((preset) => (
@@ -123,8 +129,8 @@ export function GuidePage({ guide }: { guide: Guide }) {
       ) : null}
 
       {body.sections.map((section) => (
-        <section key={section.id} aria-labelledby={section.id} className="mt-10">
-          <h2 id={section.id} className="text-xl font-semibold">
+        <section key={section.id} aria-labelledby={section.id} className="mt-14">
+          <h2 id={section.id} className="section-title">
             {section.heading}
           </h2>
           {section.blocks.map((block, index) => (
@@ -134,15 +140,18 @@ export function GuidePage({ guide }: { guide: Guide }) {
       ))}
 
       {body.faq.length > 0 ? (
-        <section aria-labelledby="faq" className="mt-10">
-          <h2 id="faq" className="text-xl font-semibold">
+        <section aria-labelledby="faq" className="mt-14">
+          <h2 id="faq" className="section-title">
             Frequently asked questions
           </h2>
-          <div className="mt-4 divide-y divide-border rounded-lg border border-border">
+          <div className="card mt-4 divide-y divide-border">
             {body.faq.map((item) => (
-              <details key={item.question} className="px-4 py-3">
-                <summary className="min-h-11 cursor-pointer py-2 font-medium">
-                  {item.question}
+              <details key={item.question} className="group px-4 py-3">
+                <summary
+                  data-faq=""
+                  className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-4 py-2 font-medium after:text-lg after:text-brand after:transition-transform after:content-['+'] group-open:after:rotate-45 [&::-webkit-details-marker]:hidden"
+                >
+                  <span>{item.question}</span>
                 </summary>
                 <p className="pb-2 text-muted">{item.answer}</p>
               </details>
@@ -152,14 +161,14 @@ export function GuidePage({ guide }: { guide: Guide }) {
       ) : null}
 
       {related.length > 0 ? (
-        <section aria-labelledby="related-guides" className="mt-10">
-          <h2 id="related-guides" className="text-xl font-semibold">
+        <section aria-labelledby="related-guides" className="mt-14">
+          <h2 id="related-guides" className="section-title">
             Related guides
           </h2>
           <ul className="mt-3 space-y-2">
             {related.map((other) => (
               <li key={other.slug}>
-                <Link href={guidePath(other)} className="font-medium underline underline-offset-2">
+                <Link href={guidePath(other)} className="text-link">
                   {other.title}
                 </Link>
               </li>
