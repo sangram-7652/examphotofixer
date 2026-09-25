@@ -224,6 +224,16 @@ returns before building any event. Tools are unaffected.
 | `crop_started`, `crop_completed`, `tool_reset`, `pack_reset`, `resize_settings_changed`, `compression_settings_changed` | Removed (micro-events)                                                     |
 | `preset_id`, `size_bucket`, `duration_ms`, `quality`, `zoom`, `checks`                                                  | Removed or replaced by `asset_type`, size/megapixel buckets, `reason_code` |
 
+## Offline report (P11)
+
+`npm run analytics:report -- <events.ndjson> [--min-sample 100]` reads an exported event
+stream (one sanitized `{ "name", "props" }` per line, as a provider receives it) and prints the
+funnel per tool, problem discovery (reason/error codes) and per-route engagement
+(`src/lib/analytics/report.ts`). `image_selected` counts accepted files only; rejected files
+appear under problem discovery. Any rate whose denominator is below the minimum sample is
+printed as "insufficient". Keep real exports in `data/` (git-ignored). A fake sample for tests
+is `fixtures/analytics/FAKE-events-sample.ndjson`. No provider exists, so no real export exists.
+
 ## Search data
 
 Search Console analysis is offline and separate: see `SEARCH_DATA_ANALYSIS.md`.

@@ -169,3 +169,14 @@ non-GET request recording, overflow check, download bytes).
   focus moved to the result, live-region announcement; home exam chip by keyboard.
 - Launch audits run by hand (not committed, see `DEPLOYMENT.md` → "Launch audit results"):
   axe-core WCAG 2.2 A/AA on every page and result state; lab page-load timings.
+
+## Growth foundation (P11)
+
+- Unit: `search-data/intent.test.ts` (every intent label, determinism, registry exam names,
+  spec extraction), `search-data/opportunities.test.ts` (inventory from registries; each
+  opportunity rule incl. threshold, verification-only paths for planned/unknown exams and
+  requirement mismatches, fixture yields no proposals), `analytics/report.test.ts` (NDJSON
+  parsing, accepted-only selections, READY vs warning, sample gating, reason codes, engagement).
+  Requirement numbers in these tests come from presets.
+- `e2e/smoke.spec.ts`: the homepage lists every live exam tool in its exam's section (failed
+  on the P10 homepage for `ibps-photo` before the fix).

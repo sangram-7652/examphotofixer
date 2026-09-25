@@ -58,6 +58,11 @@ official verification.
 
 ## Phase 4 — Growth
 
+- P11: distribution and growth foundation — data gate (no real data yet), deterministic search
+  intent, opportunity engine, offline funnel/problem report, SEO changelog, experiment log,
+  growth plan with P12 handoff (`GROWTH_PLAN.md`). Homepage lists every exam with live tools;
+  site description corrected. ✅
+
 - Guides that solve real rejection problems, linked to tools.
 - Next exams (SSC, Railway, UPSC) — only after requirements are verified from official notices.
 - Document tools (PDF size/compress) — later.

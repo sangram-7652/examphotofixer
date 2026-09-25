@@ -24,6 +24,11 @@ export default function HomePage() {
     return { exam, href: hub?.path ?? null, toolId: hub?.id ?? null };
   });
 
+  // One section per exam with live tools (from the registry), so every verified exam is listed.
+  const examSections = listExams()
+    .map((exam) => ({ exam, tools: toolsForExam(exam.id).filter((t) => t.status === "live") }))
+    .filter(({ tools }) => tools.length > 0);
+
   return (
     <>
       <JsonLd data={websiteJsonLd()} />
@@ -42,16 +47,18 @@ export default function HomePage() {
       </section>
 
       <div className="mx-auto max-w-5xl px-4">
-        <section aria-labelledby="ccc-tools" className="mt-12">
-          <h2 id="ccc-tools" className="text-xl font-semibold">
-            CCC tools
-          </h2>
-          <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            {toolsForExam("ccc").map((tool) => (
-              <ToolCard key={tool.id} tool={tool} />
-            ))}
-          </div>
-        </section>
+        {examSections.map(({ exam, tools }) => (
+          <section key={exam.id} aria-labelledby={`${exam.id}-tools`} className="mt-12">
+            <h2 id={`${exam.id}-tools`} className="text-xl font-semibold">
+              {exam.shortName} tools
+            </h2>
+            <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {tools.map((tool) => (
+                <ToolCard key={tool.id} tool={tool} />
+              ))}
+            </div>
+          </section>
+        ))}
 
         <section aria-labelledby="image-tools" className="mt-12">
           <h2 id="image-tools" className="text-xl font-semibold">

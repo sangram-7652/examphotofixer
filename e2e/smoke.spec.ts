@@ -1,11 +1,14 @@
 import { expect, test } from "@playwright/test";
 import { listGuides } from "../src/content/guides";
+import { EXAMS } from "../src/lib/presets/exams";
+import { TOOLS } from "../src/lib/tools/registry";
 
 const TOOL_PAGES = [
   { path: "/ccc-photo-resizer", h1: "CCC Photo Resizer" },
   { path: "/ccc-signature-resizer", h1: "CCC Signature Resizer" },
   { path: "/ccc-thumb-impression-resizer", h1: "CCC Left Thumb Impression Resizer" },
   { path: "/ccc-complete-pack", h1: "CCC Complete Pack" },
+  { path: "/ibps-photo-resizer", h1: "IBPS Photo Resizer" },
   { path: "/image-resizer", h1: "Image Resizer" },
   { path: "/image-compressor", h1: "Image Compressor" },
 ];
@@ -20,6 +23,16 @@ test("home page shows hero, exam search and tools", async ({ page }) => {
   await search.fill("nielit");
   await page.getByRole("link", { name: "CCC", exact: true }).click();
   await expect(page).toHaveURL(/\/ccc-complete-pack$/);
+});
+
+test("home lists every live tool of every exam in that exam's section", async ({ page }) => {
+  await page.goto("/");
+  const examTools = TOOLS.filter((tool) => tool.exam !== null && tool.status === "live");
+  expect(examTools.length).toBeGreaterThan(0);
+  for (const tool of examTools) {
+    const section = page.getByRole("region", { name: `${EXAMS[tool.exam!].shortName} tools` });
+    await expect(section.locator(`a[href="${tool.path}"]`), tool.id).toHaveCount(1);
+  }
 });
 
 for (const { path, h1 } of TOOL_PAGES) {

@@ -41,6 +41,9 @@ yarn-error.log*
 next-env.d.ts
 !.env.example
 
+# local analytics / Search Console exports (may contain real search queries)
+/data/
+
 # playwright
 /test-results/
 /playwright-report/

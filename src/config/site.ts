@@ -24,7 +24,7 @@ export const siteConfig = {
   tagline: "Fix it before you upload.",
   category: "Exam & Application File Tools",
   description:
-    "Resize, compress, crop and validate photos, signatures and documents for online applications.",
+    "Resize, compress, crop and validate photos, signatures and thumb impressions for online exam and application forms.",
   url: resolveSiteUrl(),
   locale: "en_IN",
   indexable: process.env.NEXT_PUBLIC_SITE_INDEXABLE === "true",

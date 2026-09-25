@@ -37,8 +37,17 @@ Exports:
 
 ```
 npm run search:report -- <export.csv> [more.csv ...] [--limit 20] [--min-impressions 100] [--max-ctr 0.02]
+    [--previous <older-export.csv>] [--events <events.ndjson>]
 npm run search:report -- fixtures/search-console/FAKE-search-console-sample.csv   # demo, fake data
 ```
+
+Keep real exports in `data/` (git-ignored). Every report starts with its **data class**:
+`TEST_FIXTURE` for files with the `# FAKE DATA` header, otherwise `REAL` (an export you
+supplied). P11 added, after the sections below: **search intent** mix
+(`src/lib/search-data/intent.ts`), **opportunities** (`opportunities.ts`, proposals only, with
+an evidence threshold = `--min-impressions`), **new queries** since `--previous`, and **pages
+with clicks but weak engagement** when `--events` (an analytics export) is given. Rules and
+types: `GROWTH_PLAN.md` sections 4–5.
 
 - Reads CSVs you downloaded; sends nothing, writes nothing, no services, no database.
 - Headers are matched case-insensitively (`Top queries`/`Query`, `Top pages`/`Page`/`URL`,
@@ -106,5 +115,6 @@ happens **after**. They can't be joined per user (no identifiers, by design). Jo
 
 - No invented numbers: reports quote only real exports, with the date range and property.
 - No SEO or conversion improvement is claimed without before/after data over comparable periods.
-- Exports may contain queries typed by real people; keep them out of git (only the fake
-  fixture is committed).
+- Exports may contain queries typed by real people; keep them out of git (`data/` is ignored;
+  only the fake fixture is committed) and never publish raw queries or turn them into pages
+  automatically.

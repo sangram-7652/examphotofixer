@@ -87,6 +87,12 @@ FORM_PRESETS, SEO_STRATEGY, SEO_URL_MAP, ANALYTICS, TESTING, PRIVACY, DEPLOYMENT
 - Compressor success is decided from actual output bytes; never offer an over-limit file as
   the result.
 
+## Growth rules
+
+- Growth decisions need real data (`docs/GROWTH_PLAN.md` data gate); fixtures are never evidence.
+- Log every title/description/H1/intro/link change in `docs/SEO_CHANGELOG.md` before shipping;
+  experiments in `docs/EXPERIMENTS.md`. Search demand never changes a preset.
+
 ## Guide rules
 
 - Guides live in `src/content/guides.ts`; values via `describePreset()`, sources via
