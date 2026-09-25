@@ -53,10 +53,12 @@ sparingly (quota per day); the sitemap covers routine discovery.
 | Excluded pages ("Not indexed") | Indexing → Pages             | Find unexpected exclusions             |
 | Core Web Vitals                | Experience → Core Web Vitals | LCP, INP, CLS from real Chrome users   |
 
-Tool usage comes from the provider-independent analytics events (`tool_open`,
-`image_selected`, `processing_completed`, `validation_passed`, `validation_warning`,
-`download_clicked`, `download_completed`). They count events, not unique people, unless the
-chosen provider measures users accurately.
+Tool usage comes from the provider-independent analytics events (`tool_viewed`,
+`image_selected`, `processing_started`, `result_ready`, `result_ready_with_warning`,
+`validation_failed`, `processing_failed`, `download_started`, `download_completed`; see
+`ANALYTICS.md`). They count events, not unique people. No provider is installed yet, so no
+event data exists. To analyse exported Search Console data offline (top queries, low-CTR
+queries, pages, query + page, device, country, date), see `SEARCH_DATA_ANALYSIS.md`.
 
 ## 6. Inspect search queries
 

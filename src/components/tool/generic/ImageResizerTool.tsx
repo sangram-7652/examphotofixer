@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useId, useRef, useState, useSyncExternalStore } from "react";
-import { sizeBucket, track } from "@/lib/analytics";
+import { fileSizeBucket, megapixelBucket, trackEvent } from "@/lib/analytics";
+import { primaryReasonCode } from "@/lib/analytics/reasons";
+import { trackJobResult } from "@/lib/analytics/tool-events";
 import { FORMAT_LABELS } from "@/lib/image/formats";
 import type { OutputFormat } from "@/lib/image/pipeline";
 import {
@@ -43,6 +45,7 @@ import {
 } from "./SettingsParts";
 
 const TOOL_ID = "image-resizer";
+const TOOL_TYPE = "generic-resize";
 const FORMATS: readonly OutputFormat[] = ["jpeg", "png", "webp"];
 const noopSubscribe = () => () => {};
 
@@ -72,13 +75,11 @@ function NumberField({
   value,
   error,
   onChange,
-  onBlur,
 }: {
   label: string;
   value: number;
   error?: string;
   onChange: (value: number) => void;
-  onBlur: () => void;
 }) {
   const id = useId();
   return (
@@ -98,7 +99,6 @@ function NumberField({
           onChange={(event) =>
             onChange(event.target.value === "" ? Number.NaN : Number(event.target.value))
           }
-          onBlur={onBlur}
           aria-invalid={error ? true : undefined}
           aria-describedby={error ? `${id}-error` : undefined}
           className="min-h-11 w-full rounded-lg border border-border bg-background px-3 text-lg tabular-nums focus:border-brand focus:ring-2 focus:ring-brand/30 focus:outline-none aria-invalid:border-danger"
@@ -129,7 +129,7 @@ export function ImageResizerTool() {
   const selection = useRef(0);
 
   useEffect(() => {
-    track("tool_open", { tool_id: TOOL_ID });
+    trackEvent("tool_viewed", { tool_id: TOOL_ID, tool_type: TOOL_TYPE });
     let active = true;
     detectEncodableFormats().then((formats) => {
       if (active) setEncodable(formats);
@@ -146,16 +146,19 @@ export function ImageResizerTool() {
     }
   }, [state.phase]);
 
-  const changed = (setting: string) =>
-    track("resize_settings_changed", { tool_id: TOOL_ID, setting });
-
   const handleFile = async (file: File) => {
     const token = ++selection.current;
     setState({ phase: "select", error: null, busy: true });
     const selected = await readSelectedImage(file, urls.create, urls.release);
     if (token !== selection.current) return;
     if (!selected.ok) {
-      track("image_selected", { tool_id: TOOL_ID, accepted: false, reason: selected.reason });
+      trackEvent("image_selected", {
+        tool_id: TOOL_ID,
+        tool_type: TOOL_TYPE,
+        accepted: false,
+        error_code: selected.reason,
+        input_size_bucket: fileSizeBucket(file.size),
+      });
       setState({
         phase: "select",
         busy: false,
@@ -168,11 +171,13 @@ export function ImageResizerTool() {
     }
     const { image } = selected;
     const formats = encodable ?? (await detectEncodableFormats());
-    track("image_selected", {
+    trackEvent("image_selected", {
       tool_id: TOOL_ID,
+      tool_type: TOOL_TYPE,
       accepted: true,
       input_format: image.format,
-      size_bucket: sizeBucket(image.file.size),
+      input_size_bucket: fileSizeBucket(image.file.size),
+      input_megapixel_bucket: megapixelBucket(image.width, image.height),
     });
     job.warmUp();
     setState({
@@ -192,7 +197,8 @@ export function ImageResizerTool() {
     const { image, settings, crop } = state;
     const request = toResizeJob(settings, image);
     setState({ phase: "processing", image, settings, crop });
-    track("processing_started", { tool_id: TOOL_ID, format: settings.format, mode: settings.mode });
+    const eventProps = { tool_id: TOOL_ID, tool_type: TOOL_TYPE, output_format: settings.format };
+    trackEvent("processing_started", eventProps);
     const outcome = await job.run(image.file, {
       requirements: request.requirements,
       encoding: request.encoding,
@@ -200,11 +206,7 @@ export function ImageResizerTool() {
     });
     if (!outcome) return;
     if (!outcome.ok) {
-      track("processing_completed", {
-        tool_id: TOOL_ID,
-        ok: false,
-        error_code: outcome.error.code,
-      });
+      trackJobResult(eventProps, "ERROR", { error_code: outcome.error.code });
       setState({
         phase: "error",
         image,
@@ -216,9 +218,16 @@ export function ImageResizerTool() {
       return;
     }
     const resultUrl = urls.create(outcome.result.blob);
-    track("processing_completed", { tool_id: TOOL_ID, ok: true });
-    track(outcome.result.validation.ready ? "validation_passed" : "validation_failed", {
-      tool_id: TOOL_ID,
+    const { facts, validation } = outcome.result;
+    const resultState = validation.ready ? "READY" : "INVALID";
+    trackEvent("processing_completed", {
+      ...eventProps,
+      result_state: resultState,
+      output_size_bucket: fileSizeBucket(facts.byteLength),
+      output_megapixel_bucket: megapixelBucket(facts.width, facts.height),
+    });
+    trackJobResult(eventProps, resultState, {
+      reason_code: primaryReasonCode({ checks: validation.checks, outputDpi: facts.dpi }),
     });
     setState({ phase: "result", image, settings, crop, result: outcome.result, resultUrl });
   };
@@ -240,7 +249,6 @@ export function ImageResizerTool() {
     selection.current++;
     urls.releaseAll();
     setState({ phase: "select", error: null, busy: false });
-    track("tool_reset", { tool_id: TOOL_ID });
   };
 
   const heading = "text-lg font-semibold outline-none";
@@ -300,7 +308,6 @@ export function ImageResizerTool() {
           onCrop={(crop) =>
             setState((current) => (current.phase === "configure" ? { ...current, crop } : current))
           }
-          onChanged={changed}
           onResize={resize}
           onReset={reset}
         />
@@ -357,8 +364,15 @@ export function ImageResizerTool() {
                   state.settings.format,
                 )}
                 onDownload={() => {
-                  track("download_clicked", { tool_id: TOOL_ID });
-                  setTimeout(() => track("download_completed", { tool_id: TOOL_ID }), 0);
+                  const props = {
+                    tool_id: TOOL_ID,
+                    tool_type: TOOL_TYPE,
+                    output_format: state.settings.format,
+                    result_state: "READY",
+                  };
+                  trackEvent("download_started", props);
+                  // Hand-off to the browser, not a confirmed save.
+                  setTimeout(() => trackEvent("download_completed", props), 0);
                 }}
               >
                 Download
@@ -402,7 +416,6 @@ function ResizeSettingsForm({
   headingRef,
   onChange,
   onCrop,
-  onChanged,
   onResize,
   onReset,
 }: {
@@ -411,7 +424,6 @@ function ResizeSettingsForm({
   headingRef: React.RefObject<HTMLHeadingElement | null>;
   onChange: (settings: ResizeSettings) => void;
   onCrop: (crop: ViewportCrop) => void;
-  onChanged: (setting: string) => void;
   onResize: () => void;
   onReset: () => void;
 }) {
@@ -441,14 +453,12 @@ function ResizeSettingsForm({
             value={settings.width}
             error={errors?.width}
             onChange={(width) => onChange(setWidth(settings, width))}
-            onBlur={() => onChanged("width")}
           />
           <NumberField
             label="Height"
             value={settings.height}
             error={errors?.height}
             onChange={(height) => onChange(setHeight(settings, height))}
-            onBlur={() => onChanged("height")}
           />
         </div>
         {errors?.size ? (
@@ -461,10 +471,7 @@ function ResizeSettingsForm({
             id={lockId}
             type="checkbox"
             checked={settings.lockAspect}
-            onChange={(event) => {
-              onChange(setLockAspect(settings, event.target.checked));
-              onChanged("lock_aspect");
-            }}
+            onChange={(event) => onChange(setLockAspect(settings, event.target.checked))}
             className="size-5 accent-brand"
           />
           <label htmlFor={lockId} className="font-medium">
@@ -485,10 +492,7 @@ function ResizeSettingsForm({
           name="resize-mode"
           value="crop"
           checked={settings.mode === "crop"}
-          onChange={() => {
-            onChange({ ...settings, mode: "crop" });
-            onChanged("mode");
-          }}
+          onChange={() => onChange({ ...settings, mode: "crop" })}
           label="Crop to exact dimensions"
           description="The output is exactly the size you enter. Anything outside the frame is trimmed."
         />
@@ -496,10 +500,7 @@ function ResizeSettingsForm({
           name="resize-mode"
           value="fit"
           checked={settings.mode === "fit"}
-          onChange={() => {
-            onChange({ ...settings, mode: "fit" });
-            onChanged("mode");
-          }}
+          onChange={() => onChange({ ...settings, mode: "fit" })}
           label="Fit inside dimensions"
           description="The whole image is kept and scaled to fit inside the size you enter. No background is added."
         />
@@ -527,10 +528,7 @@ function ResizeSettingsForm({
         formats={FORMATS}
         value={settings.format}
         encodable={encodable}
-        onChange={(format) => {
-          onChange({ ...settings, format });
-          onChanged("format");
-        }}
+        onChange={(format) => onChange({ ...settings, format })}
       />
       {warning ? <Notice tone="warning">{warning}</Notice> : null}
       {settings.format === "png" ? (
@@ -541,7 +539,6 @@ function ResizeSettingsForm({
         <QualitySlider
           value={settings.quality}
           onChange={(quality) => onChange({ ...settings, quality })}
-          onCommit={() => onChanged("quality")}
         />
       )}
 

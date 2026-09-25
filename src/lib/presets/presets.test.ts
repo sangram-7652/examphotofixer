@@ -36,6 +36,18 @@ describe("preset registry", () => {
     }
   });
 
+  it("gives each source document a stable, analytics-safe id", () => {
+    const byId = new Map<string, unknown>();
+    for (const { id, source } of listPresets()) {
+      expect(source.id, id).toMatch(/^[a-z0-9][a-z0-9.-]{2,62}$/);
+      // One id per document: presets sharing an id share the same source object.
+      if (byId.has(source.id)) expect(byId.get(source.id), id).toBe(source);
+      byId.set(source.id, source);
+    }
+    expect(getPreset("ccc-photo").source.id).toBe("nielit-ccc-guidelines-v1.11");
+    expect(getPreset("ibps-photo").source.id).toBe("ibps-crp-rrbs-xv-notification");
+  });
+
   it("has no presets for planned exams (requirements are never invented)", () => {
     for (const exam of Object.values(EXAMS).filter((e) => e.status === "planned")) {
       expect(presetsForExam(exam.id)).toEqual([]);

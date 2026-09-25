@@ -77,7 +77,7 @@ export function GuidePage({ guide }: { guide: Guide }) {
   );
 
   return (
-    <article className="mx-auto max-w-3xl px-4 py-6 sm:py-8">
+    <article className="mx-auto max-w-3xl px-4 py-6 sm:py-8" data-analytics-guide-id={guide.slug}>
       <JsonLd data={jsonLd} />
       <Breadcrumbs crumbs={crumbs} />
       <p className="mt-3 text-sm font-medium text-brand">{guide.category}</p>
@@ -97,6 +97,8 @@ export function GuidePage({ guide }: { guide: Guide }) {
           <Link
             key={link.toolId}
             href={getTool(link.toolId).path}
+            data-analytics-event="guide_tool_clicked"
+            data-analytics-tool-id={link.toolId}
             className={`inline-flex min-h-11 items-center justify-center rounded-lg px-4 py-2 text-center font-semibold focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-brand ${
               index === 0 ? "bg-brand text-brand-foreground" : "border border-border"
             }`}

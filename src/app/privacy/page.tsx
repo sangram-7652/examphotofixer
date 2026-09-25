@@ -25,8 +25,11 @@ export default function PrivacyPage() {
 
       <h2>Analytics</h2>
       <p>
-        We may use privacy-friendly analytics to count page visits and tool usage. Analytics never
-        include your files, file names or image contents.
+        The site prepares anonymous usage events, such as &ldquo;a photo was processed&rdquo; or
+        &ldquo;a guide link was clicked&rdquo;, to understand which pages and tools are useful. They
+        never include your files, file names, image contents, photo location or camera details, or
+        anything you type. At present these events are not sent to any analytics service, and no
+        analytics cookies are used. If that changes, this page will be updated first.
       </p>
 
       <h2>Contact</h2>

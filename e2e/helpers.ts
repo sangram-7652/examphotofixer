@@ -82,20 +82,43 @@ export async function upload(
   await scope.getByTestId("file-input").setInputFiles({ name, mimeType, buffer });
 }
 
-/** Captures provider-independent analytics event names (call before navigation). */
+export interface RecordedEvent {
+  name: string;
+  props: Record<string, string | number | boolean>;
+}
+
+/**
+ * Captures provider-independent analytics events (call before navigation):
+ * names in `__events`, full payloads in `__payloads`. Survives reloads.
+ */
 export async function recordAnalytics(page: Page) {
   await page.addInitScript(() => {
-    const events: string[] = [];
-    (window as unknown as { __events: string[] }).__events = events;
-    window.addEventListener("epf:analytics", (event) =>
-      events.push((event as CustomEvent<{ name: string }>).detail.name),
-    );
+    const w = window as unknown as { __events: string[]; __payloads: unknown[] };
+    w.__events = [];
+    w.__payloads = [];
+    window.addEventListener("epf:analytics", (event) => {
+      const detail = (event as CustomEvent<{ name: string }>).detail;
+      w.__events.push(detail.name);
+      w.__payloads.push(JSON.parse(JSON.stringify(detail)));
+    });
   });
 }
 
 export function analyticsEvents(page: Page): Promise<string[]> {
   return page.evaluate(() => (window as unknown as { __events: string[] }).__events);
 }
+
+export function analyticsPayloads(page: Page): Promise<RecordedEvent[]> {
+  return page.evaluate(() => (window as unknown as { __payloads: RecordedEvent[] }).__payloads);
+}
+
+/** Result events: exactly one per finished job. */
+export const RESULT_EVENTS = [
+  "result_ready",
+  "result_ready_with_warning",
+  "validation_failed",
+  "processing_failed",
+];
 
 /** Records every non-GET request (an image upload would be a POST/PUT). */
 export function recordNonGetRequests(page: Page): string[] {

@@ -115,15 +115,14 @@ test("upload shows original details; lock recalculates; crop gives exact size; d
   expect(uploads).toEqual([]);
   const events = await analyticsEvents(page);
   for (const name of [
-    "tool_open",
+    "page_view",
+    "tool_viewed",
     "image_selected",
-    "resize_settings_changed",
     "processing_started",
     "processing_completed",
-    "validation_passed",
-    "download_clicked",
+    "result_ready",
+    "download_started",
     "download_completed",
-    "tool_reset",
   ]) {
     expect(events, name).toContain(name);
   }

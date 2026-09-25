@@ -6,6 +6,7 @@ import { buildDownloadFilename, buildPackFilename } from "../src/lib/tools/prese
 import { readZip } from "../src/lib/zip/testing/read-zip";
 import {
   analyticsEvents,
+  analyticsPayloads,
   downloadBytes,
   hasNoHorizontalOverflow,
   makeImage,
@@ -135,9 +136,24 @@ test("valid pack: all READY → Download All ZIP holds the exact processed files
 
   expect(uploads).toEqual([]); // nothing left the browser
   const events = await analyticsEvents(page);
-  for (const name of ["pack_open", "pack_download_clicked", "pack_download_completed"]) {
+  for (const name of ["tool_viewed", "pack_completed", "download_started", "download_completed"]) {
     expect(events).toContain(name);
   }
+  // One view for the pack, not one per embedded tool; one completion per asset.
+  expect(events.filter((name) => name === "tool_viewed")).toHaveLength(1);
+  expect(events.filter((name) => name === "pack_asset_completed")).toHaveLength(3);
+  const payloads = await analyticsPayloads(page);
+  // The ZIP download (per-file downloads in the steps are reported with their asset_type).
+  const zipDownloads = payloads.filter(
+    (e) => e.name === "download_completed" && e.props.output_format === "zip",
+  );
+  expect(zipDownloads).toHaveLength(1);
+  expect(zipDownloads[0].props).toMatchObject({
+    tool_id: "ccc-pack",
+    tool_type: "pack",
+    asset_type: "pack",
+    output_format: "zip",
+  });
 });
 
 test("warning pack: a below-minimum file is flagged but the pack stays downloadable", async ({
@@ -203,11 +219,15 @@ test("start again clears every file, result, warning and the pack state", async 
   }
   await expect(page.getByTestId("pack-warning")).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Download All (ZIP)" })).toHaveCount(0);
-  expect(await analyticsEvents(page)).toContain("pack_reset");
+  const completions = async () =>
+    (await analyticsEvents(page)).filter((name) => name === "pack_asset_completed").length;
+  expect(await completions()).toBe(2);
 
-  // No stale result survives: the pack becomes ready again only after reprocessing.
+  // No stale result survives: the pack becomes ready again only after reprocessing,
+  // and the reprocessed asset is reported as completed again.
   await processAsset(page, CCC_PHOTO, "noise");
   await expect(pack(page)).toHaveAttribute("data-pack-state", "IN_PROGRESS");
+  await expect.poll(completions).toBe(3);
 });
 
 test("mobile: steps stack without horizontal overflow; touch targets ≥ 44 px", async ({

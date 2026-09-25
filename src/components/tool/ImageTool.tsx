@@ -1,7 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useReducer, useRef, useSyncExternalStore } from "react";
-import { track, sizeBucket } from "@/lib/analytics";
+import { fileSizeBucket, megapixelBucket, trackEvent } from "@/lib/analytics";
+import { primaryReasonCode } from "@/lib/analytics/reasons";
+import { trackJobResult } from "@/lib/analytics/tool-events";
 import type { ProgressStage } from "@/lib/image/pipeline";
 import { isImageProcessingSupported } from "@/lib/image/support";
 import type { ImageProcessingResult } from "@/lib/image/worker/protocol";
@@ -143,6 +145,8 @@ interface ImageToolProps {
   preset: ImagePreset;
   /** Tool id for analytics. */
   toolId: string;
+  /** True inside a pack: the pack reports its own view, and events carry `tool_type: "pack"`. */
+  embedded?: boolean;
   /** Heading level for step headings: 2 on a tool page, 3 when embedded in a section. */
   headingLevel?: 2 | 3;
   onStatusChange?: (status: ImageToolStatus) => void;
@@ -153,7 +157,13 @@ interface ImageToolProps {
  * The image never leaves the browser; processing runs in the image worker,
  * which is loaded only when needed.
  */
-export function ImageTool({ preset, toolId, headingLevel = 2, onStatusChange }: ImageToolProps) {
+export function ImageTool({
+  preset,
+  toolId,
+  embedded = false,
+  headingLevel = 2,
+  onStatusChange,
+}: ImageToolProps) {
   const Heading = (headingLevel === 3 ? "h3" : "h2") as "h2";
   const [state, dispatch] = useReducer(reducer, INITIAL);
   const supported = useSyncExternalStore(noopSubscribe, isImageProcessingSupported, () => true);
@@ -166,7 +176,14 @@ export function ImageTool({ preset, toolId, headingLevel = 2, onStatusChange }: 
   const noun = documentNoun(preset);
   const filename = buildDownloadFilename(preset);
   const target = { width: preset.width, height: preset.height };
-  const baseProps = { tool_id: toolId, preset_id: preset.id };
+  // Only controlled identifiers; never file names or image-derived values.
+  const baseProps = {
+    tool_id: toolId,
+    tool_type: embedded ? "pack" : "preset",
+    exam_id: preset.exam,
+    asset_type: preset.documentType,
+    output_format: "jpeg",
+  };
   const uiState = uiStateOf(state);
 
   const createUrl = (blob: Blob) => {
@@ -187,8 +204,9 @@ export function ImageTool({ preset, toolId, headingLevel = 2, onStatusChange }: 
   }, []);
 
   useEffect(() => {
-    track("tool_open", { tool_id: toolId, preset_id: preset.id });
-  }, [toolId, preset.id]);
+    if (!embedded)
+      trackEvent("tool_viewed", { tool_id: toolId, tool_type: "preset", exam_id: preset.exam });
+  }, [embedded, toolId, preset.exam]);
 
   useEffect(() => releaseAll, [releaseAll]);
 
@@ -220,7 +238,12 @@ export function ImageTool({ preset, toolId, headingLevel = 2, onStatusChange }: 
       return;
     }
     if (!selected.ok) {
-      track("image_selected", { ...baseProps, accepted: false, reason: selected.reason });
+      trackEvent("image_selected", {
+        ...baseProps,
+        accepted: false,
+        error_code: selected.reason,
+        input_size_bucket: fileSizeBucket(file.size),
+      });
       dispatch({
         type: "rejected",
         error:
@@ -232,13 +255,13 @@ export function ImageTool({ preset, toolId, headingLevel = 2, onStatusChange }: 
     }
     const { url, width, height, format } = selected.image;
     dispatch({ type: "selected", source: { file, url, width, height } });
-    track("image_selected", {
+    trackEvent("image_selected", {
       ...baseProps,
       accepted: true,
       input_format: format,
-      size_bucket: sizeBucket(file.size),
+      input_size_bucket: fileSizeBucket(file.size),
+      input_megapixel_bucket: megapixelBucket(width, height),
     });
-    track("crop_started", baseProps);
     // Warm up the engine client while the user crops.
     void import("@/lib/image/worker/client");
   };
@@ -252,9 +275,7 @@ export function ImageTool({ preset, toolId, headingLevel = 2, onStatusChange }: 
     abort.current = controller;
 
     dispatch({ type: "start" });
-    if (state.phase === "crop") track("crop_completed", { ...baseProps, zoom: crop.zoom });
-    track("processing_started", baseProps);
-    const started = performance.now();
+    trackEvent("processing_started", baseProps);
 
     let outcome: Awaited<ReturnType<typeof import("@/lib/image/worker/client").processImage>>;
     try {
@@ -276,9 +297,8 @@ export function ImageTool({ preset, toolId, headingLevel = 2, onStatusChange }: 
     if (controller.signal.aborted) return;
     abort.current = null;
 
-    const durationMs = Math.round(performance.now() - started);
     if (!outcome.ok) {
-      track("processing_completed", { ...baseProps, ok: false, error_code: outcome.error.code });
+      trackJobResult(baseProps, "ERROR", { error_code: outcome.error.code });
       dispatch({
         type: "failed",
         error: {
@@ -292,26 +312,25 @@ export function ImageTool({ preset, toolId, headingLevel = 2, onStatusChange }: 
     const { result } = outcome;
     const resultUrl = createUrl(result.blob);
     dispatch({ type: "done", result, resultUrl });
-    track("processing_completed", {
-      ...baseProps,
-      ok: true,
-      duration_ms: durationMs,
-      quality: result.compression.quality ?? "lossless",
-    });
     const resultState = deriveResultState(result);
-    if (resultState === "READY") track("validation_passed", baseProps);
-    else if (resultState === "READY_WITH_WARNING") {
-      track("validation_warning", { ...baseProps, status: result.compression.status });
-    } else {
-      const failed = result.validation.checks.filter((c) => c.status === "fail").map((c) => c.id);
-      track("validation_failed", { ...baseProps, checks: failed.join(",") });
-    }
+    trackEvent("processing_completed", {
+      ...baseProps,
+      result_state: resultState,
+      output_size_bucket: fileSizeBucket(result.facts.byteLength),
+      output_megapixel_bucket: megapixelBucket(result.facts.width, result.facts.height),
+    });
+    trackJobResult(baseProps, resultState, {
+      reason_code: primaryReasonCode({
+        checks: result.validation.checks,
+        compressionStatus: result.compression.status,
+        outputDpi: result.facts.dpi,
+      }),
+    });
   };
 
   const reset = () => {
     releaseAll();
     dispatch({ type: "reset" });
-    track("tool_reset", baseProps);
   };
 
   const adjustCrop = () => {
@@ -320,9 +339,10 @@ export function ImageTool({ preset, toolId, headingLevel = 2, onStatusChange }: 
   };
 
   const onDownload = () => {
-    track("download_clicked", { ...baseProps, state: uiState });
-    // Browsers don't report when a save finishes; this marks the hand-off.
-    setTimeout(() => track("download_completed", baseProps), 0);
+    const props = { ...baseProps, result_state: uiState };
+    trackEvent("download_started", props);
+    // Browsers don't report when a save finishes; this marks the hand-off to the browser.
+    setTimeout(() => trackEvent("download_completed", props), 0);
   };
 
   const announcement =

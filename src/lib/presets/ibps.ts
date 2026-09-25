@@ -13,6 +13,7 @@ import type { ImagePreset, RequirementSource } from "./types";
  * record it as a new verification event. See docs/FORM_PRESETS.md.
  */
 const IBPS_CRP_RRBS_XV: RequirementSource = Object.freeze({
+  id: "ibps-crp-rrbs-xv-notification",
   authority: "IBPS",
   document: "CRP RRBs Detailed Notification",
   url: "https://www.ibps.in/wp-content/uploads/CRP-RRBs-XV-notification.pdf",

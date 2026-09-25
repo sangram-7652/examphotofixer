@@ -77,7 +77,7 @@ export function ToolPage({ toolId }: { toolId: ToolId }) {
   if (content) jsonLd.push(faqJsonLd(content.faq));
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-6 sm:py-8">
+    <div className="mx-auto max-w-3xl px-4 py-6 sm:py-8" data-analytics-tool-id={tool.id}>
       <JsonLd data={jsonLd} />
       <Breadcrumbs crumbs={crumbs} />
 

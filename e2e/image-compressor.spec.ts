@@ -117,12 +117,13 @@ test("200 KB preset: downloaded file ≤ 200 × 1024 bytes, dimensions preserved
   expect(uploads).toEqual([]);
   const events = await analyticsEvents(page);
   for (const name of [
-    "tool_open",
+    "page_view",
+    "tool_viewed",
     "image_selected",
     "processing_started",
     "processing_completed",
-    "validation_passed",
-    "download_clicked",
+    "result_ready",
+    "download_started",
     "download_completed",
   ]) {
     expect(events, name).toContain(name);

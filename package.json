@@ -13,7 +13,8 @@
     "test:e2e": "playwright test",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "check": "npm run lint && npm run typecheck && npm run format:check && npm run test"
+    "check": "npm run lint && npm run typecheck && npm run format:check && npm run test",
+    "search:report": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/search-console-report.ts"
   },
   "dependencies": {
     "next": "16.3.6",

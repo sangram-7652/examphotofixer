@@ -80,7 +80,8 @@ FORM_PRESETS, SEO_STRATEGY, SEO_URL_MAP, ANALYTICS, TESTING, PRIVACY, DEPLOYMENT
 - Load the engine lazily (`import("@/lib/image/worker/client")`); keep Blobs/URLs in component
   state and revoke URLs on reset/unmount.
 - Status must never rely on colour alone; announce state changes via the live region.
-- Analytics via `track()` only; no file names or image-derived data.
+- Analytics via `trackEvent()` only (typed, allowlisted props; see docs/ANALYTICS.md); no file
+  names, typed text or image-derived data beyond coarse buckets. Never in `lib/image`/worker.
 - Generic tools build runtime `OutputRequirements` in `lib/tools/generic/`; never add generic
   settings to presets or preset values to generic tools. 1 KB = 1024 bytes in generic tools.
 - Compressor success is decided from actual output bytes; never offer an over-limit file as

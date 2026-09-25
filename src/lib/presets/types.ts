@@ -26,6 +26,11 @@ export type VerificationStatus = "verified" | "project-input" | "unverified";
  * present values without their version and date.
  */
 export interface RequirementSource {
+  /**
+   * Stable identifier for this document version, e.g. "nielit-ccc-guidelines-v1.11". Used in
+   * analytics instead of the URL; a new document version gets a new id.
+   */
+  id: string;
   /** Issuing organisation, e.g. "NIELIT". */
   authority: string;
   /** Title of the notice, instruction page or brochure. */

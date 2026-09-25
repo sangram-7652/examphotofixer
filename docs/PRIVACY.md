@@ -5,7 +5,9 @@
 1. User files are processed entirely in the browser. They are never uploaded, stored or logged.
 2. No accounts, no database, no cookies for tracking.
 3. Output files are stripped of EXIF/GPS/camera metadata (only JFIF density is written).
-4. Analytics, if any, never include file contents, names or image-derived data (see ANALYTICS.md).
+4. Analytics events are allowlisted and sanitized: never file contents, names, EXIF/GPS,
+   typed text or personal data; image facts only as coarse buckets (see ANALYTICS.md).
+   Today no analytics provider is installed: events stay in the browser and nothing is sent.
 
 ## Engineering rules
 

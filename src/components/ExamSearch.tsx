@@ -2,12 +2,15 @@
 
 import Link from "next/link";
 import { useId, useState } from "react";
+import { trackEvent } from "@/lib/analytics";
 import type { ExamDefinition } from "@/lib/presets/types";
 
 export interface ExamSearchEntry {
   exam: ExamDefinition;
   /** Hub page for the exam, or `null` when the exam has no tools yet. */
   href: string | null;
+  /** Tool behind `href`, for analytics. */
+  toolId: string | null;
 }
 
 function matches(exam: ExamDefinition, query: string): boolean {
@@ -40,11 +43,19 @@ export function ExamSearch({ entries }: { entries: ExamSearchEntry[] }) {
       <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
         <span className="text-muted">{query ? "Results:" : "Popular:"}</span>
         {results.length === 0 ? <span className="text-muted">No matching exam yet.</span> : null}
-        {results.map(({ exam, href }) =>
+        {results.map(({ exam, href, toolId }) =>
           href ? (
             <Link
               key={exam.id}
               href={href}
+              // Only the chosen exam is reported, never what was typed.
+              onClick={() =>
+                trackEvent("exam_selected", {
+                  exam_id: exam.id,
+                  destination_tool_id: toolId ?? undefined,
+                  source_page_category: "home",
+                })
+              }
               className="rounded-full border border-brand bg-brand-soft px-3 py-1 font-medium text-brand"
             >
               {exam.shortName}

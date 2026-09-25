@@ -21,7 +21,7 @@ export default function HomePage() {
     // Hub = the exam's pack if it has one, otherwise its first live tool.
     const live = toolsForExam(exam.id).filter((tool) => tool.status === "live");
     const hub = live.find((tool) => tool.kind === "pack") ?? live[0];
-    return { exam, href: hub?.path ?? null };
+    return { exam, href: hub?.path ?? null, toolId: hub?.id ?? null };
   });
 
   return (

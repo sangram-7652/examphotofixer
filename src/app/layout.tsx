@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist } from "next/font/google";
+import { AnalyticsRoot } from "@/components/AnalyticsRoot";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { siteConfig } from "@/config/site";
@@ -39,6 +40,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           {children}
         </main>
         <SiteFooter />
+        <AnalyticsRoot />
       </body>
     </html>
   );

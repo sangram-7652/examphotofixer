@@ -126,7 +126,10 @@ test("valid photo → READY; download has exact size, bytes in range, JPEG, DPI 
   expect(payloads.length).toBeGreaterThan(3);
   for (const payload of payloads) {
     expect(payload).not.toMatch(/Ravi|passport|blob:|data:image|base64|PhoneCo|GPS/i);
-    expect(payload.length).toBeLessThan(300);
+    // Every event now carries route/device context too; still far below any image data.
+    expect(payload.length).toBeLessThan(600);
+    const { props } = JSON.parse(payload) as { props: Record<string, unknown> };
+    for (const value of Object.values(props)) expect(String(value).length).toBeLessThanOrEqual(64);
   }
 });
 

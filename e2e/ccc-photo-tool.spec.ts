@@ -212,16 +212,14 @@ test("happy path: upload → crop → real progress → READY → download → s
 
   const events = await page.evaluate(() => (window as unknown as { __events: string[] }).__events);
   for (const name of [
-    "tool_open",
+    "page_view",
+    "tool_viewed",
     "image_selected",
-    "crop_started",
-    "crop_completed",
     "processing_started",
     "processing_completed",
-    "validation_passed",
-    "download_clicked",
+    "result_ready",
+    "download_started",
     "download_completed",
-    "tool_reset",
   ]) {
     expect(events, name).toContain(name);
   }

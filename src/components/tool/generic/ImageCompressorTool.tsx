@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import { useEffect, useId, useRef, useState, useSyncExternalStore } from "react";
-import { sizeBucket, track } from "@/lib/analytics";
+import { fileSizeBucket, megapixelBucket, trackEvent } from "@/lib/analytics";
+import { primaryReasonCode } from "@/lib/analytics/reasons";
+import { trackJobResult } from "@/lib/analytics/tool-events";
 import { FORMAT_LABELS } from "@/lib/image/formats";
 import { MAX_CANVAS_PIXELS } from "@/lib/image/limits";
 import {
@@ -42,6 +44,7 @@ import {
 } from "./SettingsParts";
 
 const TOOL_ID = "image-compressor";
+const TOOL_TYPE = "generic-compress";
 const noopSubscribe = () => () => {};
 
 interface Settings {
@@ -98,7 +101,7 @@ export function ImageCompressorTool() {
   const customId = useId();
 
   useEffect(() => {
-    track("tool_open", { tool_id: TOOL_ID });
+    trackEvent("tool_viewed", { tool_id: TOOL_ID, tool_type: TOOL_TYPE });
     let active = true;
     detectEncodableFormats().then((formats) => {
       if (active) setEncodable(formats);
@@ -115,16 +118,19 @@ export function ImageCompressorTool() {
     }
   }, [state.phase]);
 
-  const changed = (setting: string) =>
-    track("compression_settings_changed", { tool_id: TOOL_ID, setting });
-
   const handleFile = async (file: File) => {
     const token = ++selection.current;
     setState({ phase: "select", error: null, busy: true });
     const selected = await readSelectedImage(file, urls.create, urls.release);
     if (token !== selection.current) return;
     if (!selected.ok) {
-      track("image_selected", { tool_id: TOOL_ID, accepted: false, reason: selected.reason });
+      trackEvent("image_selected", {
+        tool_id: TOOL_ID,
+        tool_type: TOOL_TYPE,
+        accepted: false,
+        error_code: selected.reason,
+        input_size_bucket: fileSizeBucket(file.size),
+      });
       setState({
         phase: "select",
         busy: false,
@@ -137,11 +143,13 @@ export function ImageCompressorTool() {
     }
     const { image } = selected;
     const formats = encodable ?? (await detectEncodableFormats());
-    track("image_selected", {
+    trackEvent("image_selected", {
       tool_id: TOOL_ID,
+      tool_type: TOOL_TYPE,
       accepted: true,
       input_format: image.format,
-      size_bucket: sizeBucket(image.file.size),
+      input_size_bucket: fileSizeBucket(image.file.size),
+      input_megapixel_bucket: megapixelBucket(image.width, image.height),
     });
     job.warmUp();
     setState({
@@ -169,11 +177,8 @@ export function ImageCompressorTool() {
       settings.format,
     );
     setState({ phase: "processing", image, settings });
-    track("processing_started", {
-      tool_id: TOOL_ID,
-      format: settings.format,
-      limit: settings.choice,
-    });
+    const eventProps = { tool_id: TOOL_ID, tool_type: TOOL_TYPE, output_format: settings.format };
+    trackEvent("processing_started", eventProps);
     const outcome = await job.run(image.file, {
       requirements: request.requirements,
       encoding: request.encoding,
@@ -181,11 +186,7 @@ export function ImageCompressorTool() {
     });
     if (!outcome) return;
     if (!outcome.ok) {
-      track("processing_completed", {
-        tool_id: TOOL_ID,
-        ok: false,
-        error_code: outcome.error.code,
-      });
+      trackJobResult(eventProps, "ERROR", { error_code: outcome.error.code });
       setState({
         phase: "error",
         image,
@@ -204,10 +205,24 @@ export function ImageCompressorTool() {
       validation: result.validation,
     });
     const resultUrl = urls.create(result.blob);
-    track("processing_completed", { tool_id: TOOL_ID, ok: true });
-    track(verdict === "SUCCESS" ? "validation_passed" : "validation_failed", {
-      tool_id: TOOL_ID,
-      outcome: verdict,
+    const resultState = verdict === "SUCCESS" ? "READY" : "INVALID";
+    trackEvent("processing_completed", {
+      ...eventProps,
+      result_state: resultState,
+      output_size_bucket: fileSizeBucket(result.facts.byteLength),
+      output_megapixel_bucket: megapixelBucket(result.facts.width, result.facts.height),
+    });
+    trackJobResult(eventProps, resultState, {
+      reason_code:
+        verdict === "LIMIT_NOT_REACHED"
+          ? "COMPRESSION_LIMIT_NOT_REACHED"
+          : verdict === "LARGER_THAN_ORIGINAL"
+            ? "OUTPUT_LARGER_THAN_ORIGINAL"
+            : primaryReasonCode({
+                // Size is judged by the outcome above, as in deriveCompressionOutcome.
+                checks: result.validation.checks.filter((check) => check.id !== "file-size"),
+                outputDpi: result.facts.dpi,
+              }),
     });
     setState({
       phase: "result",
@@ -233,7 +248,6 @@ export function ImageCompressorTool() {
     selection.current++;
     urls.releaseAll();
     setState({ phase: "select", error: null, busy: false });
-    track("tool_reset", { tool_id: TOOL_ID });
   };
 
   const heading = "text-lg font-semibold outline-none";
@@ -316,10 +330,7 @@ export function ImageCompressorTool() {
                         name="max-size"
                         value={option.id}
                         checked={settings.choice === option.id}
-                        onChange={(choice) => {
-                          update({ ...settings, choice });
-                          changed("max_size");
-                        }}
+                        onChange={(choice) => update({ ...settings, choice })}
                         label={option.label}
                       />
                     ))}
@@ -337,7 +348,6 @@ export function ImageCompressorTool() {
                         step={1}
                         value={settings.customKB}
                         onChange={(event) => update({ ...settings, customKB: event.target.value })}
-                        onBlur={() => changed("custom_max")}
                         aria-invalid={"error" in limit ? true : undefined}
                         aria-describedby={`${customId}-help`}
                         className="mt-1 min-h-11 w-40 rounded-lg border border-border bg-background px-3 text-lg tabular-nums focus:border-brand focus:ring-2 focus:ring-brand/30 focus:outline-none aria-invalid:border-danger"
@@ -358,10 +368,7 @@ export function ImageCompressorTool() {
                   formats={COMPRESS_FORMATS}
                   value={settings.format}
                   encodable={encodable}
-                  onChange={(format) => {
-                    update({ ...settings, format: format as CompressFormat });
-                    changed("format");
-                  }}
+                  onChange={(format) => update({ ...settings, format: format as CompressFormat })}
                 />
                 {image.format === "png" ? (
                   <p className="text-sm text-muted">
@@ -563,8 +570,15 @@ function CompressionResult({
             href={state.resultUrl}
             filename={compressFilename({ name: image.file.name }, state.settings.format)}
             onDownload={() => {
-              track("download_clicked", { tool_id: TOOL_ID });
-              setTimeout(() => track("download_completed", { tool_id: TOOL_ID }), 0);
+              const props = {
+                tool_id: TOOL_ID,
+                tool_type: TOOL_TYPE,
+                output_format: state.settings.format,
+                result_state: "READY",
+              };
+              trackEvent("download_started", props);
+              // Hand-off to the browser, not a confirmed save.
+              setTimeout(() => trackEvent("download_completed", props), 0);
             }}
           >
             Download

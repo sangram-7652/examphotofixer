@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { track } from "@/lib/analytics";
+import { trackEvent } from "@/lib/analytics";
 import type { ImagePreset } from "@/lib/presets/types";
 import {
   ASSET_STATE_TEXT,
@@ -69,9 +69,43 @@ export function PackTool({ presets, toolId }: { presets: readonly ImagePreset[];
     zipUrls.current.clear();
   }, []);
 
+  const packProps = { tool_id: toolId, tool_type: "pack", exam_id: exam };
+
   useEffect(() => {
-    track("pack_open", { tool_id: toolId, assets: presets.length });
-  }, [toolId, presets.length]);
+    trackEvent("tool_viewed", { tool_id: toolId, tool_type: "pack", exam_id: exam });
+  }, [toolId, exam]);
+
+  // Completion events fire on the transition into a usable state, once each.
+  const reported = useRef<{ assets: Record<string, AssetState>; pack: PackState }>({
+    assets: {},
+    pack: "EMPTY",
+  });
+  useEffect(() => {
+    const previous = reported.current;
+    presets.forEach((preset, index) => {
+      const state = states[index];
+      const was = previous.assets[preset.id] ?? "EMPTY";
+      if (state !== was && (state === "READY" || state === "READY_WITH_WARNING")) {
+        trackEvent("pack_asset_completed", {
+          ...packProps,
+          asset_type: preset.documentType,
+          result_state: state,
+        });
+      }
+      previous.assets[preset.id] = state;
+    });
+    if (
+      packState !== previous.pack &&
+      (packState === "READY" || packState === "READY_WITH_WARNING")
+    ) {
+      trackEvent("pack_completed", {
+        ...packProps,
+        result_state: packState,
+        asset_count: presets.length,
+      });
+    }
+    previous.pack = packState;
+  });
   useEffect(() => releaseZips, [releaseZips]);
 
   const handlers = useMemo(
@@ -101,7 +135,13 @@ export function PackTool({ presets, toolId }: { presets: readonly ImagePreset[];
   const downloadAll = async () => {
     const outputs = presets.map((preset) => assets[preset.id]?.output ?? null);
     if (!downloadable || outputs.some((output) => output === null)) return;
-    track("pack_download_clicked", { tool_id: toolId, state: packState });
+    const downloadProps = {
+      ...packProps,
+      asset_type: "pack",
+      output_format: "zip",
+      result_state: packState,
+    };
+    trackEvent("download_started", downloadProps);
     setBuilding(true);
     setZipError(null);
     try {
@@ -116,7 +156,8 @@ export function PackTool({ presets, toolId }: { presets: readonly ImagePreset[];
       releaseZips();
       zipUrls.current.add(url);
       downloadUrl(url, packFilename);
-      track("pack_download_completed", { tool_id: toolId, files: entries.length });
+      // Hand-off to the browser, not a confirmed save (see docs/ANALYTICS.md).
+      trackEvent("download_completed", downloadProps);
     } catch {
       setZipError(
         "We couldn't create the ZIP file. Your processed files are still here — use each file's own download button.",
@@ -131,7 +172,6 @@ export function PackTool({ presets, toolId }: { presets: readonly ImagePreset[];
     setAssets({});
     setZipError(null);
     setGeneration((value) => value + 1); // remounts every ImageTool, which releases its files
-    track("pack_reset", { tool_id: toolId });
   };
 
   const warningAssets = presets.filter((_, i) => states[i] === "READY_WITH_WARNING");
@@ -154,6 +194,7 @@ export function PackTool({ presets, toolId }: { presets: readonly ImagePreset[];
                 key={`${generation}-${preset.id}`}
                 preset={preset}
                 toolId={toolId}
+                embedded
                 headingLevel={3}
                 onStatusChange={handlers[preset.id]}
               />

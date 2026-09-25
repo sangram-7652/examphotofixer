@@ -13,6 +13,7 @@ import type { ImagePreset, RequirementSource } from "./types";
  * change. See docs/FORM_PRESETS.md.
  */
 const CCC_SOURCE: RequirementSource = Object.freeze({
+  id: "nielit-ccc-guidelines-v1.11",
   authority: "NIELIT",
   document: "CCC Examination Application Guidelines",
   url: "https://nva.nielit.gov.in/ccc/CCC_ExamGuideLine.pdf",

@@ -10,6 +10,8 @@ export function SourceLink({ source, children }: { source: RequirementSource; ch
       href={source.url}
       target="_blank"
       rel="noopener noreferrer"
+      data-analytics-event="requirement_source_opened"
+      data-analytics-source-id={source.id}
       className="font-medium underline underline-offset-2"
     >
       {children}
