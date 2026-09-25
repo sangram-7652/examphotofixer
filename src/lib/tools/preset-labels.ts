@@ -5,12 +5,14 @@ const FILE_LABELS: Readonly<Record<DocumentType, string>> = {
   photo: "Photo",
   signature: "Signature",
   "left-thumb-impression": "Left_Thumb",
+  "handwritten-declaration": "Declaration",
 };
 
 const NOUNS: Readonly<Record<DocumentType, string>> = {
   photo: "photo",
   signature: "signature",
   "left-thumb-impression": "thumb impression",
+  "handwritten-declaration": "declaration",
 };
 
 /** Download filename derived from the preset, e.g. "CCC_Photo_132x170.jpg". */
@@ -29,7 +31,9 @@ export function documentTitle(preset: ImagePreset): string {
   const noun =
     preset.documentType === "left-thumb-impression"
       ? "left thumb impression"
-      : NOUNS[preset.documentType];
+      : preset.documentType === "handwritten-declaration"
+        ? "hand-written declaration"
+        : NOUNS[preset.documentType];
   return noun.charAt(0).toUpperCase() + noun.slice(1);
 }
 

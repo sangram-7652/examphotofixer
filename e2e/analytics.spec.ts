@@ -13,6 +13,12 @@ import {
   upload,
   type RecordedEvent,
 } from "./helpers";
+import { TOOLS } from "../src/lib/tools/registry";
+
+// The exam chip links to the exam's hub: its pack if it has one, otherwise its first live tool.
+const IBPS_HUB =
+  TOOLS.find((t) => t.exam === "ibps" && t.kind === "pack" && t.status === "live") ??
+  TOOLS.find((t) => t.exam === "ibps" && t.status === "live")!;
 
 /**
  * Analytics foundation (P9): funnel events, privacy of payloads, and that the
@@ -262,11 +268,11 @@ test("exam search reports the chosen exam, never the typed text", async ({ page 
   await page.goto("/");
   await page.getByRole("searchbox", { name: "Search your exam" }).fill("institute of banking");
   await page.getByRole("link", { name: "IBPS", exact: true }).click();
-  await expect(page).toHaveURL(/\/ibps-photo-resizer$/);
+  await expect(page).toHaveURL(new RegExp(`${IBPS_HUB.path}$`));
   const events = await analyticsPayloads(page);
   expect(events.find((e) => e.name === "exam_selected")?.props).toMatchObject({
     exam_id: "ibps",
-    destination_tool_id: "ibps-photo",
+    destination_tool_id: IBPS_HUB.id,
     source_page_category: "home",
   });
   expect(JSON.stringify(events)).not.toMatch(/institute|banking/i);

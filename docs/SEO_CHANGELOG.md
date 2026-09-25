@@ -49,3 +49,31 @@ Template:
 - Review date: 4 weeks after launch (Search Console: `/ibps-photo-resizer` indexed and
   discovered via internal links).
 - Review: pending.
+
+## 2026-09-25 — new IBPS pages (P12)
+
+- New indexable pages: `/ibps-signature-resizer`, `/ibps-thumb-impression-resizer`,
+  `/ibps-handwritten-declaration-resizer`, `/ibps-complete-pack`,
+  `/guides/ibps-signature-thumb-declaration-size` (sitemap 17 → 22 URLs). Titles and
+  descriptions: see `src/lib/tools/registry.ts` and `src/content/guides.ts`.
+- Other changes: `/guides/ibps-photo-size` gains a link to the IBPS Complete Pack; IBPS tool
+  pages link the pack with the full list of its four documents (previously a fixed CCC list).
+- Reason: the verified IBPS notification requires all four images to register; only the photo
+  was supported. Each page answers one distinct need; no keyword or programmatic pages.
+- Data source: official source verification (no search data exists).
+- Expected behaviour: pages indexed after launch; no traffic expectation is set.
+- Review date: 4 weeks after launch (Search Console: indexing of the five URLs).
+- Review: pending.
+
+## 2026-09-25 — `/guides` title and description (P12)
+
+- Old title: "Guides – CCC Photo, Signature & Thumb Requirements and Upload Help"
+- New title: "Guides – CCC & IBPS Photo, Signature and Document Requirements"
+- Old description: "Short guides to the CCC photo, signature and left thumb impression
+  requirements, with sources, and fixes for common photo upload problems."
+- New description: "Short guides to the CCC and IBPS photo, signature, thumb impression and
+  declaration requirements, with their official sources, and fixes for common photo upload
+  problems."
+- Reason: accuracy. IBPS guides existed since P8 but the index described only CCC.
+- Data source: content audit (no data).
+- Expected behaviour: accurate snippet. Review date: 4 weeks after launch. Review: pending.

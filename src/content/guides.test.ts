@@ -15,13 +15,14 @@ import {
 const text = (guide: Guide) => JSON.stringify(buildGuide(guide));
 
 describe("guide registry", () => {
-  it("has the four CCC guides and the IBPS guide, with unique, URL-safe slugs", () => {
+  it("has the four CCC guides and the two IBPS guides, with unique, URL-safe slugs", () => {
     expect(listGuides().map((g) => g.slug)).toEqual([
       "ccc-photo-size",
       "ccc-signature-size",
       "ccc-thumb-impression-size",
       "ccc-photo-upload-problems",
       "ibps-photo-size",
+      "ibps-signature-thumb-declaration-size",
     ]);
     for (const guide of listGuides()) {
       expect(guide.slug).toMatch(/^[a-z0-9]+(-[a-z0-9]+)*$/);

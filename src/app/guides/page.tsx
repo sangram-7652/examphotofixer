@@ -7,9 +7,9 @@ import { breadcrumbJsonLd, type Crumb } from "@/lib/seo/json-ld";
 import { buildPageMetadata } from "@/lib/seo/metadata";
 
 export const metadata: Metadata = buildPageMetadata({
-  title: "Guides – CCC Photo, Signature & Thumb Requirements and Upload Help",
+  title: "Guides – CCC & IBPS Photo, Signature and Document Requirements",
   description:
-    "Short guides to the CCC photo, signature and left thumb impression requirements, with sources, and fixes for common photo upload problems.",
+    "Short guides to the CCC and IBPS photo, signature, thumb impression and declaration requirements, with their official sources, and fixes for common photo upload problems.",
   path: "/guides",
 });
 

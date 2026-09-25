@@ -436,7 +436,10 @@ const GUIDES: readonly Guide[] = [
       "The photograph size in IBPS's scanning guidelines for its bank recruitment forms: pixel dimensions, file size in KB, format and DPI, with the source notification and how to prepare your photo.",
     summary: "The photograph dimensions, file size, format and DPI in IBPS's scanning guidelines.",
     presetIds: ["ibps-photo"],
-    toolLinks: [{ toolId: "ibps-photo", text: "Resize your photo with the IBPS Photo Resizer" }],
+    toolLinks: [
+      { toolId: "ibps-photo", text: "Resize your photo with the IBPS Photo Resizer" },
+      { toolId: "ibps-pack", text: "Prepare all four IBPS images in the IBPS Complete Pack" },
+    ],
     reviewedOn: REVIEWED_ON,
     build: ([photo]) => {
       const d = describePreset(photo);
@@ -508,6 +511,161 @@ const GUIDES: readonly Guide[] = [
           {
             question: "What DPI should the IBPS photo have?",
             answer: `The scanning instructions ask you to set the scanner resolution to ${d.dpi}. No maximum is stated. ExamPhotoFixer writes ${chooseOutputDpi(photo.dpi)} DPI into the file; DPI doesn't change the pixel size.`,
+          },
+          {
+            question: "Is ExamPhotoFixer affiliated with IBPS?",
+            answer:
+              "No. ExamPhotoFixer is an independent tool and is not affiliated with IBPS or any bank or exam body.",
+          },
+        ],
+      };
+    },
+  },
+  {
+    slug: "ibps-signature-thumb-declaration-size",
+    category: "IBPS",
+    title: "IBPS Signature, Left Thumb Impression and Hand-written Declaration Size",
+    metaTitle: "IBPS Signature, Thumb Impression & Declaration Size – Pixels, KB, DPI",
+    description:
+      "The signature, left thumb impression and hand-written declaration requirements in IBPS's scanning guidelines: pixel dimensions, file size in KB, format and DPI, with the declaration text, the source notification and how to prepare each image.",
+    summary:
+      "Signature, left thumb impression and hand-written declaration requirements in IBPS's scanning guidelines.",
+    presetIds: ["ibps-signature", "ibps-left-thumb", "ibps-declaration"],
+    toolLinks: [
+      { toolId: "ibps-signature", text: "Resize your signature with the IBPS Signature Resizer" },
+      {
+        toolId: "ibps-thumb",
+        text: "Resize your thumb impression with the IBPS Thumb Impression Resizer",
+      },
+      {
+        toolId: "ibps-declaration",
+        text: "Resize your declaration with the IBPS Hand-written Declaration Resizer",
+      },
+      { toolId: "ibps-pack", text: "Prepare all four IBPS images in the IBPS Complete Pack" },
+    ],
+    reviewedOn: "2026-09-25",
+    build: ([signature, thumb, declaration]) => {
+      const s = describePreset(signature);
+      const t = describePreset(thumb);
+      const dec = describePreset(declaration);
+      return {
+        shortAnswer: `According to the ${sourceCitation(signature.source)}: signature ${s.size}, ${s.kb}; left thumb impression ${t.size}, ${t.kb}; hand-written declaration ${dec.size}, ${dec.kb}. All three in ${s.format} format, scanned at ${s.dpi}. The pixel sizes are stated as preferred.`,
+        sections: [
+          {
+            id: "four-images",
+            heading: "Four images in the IBPS application",
+            blocks: [
+              p(
+                "The IBPS application asks you to upload a photograph, a signature, a left thumb impression and a hand-written declaration; the notification says the application isn't registered until they are uploaded. This page covers the signature, thumb impression and declaration. For the photograph, see ",
+                { href: "/guides/ibps-photo-size", text: "IBPS photo size" },
+                ".",
+              ),
+            ],
+          },
+          {
+            id: "signature",
+            heading: "Signature",
+            blocks: [
+              list(
+                [`${s.size} (width × height), stated as preferred`],
+                [`File size ${s.kb}`],
+                [`${s.format}, scanned at ${s.dpi}`],
+              ),
+              p(
+                "Sign on white paper with a black ink pen, not in capital letters. IBPS compares the signature at the exam with the one you upload.",
+              ),
+            ],
+          },
+          {
+            id: "left-thumb",
+            heading: "Left thumb impression",
+            blocks: [
+              list(
+                [`${t.size} (width × height), stated as preferred`],
+                [`File size ${t.kb}`],
+                [`${t.format}, scanned at ${t.dpi}`],
+              ),
+              p(
+                "Put your left thumb impression on white paper with black or blue ink. If you don't have a left thumb, the notification lists which finger (or toe) to use instead, and asks you to write in the uploaded image which one it is.",
+              ),
+            ],
+          },
+          {
+            id: "declaration",
+            heading: "Hand-written declaration",
+            blocks: [
+              list(
+                [`${dec.size} (width × height), stated as preferred`],
+                [`File size ${dec.kb}`],
+                [`${dec.format}, scanned at ${dec.dpi}`],
+              ),
+              p(
+                "Write it yourself, in English only, clearly on white paper with black ink, and not in capital letters. A declaration written by someone else or in another language makes the application invalid. The text in the notification is:",
+              ),
+              p(
+                "“I, __________ (Name of the candidate), hereby declare that all the information submitted by me in the application form is correct, true and valid. I will submit the supporting documents as and when required.”",
+              ),
+              p(
+                "Copy the text from the notification for your recruitment in case it differs. Candidates who cannot write may upload the typed text with their left thumb impression below it, as the notification describes.",
+              ),
+            ],
+          },
+          {
+            id: "prepare",
+            heading: "How to prepare each image",
+            blocks: [
+              steps(
+                ["Sign, press your thumb, or write the declaration on plain white paper as above."],
+                ["Scan it, or take a sharp, evenly lit picture with no shadows."],
+                [
+                  "Open the matching tool — ",
+                  toolLink("ibps-signature", "signature"),
+                  ", ",
+                  toolLink("ibps-thumb", "thumb impression"),
+                  " or ",
+                  toolLink("ibps-declaration", "declaration"),
+                  " — or do all four in the ",
+                  toolLink("ibps-pack", "IBPS Complete Pack"),
+                  ".",
+                ],
+                [
+                  "Zoom so the ink fills the frame, process it, check the results list and download the JPG.",
+                ],
+              ),
+            ],
+          },
+          {
+            id: "tool-vs-guideline",
+            heading: "What the tools handle — and what they can't",
+            blocks: [
+              list(
+                ["Exact pixel size, cropped rather than stretched"],
+                ["File size within the stated range, at the best quality that fits"],
+                [
+                  `${s.format} output with ${chooseOutputDpi(signature.dpi)} DPI written into the file`,
+                ],
+                ["Location and camera details removed"],
+              ),
+              p(
+                "They can't check the ink colour, capital letters, the language or wording of the declaration, whose handwriting or thumb it is, or which finger was used. Those are up to you, as the notification describes.",
+              ),
+            ],
+          },
+          belowMinimumSection(declaration, "declaration"),
+        ],
+        faq: [
+          {
+            question: "Are these sizes mandatory?",
+            answer:
+              "IBPS lists the pixel sizes as preferred and states the file-size ranges and JPG/JPEG format as requirements. Using the preferred sizes exactly is the safest choice, which is what the tools produce.",
+          },
+          {
+            question: "Why is my signature or declaration file below the minimum size?",
+            answer: `Dark ink on white paper compresses to small files. If the result is below the minimum (${s.kb} for the signature, ${dec.kb} for the declaration) at the highest quality, the tools keep that version and show a warning instead of adding artificial data. A sharper, higher-resolution scan usually helps.`,
+          },
+          {
+            question: "If my files meet these values, will my form be accepted?",
+            answer: NO_GUARANTEE,
           },
           {
             question: "Is ExamPhotoFixer affiliated with IBPS?",

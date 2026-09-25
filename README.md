@@ -15,18 +15,20 @@ npm run dev                  # http://localhost:3000
 
 ## Scripts
 
-| Script                    | Purpose                                                                    |
-| ------------------------- | -------------------------------------------------------------------------- |
-| `dev` / `build` / `start` | Next.js                                                                    |
-| `lint`                    | ESLint                                                                     |
-| `typecheck`               | Route type generation + `tsc --noEmit`                                     |
-| `test` / `test:watch`     | Vitest unit tests                                                          |
-| `test:e2e`                | Playwright (run `build` first; `npx playwright install chromium` once)     |
-| `format` / `format:check` | Prettier                                                                   |
-| `check`                   | lint + typecheck + format check + unit tests                               |
-| `smoke -- <url>`          | Launch / post-deploy gate on a running site (see docs/DEPLOYMENT.md)       |
-| `search:report -- <csv>`  | Offline Search Console export report (docs/SEARCH_DATA_ANALYSIS.md)        |
-| `analytics:report -- <f>` | Offline funnel / problem report from an event export (docs/GROWTH_PLAN.md) |
+| Script                    | Purpose                                                                           |
+| ------------------------- | --------------------------------------------------------------------------------- |
+| `dev` / `build` / `start` | Next.js                                                                           |
+| `lint`                    | ESLint                                                                            |
+| `typecheck`               | Route type generation + `tsc --noEmit`                                            |
+| `test` / `test:watch`     | Vitest unit tests                                                                 |
+| `test:e2e`                | Playwright (run `build` first; `npx playwright install chromium` once)            |
+| `format` / `format:check` | Prettier                                                                          |
+| `check`                   | lint + typecheck + format check + unit tests                                      |
+| `smoke -- <url>`          | Launch / post-deploy gate on a running site (see docs/DEPLOYMENT.md)              |
+| `search:report -- <csv>`  | Offline Search Console export report (docs/SEARCH_DATA_ANALYSIS.md)               |
+| `analytics:report -- <f>` | Offline funnel / problem report from an event export (docs/GROWTH_PLAN.md)        |
+| `requirements:report`     | Preset verification status, audit, change impact (docs/REQUIREMENT_MONITORING.md) |
+| `source:checksum -- <f>`  | Compare a downloaded official source with its recorded SHA-256                    |
 
 ## Documentation
 

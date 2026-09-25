@@ -6,8 +6,10 @@
  * Hard rules encoded here:
  * - Below the evidence threshold → NO_ACTION (small numbers are noise).
  * - Search demand is never a requirement: a query that mentions numbers different from a
- *   verified preset yields UPDATE_REQUIREMENT = "re-check the official source", never "change
- *   the preset". Exams without verified presets yield CREATE_TOOL with verification required.
+ *   verified preset yields REVERIFY_SOURCE ("re-check the official source"), never a preset
+ *   change. UPDATE_REQUIREMENT is never emitted here: it is recorded by a person only after the
+ *   official source has changed (docs/REQUIREMENT_MONITORING.md). Exams without verified presets
+ *   yield CREATE_TOOL with verification required.
  * - Navigational (brand) queries → NO_ACTION.
  */
 
@@ -20,6 +22,7 @@ export type OpportunityType =
   | "CREATE_GUIDE"
   | "CREATE_TOOL"
   | "UPDATE_REQUIREMENT"
+  | "REVERIFY_SOURCE"
   | "ADD_INTERNAL_LINK"
   | "NO_ACTION";
 
@@ -166,7 +169,7 @@ function decide(
     const kbOutside = kb !== null && (kb < requirement.kb.min || kb > requirement.kb.max);
     if (dimsDiffer || kbOutside) {
       return {
-        type: "UPDATE_REQUIREMENT",
+        type: "REVERIFY_SOURCE",
         reason:
           `query mentions ${dimsDiffer ? `${dimensions!.width}×${dimensions!.height}` : `${kb} KB`}, ` +
           `unlike verified ${requirement.presetId} (${requirement.width}×${requirement.height}, ` +

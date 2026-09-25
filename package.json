@@ -16,7 +16,9 @@
     "check": "npm run lint && npm run typecheck && npm run format:check && npm run test",
     "search:report": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --import ./scripts/ts-resolve.mjs scripts/search-console-report.ts",
     "smoke": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --import ./scripts/ts-resolve.mjs scripts/smoke-check.ts",
-    "analytics:report": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --import ./scripts/ts-resolve.mjs scripts/analytics-report.ts"
+    "analytics:report": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --import ./scripts/ts-resolve.mjs scripts/analytics-report.ts",
+    "requirements:report": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --import ./scripts/ts-resolve.mjs scripts/requirements-report.ts",
+    "source:checksum": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --import ./scripts/ts-resolve.mjs scripts/source-checksum.ts"
   },
   "dependencies": {
     "next": "16.3.6",

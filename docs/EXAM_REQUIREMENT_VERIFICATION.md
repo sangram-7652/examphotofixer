@@ -57,7 +57,7 @@ Corrigenda checked (both leave image specifications unchanged — "All other ter
 
 | Corrigendum                                            | Date       | Change                              | SHA-256              |
 | ------------------------------------------------------ | ---------- | ----------------------------------- | -------------------- |
-| Corrigendum-CRP-RRBs-XV-1.pdf                          | 15.09.2026 | Indicative vacancies (Annexure I)   | `86e92e11…22238b1e`  |
+| Corrigendum-CRP-RRBs-XV-1.pdf                          | 15.09.2026 | Indicative vacancies (Annexure I)   | `86e92e11…ccd1f8b3a` |
 | Approved_Corrigendum-for-Extension_CRP-RRBs-XV-002.pdf | 21.09.2026 | Registration extended to 27.09.2026 | `39c3932b…25e629966` |
 
 ### Corroborating sources (same photograph text)
@@ -114,3 +114,88 @@ III text, and if values or wording change, update `ibps.ts` and add a history ro
 | Date       | Event                                                                                         |
 | ---------- | --------------------------------------------------------------------------------------------- |
 | 2026-09-24 | Initial verification against CRP RRBs XV (01.09.2026); corroborated by PO/MT-XVI and CSA-XVI. |
+
+## Source change workflow and tooling (P12)
+
+Re-verification triggers, statuses and the step-by-step workflow are in
+`REQUIREMENT_MONITORING.md`. Tooling (developer-side, read-only, nothing is uploaded):
+
+```
+npm run source:checksum -- <downloaded.pdf> --source <source-id>   # UNCHANGED (exit 0) / CHANGED (exit 3)
+npm run source:checksum -- --list                                  # recorded checksums
+npm run requirements:report                                        # status + audit of every preset
+npm run requirements:report -- --impact <preset-id>                # what a change touches
+```
+
+Record every check as a new event in `src/lib/presets/history.ts`; never edit a past event.
+
+## Re-verification, 2026-09-25 (P12)
+
+Both sources were downloaded again from the official domains with certificate verification on
+(for `www.ibps.in` the missing GlobalSign intermediate was fetched from the certificate's AIA URL,
+as above; chain: `*.ibps.in` ← GlobalSign RSA OV SSL CA 2018 ← GlobalSign Root R3).
+
+| Source                              | SHA-256 today                     | Result    |
+| ----------------------------------- | --------------------------------- | --------- |
+| NIELIT CCC guidelines, Version 1.11 | `853cbfca…4a3475aa` (2,585,888 B) | UNCHANGED |
+| IBPS CRP RRBs XV notification       | `105b0652…1b760508` (1,549,821 B) | UNCHANGED |
+
+All documents listed on IBPS's RRB XV page (`/index.php/rural-bank-xv/`) were checked; none
+mentions image specifications:
+
+| Document                                               | Date          | Content                                                                           | SHA-256                   |
+| ------------------------------------------------------ | ------------- | --------------------------------------------------------------------------------- | ------------------------- |
+| Corrigendum-CRP-RRBs-XV.pdf                            | 09.09.2026    | Indicative vacancies; "all other terms … remain unchanged" (not in the P8 record) | `89211d50…e4aabbf8`       |
+| Corrigendum-CRP-RRBs-XV-1.pdf                          | 15.09.2026    | Vacancies                                                                         | `86e92e11…ccd1f8b3a`      |
+| Approved_Corrigendum-for-Extension_CRP-RRBs-XV-002.pdf | 21.09.2026    | Registration extended to 27.09.2026                                               | `39c3932b…25e629966`      |
+| Annexure-I_updated09.09.2026.pdf / _15.09.2026.pdf     | 09/15.09.2026 | Vacancy tables                                                                    | `dd77db3b…` / `667a95d9…` |
+| Window-Notification_CRP-RRBs-XV.pdf                    | 31.08.2026    | Window notification                                                               | `9a29b3d6…621e4dbb8`      |
+
+### IBPS signature, left thumb impression, hand-written declaration (P12)
+
+Printed page 57 (PDF page 59), Annexure III, CRP RRBs XV; the same text (punctuation and line
+wraps aside) is in CRP PO/MT-XVI (`9379acfc…`, unchanged since P8) and CRP SPL-XVI
+(`2293242c…3d72154bd`, 59 pages).
+
+| Source text (verbatim)                                                                                                             | Preset field                                                   | Validated?                |
+| ---------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- | ------------------------- |
+| Signature: "Dimensions 140 x 60 pixels (preferred)"                                                                                | `ibps-signature` 140 × 60, `preferredDimensions`               | Yes                       |
+| "Size of file should be between 10kb – 20kb" / "not more than 20kb"                                                                | `fileSizeKB: { min: 10, max: 20 }`                             | Yes (below min → warning) |
+| "sign on white paper with Black Ink pen"; "Not in CAPITAL LETTERS"; own signature; mismatch at exam → disqualification             | `guidance`                                                     | No                        |
+| Left Thumb Impression: "File type: jpg / jpeg"; "240 x 240 pixels in 200 DPI (Preferred for required quality) i.e 3 cm * 3 cm"     | `ibps-left-thumb` 240 × 240, preferred, JPEG                   | Yes                       |
+| "File Size: 20 KB – 50 KB"                                                                                                         | `fileSizeKB: { min: 20, max: 50 }`                             | Yes                       |
+| "white paper with black or blue ink"; missing-thumb substitutions and labelling                                                    | `guidance`                                                     | No                        |
+| Hand-written declaration: "File type: jpg / jpeg"; "800 x 400 pixels in 200 DPI (Preferred for required quality) i.e 10 cm * 5 cm" | `ibps-declaration` 800 × 400, preferred, JPEG                  | Yes                       |
+| "File Size: 50 KB – 100 KB"                                                                                                        | `fileSizeKB: { min: 50, max: 100 }`                            | Yes                       |
+| English only, own handwriting, black ink, not in capitals; typed text + LTI for candidates who cannot write                        | `guidance`; the declaration text is quoted in the guide        | No                        |
+| Page 58: "Set the scanner resolution to a minimum of 200 dpi"; "The image file should be JPG or JPEG format"                       | `dpi: { min: 200, max: null }`, `formats: ["jpeg"]` (all four) | Yes                       |
+
+Browser finding (P12 e2e): at maximum quality WebKit (Safari) encodes JPEGs smaller than
+Chromium and Firefox (measured for 140 × 60 random noise: WebKit 13,714 B, Chromium 27,705 B,
+Firefox 38,179 B). Real signatures (dark ink on white) compress far more, so a 140 × 60
+signature can fall below the 10 KB minimum, especially in Safari. The tool keeps the
+highest-quality file and shows a warning; it never pads the file (locked product decision).
+
+Ambiguities: as for the photo ("preferred" sizes, DPI as a scanner setting, KB base). The
+declaration's text could differ in other notifications: the guide tells users to copy it from
+their own notification. Need: the notification states the application "will not be registered
+unless you upload your Photograph, signature, left thumb impression, hand written declaration"
+(printed p. 59), so the photo tool alone didn't let a candidate finish.
+
+## Candidates evaluated, 2026-09-25 (P12)
+
+| Candidate | Official evidence checked                                                                                                                                                                                  | Finding                                                                                                                                                                                                                           | Decision                                                                   |
+| --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| SSC       | `ssc.gov.in` notices: ASO 2026 (`Notice_of_ASO_2026_06_25.pdf.pdf`, `7048f0bc…`), CTGD 2026 (`Notice_of_CTGD_2026.pdf`, `0d849077…`)                                                                       | Photo: "The application module has been designed to capture a photograph of the candidate"; pre-existing photos → rejection. Signature: "JPEG format (10 to 20 KB)", "about 6.0 cm (width) x 2.0 cm (height)" — no pixels or DPI. | Photo: not applicable. Signature: blocked (not explicit).                  |
+| Railway   | `rrbcdg.gov.in` (certificate valid only for the bare domain; now redirects to `rrb.indianrailways.gov.in`), whose document endpoint rejects scripted requests; `rrbchennai.gov.in` failed TLS verification | No current CEN document obtained over verified TLS. Requirements are notification-specific (P8).                                                                                                                                  | Blocked (source). Needs a person to download the current CEN in a browser. |
+| UPSC      | `upsc.gov.in`: CSE 2026 notification (`Notif-CSP-2026-Engl-060226Rev.pdf`, `f68a7de9…`), NOTE 2                                                                                                            | Upload **and** live capture required; specifications are on `upsconline.nic.in` → "Instructions … Photos and Signature", behind the candidate portal's login redirect.                                                            | Blocked (source).                                                          |
+
+Search results were used only to locate official URLs; nothing was taken from them as evidence.
+
+### History (continued)
+
+| Date       | Event                                                                                                                                                                                         |
+| ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-09-25 | CCC and IBPS sources re-verified: identical checksums (UNCHANGED). IBPS signature, left thumb, declaration added.                                                                             |
+| 2026-09-25 | `ibps-photo` citation corrected to pages 56 and 58 (values unchanged).                                                                                                                        |
+| 2026-09-25 | Correction: the 15.09.2026 corrigendum's SHA-256 was recorded in P8 with a wrong suffix (`…22238b1e`); the file's hash is `86e92e11380ec4e1a478eb110e2207eeba61e761ab138d56e5f75c6ccd1f8b3a`. |

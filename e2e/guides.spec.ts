@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 import { getGuide, listGuides } from "../src/content/guides";
 import { getPreset } from "../src/lib/presets";
 import { dpiText } from "../src/lib/presets/describe";
-import { sourceCitation } from "../src/lib/presets/source";
+import { formatPages, presetSourcePages, sourceCitation } from "../src/lib/presets/source";
 import { getTool } from "../src/lib/tools/registry";
 import { hasNoHorizontalOverflow } from "./helpers";
 
@@ -58,7 +58,10 @@ for (const guide of listGuides()) {
     const cited = getPreset(guide.presetIds[0]).source;
     const source = page.getByTestId("requirements-source");
     await expect(source).toContainText(sourceCitation(cited));
-    await expect(source).toContainText(`page ${cited.page}`);
+    // Every page the guide's presets cite (e.g. "pages 57 and 58").
+    await expect(source).toContainText(
+      formatPages(guide.presetIds.flatMap((id) => presetSourcePages(getPreset(id)))),
+    );
     await expect(source.getByRole("link", { name: /^View source/ })).toHaveAttribute(
       "href",
       getPreset(guide.presetIds[0]).source.url!,

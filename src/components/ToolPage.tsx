@@ -19,6 +19,7 @@ import {
   type Crumb,
   type JsonLdObject,
 } from "@/lib/seo/json-ld";
+import { documentTitle } from "@/lib/tools/preset-labels";
 import { TOOLS, getTool, type ToolId } from "@/lib/tools/registry";
 
 const PRESET_STEPS = [
@@ -62,6 +63,13 @@ export function ToolPage({ toolId }: { toolId: ToolId }) {
           (other) => other.kind === "pack" && other.exam === tool.exam && other.status === "live",
         )
       : undefined;
+  // "photo, signature and left thumb impression", from the pack's own presets.
+  const packDocuments = pack
+    ? pack.presetIds
+        .map((id) => documentTitle(getPreset(id)).toLowerCase())
+        .join(", ")
+        .replace(/, ([^,]*)$/, " and $1")
+    : "";
   const steps =
     content?.howItWorks ??
     (tool.kind === "preset" || tool.kind === "pack" ? PRESET_STEPS : GENERIC_STEPS[tool.kind]);
@@ -114,7 +122,7 @@ export function ToolPage({ toolId }: { toolId: ToolId }) {
           <Link href={pack.path} className="font-medium underline underline-offset-2">
             Use the {pack.name}
           </Link>{" "}
-          to prepare the photo, signature and left thumb impression on one page.
+          to prepare the {packDocuments} on one page.
         </p>
       ) : null}
 
@@ -141,7 +149,7 @@ export function ToolPage({ toolId }: { toolId: ToolId }) {
               <RequirementsTable key={preset.id} preset={preset} />
             ))}
           </div>
-          {sharedSource ? <SourceVerification preset={sharedSource} /> : null}
+          {sharedSource ? <SourceVerification presets={presets} /> : null}
         </section>
       ) : null}
 

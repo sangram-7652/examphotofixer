@@ -1,13 +1,21 @@
 import { SourceLink } from "@/components/SourceLink";
-import { formatIsoDate, isVerifiedSource, sourceCitation } from "@/lib/presets/source";
+import {
+  formatIsoDate,
+  formatPages,
+  isVerifiedSource,
+  presetSourcePages,
+  sourceCitation,
+} from "@/lib/presets/source";
 import type { ImagePreset } from "@/lib/presets/types";
 
 /**
- * "Source and verification" block for a preset's requirements. The single
- * citation UI used by tool pages and guides.
+ * "Source and verification" block for presets that share one source (a tool, a pack or a
+ * guide). The single citation UI used by tool pages and guides; cites every page the presets'
+ * values come from.
  */
-export function SourceVerification({ preset }: { preset: ImagePreset }) {
-  const { source } = preset;
+export function SourceVerification({ presets }: { presets: readonly ImagePreset[] }) {
+  const { source } = presets[0];
+  const pages = formatPages(presets.flatMap(presetSourcePages));
   const verified = isVerifiedSource(source);
   return (
     <section
@@ -23,8 +31,7 @@ export function SourceVerification({ preset }: { preset: ImagePreset }) {
         <p className="mt-1">
           Values verified against the source on{" "}
           <time dateTime={source.verifiedOn}>{formatIsoDate(source.verifiedOn)}</time>
-          {source.page ? ` (page ${source.page})` : ""}.{" "}
-          <SourceLink source={source}>View source</SourceLink>
+          {pages ? ` (${pages})` : ""}. <SourceLink source={source}>View source</SourceLink>
         </p>
       ) : (
         <p className="mt-1">The official source link has not been recorded yet.</p>

@@ -73,14 +73,15 @@ The opportunity engine (`src/lib/search-data/opportunities.ts`) proposes, never 
 Each proposal carries query, intent, impressions, clicks, CTR, position, top page, existing
 tool/guide, type, reason and evidence (source file + data class).
 
-| Type                          | Rule                                                                                                                      |
-| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| `NO_ACTION`                   | Below the evidence threshold (default < 100 impressions), brand queries, or no rule fires.                                |
-| `CREATE_TOOL` (verify)        | Demand for a planned/unknown exam, or an active exam's document without a verified preset. Always `verificationRequired`. |
-| `UPDATE_REQUIREMENT` (verify) | Query numbers differ from the verified preset → **re-check the official source**; never change a preset from search data. |
-| `CREATE_GUIDE`                | Problem queries for an exam that has no upload-problems guide.                                                            |
-| `ADD_INTERNAL_LINK`           | Tool-intent query whose top page is a guide.                                                                              |
-| `OPTIMIZE_EXISTING_PAGE`      | Position ≤ 10 and CTR below the threshold (default 2%).                                                                   |
+| Type                     | Rule                                                                                                                            |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------- |
+| `NO_ACTION`              | Below the evidence threshold (default < 100 impressions), brand queries, or no rule fires.                                      |
+| `CREATE_TOOL` (verify)   | Demand for a planned/unknown exam, or an active exam's document without a verified preset. Always `verificationRequired`.       |
+| `REVERIFY_SOURCE`        | Query numbers differ from the verified preset → **re-check the official source**; never change a preset from search data (P12). |
+| `UPDATE_REQUIREMENT`     | Never emitted by the engine: recorded by a person only after the official source changed (`REQUIREMENT_MONITORING.md`).         |
+| `CREATE_GUIDE`           | Problem queries for an exam that has no upload-problems guide.                                                                  |
+| `ADD_INTERNAL_LINK`      | Tool-intent query whose top page is a guide.                                                                                    |
+| `OPTIMIZE_EXISTING_PAGE` | Position ≤ 10 and CTR below the threshold (default 2%).                                                                         |
 
 - **FACT:** on the fake fixture, the engine proposes nothing (all below threshold) — tested.
 - **FACT:** content audit (not data) on 2026-09-25 found and fixed two landing-page issues:
@@ -221,7 +222,23 @@ Only measurable once data exists; no targets are set before a baseline.
   `SEO_CHANGELOG.md` with its review date.
 - Quarterly: re-verify every preset's official source for new notifications.
 
-## 16. P12 inputs (handoff)
+## 16. P12 inputs (handoff) — outcome
+
+P12 (2026-09-25) evaluated every candidate against official sources only
+(`REQUIREMENT_MONITORING.md` → "Candidates evaluated", evidence in
+`EXAM_REQUIREMENT_VERIFICATION.md`). Demand evidence is still **NOT AVAILABLE** for all of them.
+
+| Candidate                               | Result                                                                                                                                    |
+| --------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| IBPS signature, left thumb, declaration | Re-verified from the current notification (unchanged); implemented with tools, pack and guide. Need = official workflow, not search data. |
+| SSC                                     | Photo captured live (not applicable); signature spec not explicit (blocked).                                                              |
+| Railway (RRB)                           | Blocked: no current CEN obtainable from an official source with verified TLS.                                                             |
+| UPSC                                    | Blocked: specifications behind the candidate portal login; no public document.                                                            |
+| IBPS upload-problems guide              | Deferred: needs problem-query evidence.                                                                                                   |
+
+P13 inputs: launch (gates all data), then Railway/UPSC verification by a person in a browser.
+
+Original P11 handoff table (kept for history):
 
 None of these is backed by search data (none exists). They are listed with what is and isn't
 known, so P12 inherits no assumption as fact.

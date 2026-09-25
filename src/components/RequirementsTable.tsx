@@ -1,6 +1,6 @@
 import { FORMAT_LABELS } from "@/lib/image/formats";
 import { dpiText } from "@/lib/presets/describe";
-import { sourceCitation } from "@/lib/presets/source";
+import { formatPages, presetSourcePages, sourceCitation } from "@/lib/presets/source";
 import type { ImagePreset } from "@/lib/presets/types";
 import { SourceLink } from "./SourceLink";
 
@@ -16,6 +16,7 @@ export function RequirementsTable({ preset }: { preset: ImagePreset }) {
     ["DPI", dpiText(preset.dpi)],
   ];
   const { source } = preset;
+  const pages = formatPages(presetSourcePages(preset));
 
   return (
     <section
@@ -52,7 +53,7 @@ export function RequirementsTable({ preset }: { preset: ImagePreset }) {
       ) : null}
       <p className="border-t border-border px-4 py-2 text-xs text-muted">
         Source: {sourceCitation(source)}
-        {source.page ? `, page ${source.page}` : ""}.{" "}
+        {pages ? `, ${pages}` : ""}.{" "}
         {source.url ? <SourceLink source={source}>View source</SourceLink> : null} Always confirm
         with the current official notification before uploading.
       </p>

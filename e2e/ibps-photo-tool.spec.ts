@@ -3,7 +3,7 @@ import { readJpegFacts } from "../src/lib/image/inspect";
 import { insertExif } from "../src/lib/image/testing/exif-builder";
 import { IBPS_PHOTO } from "../src/lib/presets/ibps";
 import { dpiShortText } from "../src/lib/presets/describe";
-import { sourceCitation } from "../src/lib/presets/source";
+import { formatPages, presetSourcePages, sourceCitation } from "../src/lib/presets/source";
 import { buildDownloadFilename } from "../src/lib/tools/preset-labels";
 import {
   downloadBytes,
@@ -55,7 +55,7 @@ test("page: H1, requirements and source from the preset, live-capture limitation
 
   const source = page.getByTestId("requirements-source");
   await expect(source).toContainText(sourceCitation(P.source));
-  await expect(source).toContainText(`page ${P.source.page}`);
+  await expect(source).toContainText(formatPages(presetSourcePages(P)));
   await expect(source).toContainText("not affiliated with IBPS");
   await expect(source.getByRole("link", { name: /^View source/ })).toHaveAttribute(
     "href",

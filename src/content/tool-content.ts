@@ -375,6 +375,127 @@ function ibpsPhotoContent(preset: ImagePreset): ToolContent {
   };
 }
 
+/** IBPS signature, left thumb impression and hand-written declaration share one flow. */
+function ibpsDocumentContent(
+  preset: ImagePreset,
+  kind: "signature" | "thumb" | "declaration",
+): ToolContent {
+  const d = describe(preset);
+  const citation = sourceCitation(preset.source);
+  const noun = {
+    signature: "signature",
+    thumb: "left thumb impression",
+    declaration: "hand-written declaration",
+  }[kind];
+  const short = { signature: "signature", thumb: "thumb impression", declaration: "declaration" }[
+    kind
+  ];
+  const guidance = preset.guidance ?? [];
+  const cannotCheck = {
+    signature:
+      "whether you signed in black ink, in capital letters, or whether it is your own signature",
+    thumb: "whether the impression is clear or which finger was used",
+    declaration:
+      "the handwriting, the language, capital letters, or whether the text matches the declaration IBPS asks for",
+  }[kind];
+  return {
+    intro: `Resize the image of your ${noun} to the requirements in IBPS's published scanning guidelines — ${d.size}, ${d.kb}, ${d.format}, ${d.dpi} — and check it before you upload. The image is processed on your device and never uploaded to our servers.`,
+    howItWorks: [
+      `Prepare your ${noun} as the notification describes (see “The same guidelines also ask” below), then scan it or take a clear, well-lit picture of it.`,
+      `Choose the image and drag or zoom so the ${short} fills the frame. The frame has the ${preset.width}:${preset.height} shape, so nothing is stretched.`,
+      `Tap “Process ${short}”. We resize to exactly ${d.size}, compress to fit ${d.kb} at the best possible quality, and write ${chooseOutputDpi(preset.dpi)} DPI into the file.`,
+      `Check the results list, download the JPG and upload it in the ${noun} field of the IBPS application.`,
+    ],
+    commonProblems: [
+      {
+        title: `${short.charAt(0).toUpperCase()}${short.slice(1)} too small in the frame`,
+        body: `Zoom in so the ${short} fills most of the frame. Blank paper around it stays in the image and makes it harder to read.`,
+      },
+      {
+        title: `File is below ${preset.fileSizeKB.min} KB`,
+        body: `Dark ink on plain white paper compresses to small files. We keep the highest-quality version and tell you if it is below ${preset.fileSizeKB.min} KB, instead of adding artificial data. A sharper scan or photo usually helps.`,
+      },
+      {
+        title: "What the tool can't check",
+        body: `The tool checks size, file size, format and DPI. It can't check ${cannotCheck}. Follow the notification's instructions for those.`,
+      },
+    ],
+    faq: [
+      {
+        question: `What size should the IBPS ${noun} be?`,
+        answer: `According to the ${citation}: ${d.size} (width × height, stated as preferred), between ${d.kb}, in ${d.format} format. The scanning instructions ask for ${d.dpi}. Check the notification for your recruitment before you upload.`,
+      },
+      ...(guidance.length > 0
+        ? [
+            {
+              question: `How should I prepare the ${noun}?`,
+              answer: `${guidance.join(" ")} This tool fixes the size, file size, format and DPI; it can't change how the ${short} was made.`,
+            },
+          ]
+        : []),
+      {
+        question: "Is my image uploaded to your server?",
+        answer: "No. Everything happens inside your browser; the image never leaves your device.",
+      },
+      {
+        question: "Is ExamPhotoFixer affiliated with IBPS?",
+        answer:
+          "No. ExamPhotoFixer is an independent tool and is not affiliated with IBPS or any bank or exam body.",
+      },
+    ],
+  };
+}
+
+function ibpsPackContent(presets: ImagePreset[]): ToolContent {
+  const list = presets
+    .map((preset) => {
+      const d = describe(preset);
+      return `${preset.label.replace(/^IBPS /, "")}: ${d.size}, ${d.kb}`;
+    })
+    .join("; ");
+  const first = describe(presets[0]);
+  return {
+    intro: `Prepare all four IBPS application images on one page — photo, signature, left thumb impression and hand-written declaration — check each against IBPS's published guidelines and download them together as a ZIP. Everything is processed on your device.`,
+    howItWorks: [
+      "Work through the four steps on this page: photo, signature, left thumb impression, then hand-written declaration.",
+      "For each file: choose the image, adjust the crop, and process it. Each file is checked against its own requirements.",
+      "The pack status shows which files are ready, which have a warning and which still need attention.",
+      "When all four are processed, download them together as one ZIP — or download each file on its own.",
+    ],
+    commonProblems: [
+      {
+        title: "Mixing up the four sizes",
+        body: "Each IBPS image has its own dimensions and file-size range. Each step here uses the right requirements automatically.",
+      },
+      {
+        title: "The live photo and the certificates",
+        body: "IBPS also asks for a photo captured live during the application and, where applicable, certificates as PDF. Those happen on the IBPS website; this pack prepares the four images.",
+      },
+    ],
+    faq: [
+      {
+        question: "What are the IBPS application image requirements?",
+        answer: `According to the ${sourceCitation(presets[0].source)}: ${list}. All must be ${first.format}, and the scanning instructions ask for ${first.dpi}.`,
+      },
+      {
+        question: "What is in the ZIP file?",
+        answer:
+          "Exactly the four processed JPG files shown on this page, named for each document. The ZIP is created in your browser; nothing is uploaded.",
+      },
+      {
+        question: "Can I download the pack if one file is below the minimum size?",
+        answer:
+          "Yes. We keep the highest-quality version instead of adding artificial data, and show a warning. The application website may still enforce its own minimum-size check.",
+      },
+      {
+        question: "Is ExamPhotoFixer affiliated with IBPS?",
+        answer:
+          "No. ExamPhotoFixer is an independent tool and is not affiliated with IBPS or any bank or exam body.",
+      },
+    ],
+  };
+}
+
 const CONTENT: Partial<
   Record<ToolDefinition["id"], (presets: ImagePreset[]) => ToolContent | null>
 > = {
@@ -384,6 +505,13 @@ const CONTENT: Partial<
   "ccc-thumb": (presets) => (presets.length === 1 ? cccInkContent(presets[0], "thumb") : null),
   "ccc-pack": (presets) => (presets.length > 1 ? cccPackContent(presets) : null),
   "ibps-photo": (presets) => (presets.length === 1 ? ibpsPhotoContent(presets[0]) : null),
+  "ibps-signature": (presets) =>
+    presets.length === 1 ? ibpsDocumentContent(presets[0], "signature") : null,
+  "ibps-thumb": (presets) =>
+    presets.length === 1 ? ibpsDocumentContent(presets[0], "thumb") : null,
+  "ibps-declaration": (presets) =>
+    presets.length === 1 ? ibpsDocumentContent(presets[0], "declaration") : null,
+  "ibps-pack": (presets) => (presets.length > 1 ? ibpsPackContent(presets) : null),
   "image-resizer": () => imageResizerContent(),
   "image-compressor": () => imageCompressorContent(),
 };

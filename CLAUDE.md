@@ -39,6 +39,9 @@ FORM_PRESETS, SEO_STRATEGY, SEO_URL_MAP, ANALYTICS, TESTING, PRIVACY, DEPLOYMENT
   go in `guidance`, never in validation.
 - Reference sources, never imply endorsement: no "official", "approved by" or "affiliated" claims.
 - Changing a preset value requires the official source in the same change and an updated test.
+- Every verification (first check, re-check, change) is a new event in `src/lib/presets/history.ts`;
+  never edit past events. A changed source only opens a review (`docs/REQUIREMENT_MONITORING.md`);
+  no script, checksum or search signal changes a requirement.
 - UI must show the source and remind users to check the official notification.
 
 ## Image-processing rules

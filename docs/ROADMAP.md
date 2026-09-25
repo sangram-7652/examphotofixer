@@ -58,6 +58,11 @@ official verification.
 
 ## Phase 4 — Growth
 
+- P12: continuous SEO + verified expansion — CCC and IBPS sources re-verified (unchanged);
+  requirement version history, monitoring statuses, checksum and report tooling
+  (`REQUIREMENT_MONITORING.md`); IBPS signature, left thumb impression and hand-written
+  declaration tools + IBPS Complete Pack + guide; SSC/RRB/UPSC evaluated and blocked with
+  reasons. ✅
 - P11: distribution and growth foundation — data gate (no real data yet), deterministic search
   intent, opportunity engine, offline funnel/problem report, SEO changelog, experiment log,
   growth plan with P12 handoff (`GROWTH_PLAN.md`). Homepage lists every exam with live tools;

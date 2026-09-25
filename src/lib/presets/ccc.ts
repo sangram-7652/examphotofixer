@@ -21,13 +21,14 @@ const CCC_SOURCE: RequirementSource = Object.freeze({
   published: "2023",
   page: 3,
   sha256: "853cbfca530016fb934c3f78acb1dbdc1f9b6cdfc1e472f5947b259c4a3475aa",
-  verifiedOn: "2026-09-24",
+  verifiedOn: "2026-09-25",
   status: "verified",
   notes:
     "Full title: Guidelines and Instructions for Submission of Online Examination Application " +
     "Form (OEAF) and Examination Fee for Examination of Digital Literacy Courses (DLC). Every " +
     "page footer reads 'Version1.11 (2023)'; PDF created 2023-06-14 (its embedded title still " +
-    "names the Version 1.10 Word file).",
+    "names the Version 1.10 Word file). First verified 2026-09-24; re-verified unchanged (same " +
+    "SHA-256) on 2026-09-25.",
 });
 
 export const CCC_PHOTO: ImagePreset = {

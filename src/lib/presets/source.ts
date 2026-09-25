@@ -1,4 +1,4 @@
-import type { RequirementSource } from "./types";
+import type { ImagePreset, RequirementSource } from "./types";
 
 const MONTHS = [
   "January",
@@ -37,6 +37,20 @@ export function sourceCitation(source: RequirementSource): string {
 /** True when the source can be shown as verified: status, link and date are all present. */
 export function isVerifiedSource(source: RequirementSource): boolean {
   return source.status === "verified" && source.url !== null && source.verifiedOn !== null;
+}
+
+/** Pages where a preset's values appear: its own `sourcePages`, else the source's `page`. */
+export function presetSourcePages(preset: ImagePreset): number[] {
+  if (preset.sourcePages && preset.sourcePages.length > 0) return [...preset.sourcePages];
+  return preset.source.page ? [preset.source.page] : [];
+}
+
+/** "page 3", "pages 56 and 58", "pages 56, 57 and 58"; "" when no page is recorded. */
+export function formatPages(pages: readonly number[]): string {
+  const sorted = [...new Set(pages)].sort((a, b) => a - b);
+  if (sorted.length === 0) return "";
+  if (sorted.length === 1) return `page ${sorted[0]}`;
+  return `pages ${sorted.slice(0, -1).join(", ")} and ${sorted[sorted.length - 1]}`;
 }
 
 export function isPdf(url: string): boolean {

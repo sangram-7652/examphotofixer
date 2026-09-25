@@ -180,3 +180,17 @@ non-GET request recording, overflow check, download bytes).
   Requirement numbers in these tests come from presets.
 - `e2e/smoke.spec.ts`: the homepage lists every live exam tool in its exam's section (failed
   on the P10 homepage for `ibps-photo` before the fix).
+
+## Requirement monitoring and IBPS documents (P12)
+
+- Unit: `requirements/requirements.test.ts` (every preset equals its latest verified snapshot;
+  history matches source metadata and is append-only; superseded versions kept; REVIEW_DUE after
+  90 days without touching values; change impact; checksum UNCHANGED/CHANGED/unknown; the
+  generated table in `docs/REQUIREMENT_MONITORING.md` matches the code for its "as of" date).
+  `presets.test.ts`: exact IBPS signature/left thumb/declaration values, shared frozen source,
+  cited pages.
+- `e2e/ibps-documents.spec.ts`: each new IBPS tool (page, requirements and guidance from the
+  preset, source with pages, pack link listing four documents, no claims; READY download
+  re-validated incl. EXIF/GPS stripped and nothing uploaded; below-minimum warning; mobile) and
+  the IBPS Complete Pack (four steps, shared source citing pages 56–58, ZIP with four validated
+  files, analytics without file data).

@@ -80,10 +80,11 @@ describe("opportunities", () => {
   });
 
   it("an active exam asset without a verified preset needs verification first", () => {
-    expect(only([row("ibps signature size", "/guides/ibps-photo-size", 1, 300, 12)])).toMatchObject(
+    // CCC's guidelines have no declaration; demand alone never creates one.
+    expect(only([row("ccc declaration size", "/guides/ccc-photo-size", 1, 300, 12)])).toMatchObject(
       {
         type: "CREATE_TOOL",
-        examId: "ibps",
+        examId: "ccc",
         verificationRequired: true,
       },
     );
@@ -93,14 +94,14 @@ describe("opportunities", () => {
     const photo = getPreset("ibps-photo");
     const differing = `ibps photo ${photo.width + 50}x${photo.height} resize`;
     const o = only([row(differing, "/ibps-photo-resizer", 1, 300, 3)]);
-    expect(o).toMatchObject({ type: "UPDATE_REQUIREMENT", verificationRequired: true });
+    expect(o).toMatchObject({ type: "REVERIFY_SOURCE", verificationRequired: true });
     expect(o.reason).toMatch(/re-check the official source/);
     expect(o.reason).toMatch(/do not change the preset/);
 
     const matching = `ibps photo ${photo.width}x${photo.height} resize`;
     expect(only([row(matching, "/ibps-photo-resizer", 30, 300, 3)]).type).toBe("NO_ACTION");
     const tooBig = `ibps photo ${photo.fileSizeKB.max + 50} kb`;
-    expect(only([row(tooBig, "/ibps-photo-resizer", 30, 300, 3)]).type).toBe("UPDATE_REQUIREMENT");
+    expect(only([row(tooBig, "/ibps-photo-resizer", 30, 300, 3)]).type).toBe("REVERIFY_SOURCE");
   });
 
   it("problem demand for an exam without a problems guide → CREATE_GUIDE", () => {

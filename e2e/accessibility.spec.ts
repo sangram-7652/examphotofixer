@@ -1,5 +1,11 @@
 import { expect, test, type Page } from "@playwright/test";
 import { downloadBytes, makeImage, upload } from "./helpers";
+import { TOOLS } from "../src/lib/tools/registry";
+
+// The exam chip links to the exam's hub: its pack if it has one, otherwise its first live tool.
+const IBPS_HUB =
+  TOOLS.find((t) => t.exam === "ibps" && t.kind === "pack" && t.status === "live") ??
+  TOOLS.find((t) => t.exam === "ibps" && t.status === "live")!;
 
 /**
  * Keyboard-only use of a tool (P10 launch audit): controls are reachable with Tab and show a
@@ -61,5 +67,5 @@ test("keyboard only: home → exam chip → tool, with visible focus", async ({ 
   await tabTo(page, "IBPS");
   expect(await focusIsVisible(page)).toBe(true);
   await page.keyboard.press("Enter");
-  await expect(page).toHaveURL(/\/ibps-photo-resizer$/);
+  await expect(page).toHaveURL(new RegExp(`${IBPS_HUB.path}$`));
 });

@@ -8,6 +8,10 @@ export type ToolId =
   | "ccc-thumb"
   | "ccc-pack"
   | "ibps-photo"
+  | "ibps-signature"
+  | "ibps-thumb"
+  | "ibps-declaration"
+  | "ibps-pack"
   | "image-resizer"
   | "image-compressor";
 
@@ -99,6 +103,62 @@ export const TOOLS: readonly ToolDefinition[] = [
     metaDescription:
       "Resize your photo to the size, file size, format and DPI in IBPS's published scanning guidelines for its bank recruitment forms, and check it before you upload — processed in your browser.",
     summary: "Resize and check your photo for IBPS bank recruitment application forms.",
+  },
+  {
+    id: "ibps-signature",
+    path: "/ibps-signature-resizer",
+    status: "live",
+    kind: "preset",
+    exam: "ibps",
+    presetIds: ["ibps-signature"],
+    name: "IBPS Signature Resizer",
+    h1: "IBPS Signature Resizer",
+    metaTitle: "IBPS Signature Resizer – Resize Signature for IBPS Bank Exam Forms",
+    metaDescription:
+      "Resize your signature to the size, file size, format and DPI in IBPS's published scanning guidelines, and check it before you upload — processed in your browser.",
+    summary: "Resize and check your signature for IBPS bank recruitment application forms.",
+  },
+  {
+    id: "ibps-thumb",
+    path: "/ibps-thumb-impression-resizer",
+    status: "live",
+    kind: "preset",
+    exam: "ibps",
+    presetIds: ["ibps-left-thumb"],
+    name: "IBPS Left Thumb Impression Resizer",
+    h1: "IBPS Left Thumb Impression Resizer",
+    metaTitle: "IBPS Thumb Impression Resizer – Left Thumb Image for IBPS Forms",
+    metaDescription:
+      "Resize your left thumb impression to the size, file size, format and DPI in IBPS's published scanning guidelines, and check it before you upload — processed in your browser.",
+    summary: "Resize and check your left thumb impression for IBPS application forms.",
+  },
+  {
+    id: "ibps-declaration",
+    path: "/ibps-handwritten-declaration-resizer",
+    status: "live",
+    kind: "preset",
+    exam: "ibps",
+    presetIds: ["ibps-declaration"],
+    name: "IBPS Hand-written Declaration Resizer",
+    h1: "IBPS Hand-written Declaration Resizer",
+    metaTitle: "IBPS Handwritten Declaration Resizer – Size, KB and DPI for IBPS Forms",
+    metaDescription:
+      "Resize the image of your hand-written declaration to the size, file size, format and DPI in IBPS's published scanning guidelines, and check it before you upload — processed in your browser.",
+    summary: "Resize and check your hand-written declaration image for IBPS forms.",
+  },
+  {
+    id: "ibps-pack",
+    path: "/ibps-complete-pack",
+    status: "live",
+    kind: "pack",
+    exam: "ibps",
+    presetIds: ["ibps-photo", "ibps-signature", "ibps-left-thumb", "ibps-declaration"],
+    name: "IBPS Complete Pack",
+    h1: "IBPS Complete Pack: Photo, Signature, Thumb Impression & Declaration",
+    metaTitle: "IBPS Complete Pack – Photo, Signature, Thumb & Declaration Images",
+    metaDescription:
+      "Prepare all four IBPS application images — photo, signature, left thumb impression and hand-written declaration — on one page, check each against IBPS's published guidelines and download them as a ZIP. Processed in your browser.",
+    summary: "Prepare the IBPS photo, signature, thumb impression and declaration together.",
   },
   {
     id: "image-resizer",

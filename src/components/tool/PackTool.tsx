@@ -29,8 +29,9 @@ const MARKS: Record<AssetState, string> = {
   ERROR: "✕",
 };
 
-const PACK_TEXT: Record<PackState, string> = {
-  EMPTY: "Add all three files to build your pack.",
+const COUNT_WORDS = ["zero", "one", "two", "three", "four", "five", "six"];
+
+const PACK_TEXT: Record<Exclude<PackState, "EMPTY">, string> = {
   IN_PROGRESS: "Keep going — each file must be processed before you can download the pack.",
   READY: "All files are ready.",
   READY_WITH_WARNING: "All files are processed. One or more has a warning.",
@@ -212,7 +213,9 @@ export function PackTool({ presets, toolId }: { presets: readonly ImagePreset[];
           Pack status
         </h2>
         <p role="status" aria-live="polite" className="mt-1 text-muted">
-          {PACK_TEXT[packState]}
+          {packState === "EMPTY"
+            ? `Add all ${COUNT_WORDS[presets.length] ?? presets.length} files to build your pack.`
+            : PACK_TEXT[packState]}
         </p>
         <ul className="mt-3 space-y-2">
           {presets.map((preset, index) => (

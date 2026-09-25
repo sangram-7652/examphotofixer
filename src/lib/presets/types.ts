@@ -6,7 +6,8 @@
 
 export type ExamId = "ccc" | "ibps" | "ssc" | "railway" | "upsc";
 
-export type DocumentType = "photo" | "signature" | "left-thumb-impression";
+export type DocumentType =
+  "photo" | "signature" | "left-thumb-impression" | "handwritten-declaration";
 
 /** Output formats a preset may accept. Extend only when a source requires it. */
 export type AcceptedFormat = "jpeg";
@@ -82,6 +83,11 @@ export interface ImagePreset {
   formats: readonly AcceptedFormat[];
   /** The source calls the dimensions "preferred" rather than mandatory; shown as such. */
   preferredDimensions?: boolean;
+  /**
+   * Printed pages of the source where this preset's values appear, when they differ from
+   * `source.page` (e.g. dimensions on one page, format and DPI on another). Cited on the page.
+   */
+  sourcePages?: readonly number[];
   /** Non-technical instructions from the same source (e.g. background, recency), paraphrased closely. */
   guidance?: readonly string[];
   source: RequirementSource;

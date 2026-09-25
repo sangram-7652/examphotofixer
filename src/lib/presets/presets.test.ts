@@ -147,13 +147,56 @@ describe("IBPS photo matches CRP RRBs XV (01.09.2026), Annexure III", () => {
       published: "01.09.2026",
       page: 56,
       sha256: "105b0652fb7f2564adc452685248734e8546235b332b84c93f81acdb1b760508",
-      verifiedOn: "2026-09-24",
+      verifiedOn: "2026-09-25", // re-verified unchanged (P12); first verified 2026-09-24
       status: "verified",
     });
     expect(Object.isFrozen(getPreset("ibps-photo").source)).toBe(true);
+    // Photograph on printed page 56; format and scanner resolution on page 58.
+    expect(getPreset("ibps-photo").sourcePages).toEqual([56, 58]);
   });
 
   it("does not share CCC's source", () => {
     expect(getPreset("ibps-photo").source).not.toBe(getPreset("ccc-photo").source);
+  });
+});
+
+describe("IBPS signature, left thumb and declaration match CRP RRBs XV, Annexure III pp. 57–58", () => {
+  it("share the photo's frozen source and cite pages 57 and 58", () => {
+    for (const id of ["ibps-signature", "ibps-left-thumb", "ibps-declaration"]) {
+      const preset = getPreset(id);
+      expect(preset.source, id).toBe(getPreset("ibps-photo").source);
+      expect(preset.sourcePages, id).toEqual([57, 58]);
+      expect(preset.preferredDimensions, id).toBe(true);
+      expect(preset.formats, id).toEqual(["jpeg"]);
+      // "Set the scanner resolution to a minimum of 200 dpi"; no maximum stated.
+      expect(preset.dpi, id).toEqual({ min: 200, max: null });
+    }
+  });
+
+  it("signature: 140 x 60 pixels (preferred), 10–20 KB", () => {
+    const signature = getPreset("ibps-signature");
+    expect([signature.width, signature.height]).toEqual([140, 60]);
+    expect(signature.fileSizeKB).toEqual({ min: 10, max: 20 });
+    expect(signature.documentType).toBe("signature");
+  });
+
+  it("left thumb impression: 240 x 240 pixels in 200 DPI (preferred), 20–50 KB", () => {
+    const thumb = getPreset("ibps-left-thumb");
+    expect([thumb.width, thumb.height]).toEqual([240, 240]);
+    expect(thumb.fileSizeKB).toEqual({ min: 20, max: 50 });
+    expect(thumb.documentType).toBe("left-thumb-impression");
+  });
+
+  it("hand-written declaration: 800 x 400 pixels in 200 DPI (preferred), 50–100 KB", () => {
+    const declaration = getPreset("ibps-declaration");
+    expect([declaration.width, declaration.height]).toEqual([800, 400]);
+    expect(declaration.fileSizeKB).toEqual({ min: 50, max: 100 });
+    expect(declaration.documentType).toBe("handwritten-declaration");
+  });
+
+  it("carries guidance the engine can't check, per document", () => {
+    expect(getPreset("ibps-signature").guidance?.[0]).toMatch(/black ink pen/);
+    expect(getPreset("ibps-left-thumb").guidance?.[0]).toMatch(/black or blue ink/);
+    expect(getPreset("ibps-declaration").guidance?.join(" ")).toMatch(/English only/);
   });
 });

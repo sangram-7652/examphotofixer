@@ -118,7 +118,7 @@ export function GuidePage({ guide }: { guide: Guide }) {
               <RequirementsTable key={preset.id} preset={preset} />
             ))}
           </div>
-          {sharedSource ? <SourceVerification preset={sharedSource} /> : null}
+          {sharedSource ? <SourceVerification presets={presets} /> : null}
         </section>
       ) : null}
 
