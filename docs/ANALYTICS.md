@@ -179,9 +179,9 @@ no acquisition data.
 No cookies, local storage or identifiers are used by analytics, and nothing is sent anywhere,
 so no consent banner is needed today. The core tools never depend on analytics or consent.
 **Before adding a provider:** prefer a cookieless one; send only the sanitized `{ name, props }`;
-update `/privacy`, `docs/PRIVACY.md` and this file in the same change; allow its origin in the
-CSP `connect-src` if one exists (none today); add consent handling if it sets cookies or
-identifiers.
+update `/privacy`, `docs/PRIVACY.md` and this file in the same change; add its origin to the
+CSP `connect-src` in `src/config/security-headers.ts` (today `'self' blob:` only, so the browser
+blocks any provider until then); add consent handling if it sets cookies or identifiers.
 
 ## Adding a provider (future)
 
@@ -190,8 +190,8 @@ identifiers.
 2. Register one function, client-side only, e.g. in `AnalyticsRoot`:
    `setAnalyticsProvider((event) => navigator.sendBeacon(ENDPOINT, JSON.stringify(event)))`.
    Send only `event` (already sanitized); never add identifiers, the URL or the referrer.
-3. If a Content-Security-Policy exists by then (none today), allow the endpoint in
-   `connect-src`. Update `/privacy`, `docs/PRIVACY.md` and this file in the same change; add
+3. Add the endpoint's origin to `connect-src` in `src/config/security-headers.ts` (the CSP
+   blocks it otherwise) and update the unit and smoke checks that pin `connect-src 'self' blob:`. Update `/privacy`, `docs/PRIVACY.md` and this file in the same change; add
    consent handling if it sets cookies or identifiers.
 4. Extend `e2e/analytics.spec.ts` to intercept the endpoint and run the same payload checks.
 

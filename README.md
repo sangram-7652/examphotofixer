@@ -24,6 +24,8 @@ npm run dev                  # http://localhost:3000
 | `test:e2e`                | Playwright (run `build` first; `npx playwright install chromium` once) |
 | `format` / `format:check` | Prettier                                                               |
 | `check`                   | lint + typecheck + format check + unit tests                           |
+| `smoke -- <url>`          | Launch / post-deploy gate on a running site (see docs/DEPLOYMENT.md)   |
+| `search:report -- <csv>`  | Offline Search Console export report (docs/SEARCH_DATA_ANALYSIS.md)    |
 
 ## Documentation
 

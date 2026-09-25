@@ -113,6 +113,8 @@ FORM_PRESETS, SEO_STRATEGY, SEO_URL_MAP, ANALYTICS, TESTING, PRIVACY, DEPLOYMENT
 
 - No network calls carrying file data. No third-party scripts on tool pages beyond approved analytics.
 - Analytics never includes file names, contents or image-derived data (docs/ANALYTICS.md).
+- Security headers/CSP live in `src/config/security-headers.ts`; `connect-src` stays `'self' blob:`
+  unless a reviewed provider is added (update /privacy and the smoke check with it).
 
 ## Development workflow
 

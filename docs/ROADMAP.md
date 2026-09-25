@@ -48,7 +48,13 @@ official verification.
 
 ## Phase 3 — Launch
 
-- Legal review. Analytics decision. Enable indexing.
+- P9: search data and conversion analytics foundation (no provider). ✅
+- P10: production hardening — security headers and CSP (`connect-src 'self' blob:`), launch smoke
+  check (`npm run smoke`), launch-mode robots/sitemap gates, deployment, rollback and launch
+  checklist docs. Code ready; not deployed. ✅
+- Remaining (owner): legal review, contact address, hosting + domain + DNS, production env,
+  live smoke test, Search Console. Analytics provider decision. See
+  `PRODUCTION_LAUNCH_CHECKLIST.md`.
 
 ## Phase 4 — Growth
 

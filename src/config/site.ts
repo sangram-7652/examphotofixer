@@ -14,6 +14,11 @@ function resolveSiteUrl(): string {
   return url.replace(/\/+$/, "");
 }
 
+function resolveContactEmail(): string | null {
+  const raw = process.env.NEXT_PUBLIC_CONTACT_EMAIL?.trim();
+  return raw && /^[^\s@<>"]+@[^\s@<>"]+\.[^\s@<>"]+$/.test(raw) ? raw : null;
+}
+
 export const siteConfig = {
   name: "ExamPhotoFixer",
   tagline: "Fix it before you upload.",
@@ -23,6 +28,8 @@ export const siteConfig = {
   url: resolveSiteUrl(),
   locale: "en_IN",
   indexable: process.env.NEXT_PUBLIC_SITE_INDEXABLE === "true",
+  /** Public contact address shown on /privacy; unset until the owner provides one. */
+  contactEmail: resolveContactEmail(),
 } as const;
 
 export function absoluteUrl(path: string): string {

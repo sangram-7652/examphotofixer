@@ -14,6 +14,18 @@ also needs host libraries: `sudo npx playwright install-deps webkit` (CI: use
 `npx playwright install --with-deps`). Run a subset with
 `npx playwright test --project=chromium --project=firefox`.
 
+**Launch mode.** The default e2e build is pre-launch (noindex, robots `Disallow: /`), and
+`e2e/launch.spec.ts` checks exactly that. To check the launch gates (robots allows `/`, sitemap
+on the canonical origin, `/dev/` disallowed, no noindex), build and test with:
+
+```
+NEXT_PUBLIC_SITE_INDEXABLE=true NEXT_PUBLIC_SITE_URL=https://examphotofixer.com npm run build
+E2E_LAUNCH=1 npx playwright test e2e/launch.spec.ts e2e/seo.spec.ts e2e/smoke.spec.ts --project=chromium
+```
+
+Rebuild without those variables before the regular e2e run. `npm run smoke -- <url>` runs the
+same gates against any running server or the live site (see `DEPLOYMENT.md`).
+
 **WebKit from a VS Code Snap terminal.** The Snap exports `GIO_MODULE_DIR`, `GTK_PATH`,
 `LOCPATH` etc.; WebKit's network process then loads Snap GIO modules built against an older
 glibc and every navigation fails with "WebKit encountered an internal error". Run WebKit with
@@ -142,3 +154,18 @@ non-GET request recording, overflow check, download bytes).
 - Compression tests must be deterministic: inject an encoder or assert ranges, never exact bytes from a real browser encoder.
 - Any change to a preset changes its test in the same commit.
 - A bug fix comes with a test that fails without it.
+
+## Production launch (P10)
+
+- Unit: `config/security-headers.test.ts` (CSP directives: `connect-src 'self' blob:`, worker and
+  blob sources only, no wildcard, no `unsafe-eval` in production; header set; www↔apex
+  redirect), `config/site.test.ts` (origin, indexable flag, contact address validation),
+  `lib/launch/smoke.test.ts` (robots, sitemap, page and header gates, including failing cases
+  such as an accidental global `Disallow: /`, preview-host sitemaps and redirect chains).
+- `e2e/launch.spec.ts`: the smoke gate against the served build (pre-launch or `E2E_LAUNCH=1`);
+  every tool type processes and downloads with zero CSP violations and no cookies set;
+  `/privacy` states only implemented behaviour.
+- `e2e/accessibility.spec.ts`: keyboard-only processing and download with visible focus,
+  focus moved to the result, live-region announcement; home exam chip by keyboard.
+- Launch audits run by hand (not committed, see `DEPLOYMENT.md` → "Launch audit results"):
+  axe-core WCAG 2.2 A/AA on every page and result state; lab page-load timings.

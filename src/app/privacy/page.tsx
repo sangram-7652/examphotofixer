@@ -25,15 +25,40 @@ export default function PrivacyPage() {
 
       <h2>Analytics</h2>
       <p>
-        The site prepares anonymous usage events, such as &ldquo;a photo was processed&rdquo; or
-        &ldquo;a guide link was clicked&rdquo;, to understand which pages and tools are useful. They
-        never include your files, file names, image contents, photo location or camera details, or
-        anything you type. At present these events are not sent to any analytics service, and no
-        analytics cookies are used. If that changes, this page will be updated first.
+        The site prepares usage events without any identifiers, such as &ldquo;a photo was
+        processed&rdquo; or &ldquo;a guide link was clicked&rdquo;, to understand which pages and
+        tools are useful. They never include your files, file names, image contents, photo location
+        or camera details, or anything you type. At present these events are not sent to any
+        analytics service, and no cookies are used. If that changes, this page will be updated
+        first.
+      </p>
+
+      <h2>What our servers receive</h2>
+      <p>
+        Like any website, the servers that deliver these pages receive standard technical request
+        information, such as your IP address and browser type, to serve and protect the site. These
+        requests never contain your files. The site also tells your browser not to send data to any
+        other website from these pages.
+      </p>
+
+      <h2>Links to official sources</h2>
+      <p>
+        Requirement pages link to official notifications on exam bodies&rsquo; websites. Those links
+        open the other website in a new tab, and its own privacy policy applies there.
       </p>
 
       <h2>Contact</h2>
-      <p>Questions about this policy can be sent to the contact listed on this site.</p>
+      {siteConfig.contactEmail ? (
+        <p>
+          Questions about this policy:{" "}
+          <a href={`mailto:${siteConfig.contactEmail}`} className="font-medium underline">
+            {siteConfig.contactEmail}
+          </a>
+          .
+        </p>
+      ) : (
+        <p>A contact address for privacy questions will be published on this page.</p>
+      )}
     </article>
   );
 }
