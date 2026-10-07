@@ -6,6 +6,9 @@ const hostRedirect = alternateHostRedirect(siteConfig.url);
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  // Traces only the files `next start`'s replacement server.js needs — required for a minimal
+  // Docker runtime image (docs/DEPLOYMENT.md "Docker"). No effect on routes, headers or output.
+  output: "standalone",
   async headers() {
     return [
       {

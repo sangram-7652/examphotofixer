@@ -1,0 +1,46 @@
+# Keep the Docker build context minimal and reproducible from a clean checkout.
+# npm ci + next build need package*.json, tsconfig.json, next.config.ts, src/, public/, scripts/
+# (type-only imports), postcss/tailwind config — everything else below is excluded.
+
+node_modules
+.next
+out
+build
+
+.git
+.gitignore
+.github
+
+Dockerfile*
+.dockerignore
+docker-compose*.yml
+docker-compose*.yaml
+compose.yml
+compose.yaml
+
+.env
+.env.*
+!.env.example
+
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+coverage
+test-results
+playwright-report
+blob-report
+playwright/.cache
+e2e
+
+*.tsbuildinfo
+next-env.d.ts
+
+.vscode
+.idea
+*.swp
+.DS_Store
+
+docs
+README.md

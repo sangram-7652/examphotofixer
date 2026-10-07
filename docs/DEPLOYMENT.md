@@ -1,8 +1,10 @@
 # Deployment
 
-Status (P10): **code ready; not deployed.** No hosting project, domain, DNS or Search Console
+Status (P12.2): **code ready; not deployed.** No hosting project, domain, DNS or Search Console
 property has been configured from this repository, and no live URL has been verified. Every
 "live" step below is a manual step for the owner. Launch blockers: `PRODUCTION_LAUNCH_CHECKLIST.md`.
+Local Docker containerization is built and verified (below); nothing has been deployed to the
+production VPS.
 
 ## Architecture
 
@@ -17,14 +19,125 @@ User → DNS → CDN / HTTPS (hosting platform) → Next.js (prerendered pages +
   to send data to any other origin; `e2e` asserts no non-GET requests and no cross-origin
   requests while processing.
 - `/dev/image-engine` (test harness) returns 404 unless the server runs with `ENGINE_HARNESS=1`.
-- Do not add Docker, a database, Redis, queues, object storage or an image server for V1.
+- Do not add a database, Redis, queues, object storage or an image server for V1. The app is
+  still fully static/server-rendered with no persistent state — Docker (below) only packages
+  the same `next start`-equivalent process; it adds no new service.
 
 ## Platform
 
-The repository has always documented **Vercel** as the recommended target (zero-config Next.js,
-HTTPS, CDN, instant rollback); the project is not linked yet (no `.vercel/`). Any host that runs
-`next start` on Node ≥ 22 behind HTTPS also works. No platform-specific code or dependency is
-used: headers and redirects live in `next.config.ts`.
+Two supported targets; both run the exact same application code with no platform-specific
+branches (headers and redirects live in `next.config.ts`):
+
+- **Vercel** (zero-config Next.js, HTTPS, CDN, instant rollback) — the project is not linked yet
+  (no `.vercel/`).
+- **Self-hosted VPS behind host Nginx, via Docker** (P12.2) — see "Docker" below. Any host that
+  runs the container (or plain `next start` on Node ≥ 22) behind HTTPS works equally well; no
+  platform-specific code or dependency is used either way.
+
+## Docker
+
+Status: image builds and runs correctly locally (P12.2); **not deployed to the VPS yet**. This
+section is for the self-hosted-VPS path; it does not apply to Vercel.
+
+### Architecture
+
+```
+Internet → host Nginx (:80/:443, HTTPS termination) → 127.0.0.1:3000 → Docker container → Next.js
+```
+
+- Nginx runs on the VPS host, **not** in the container or in `docker-compose.yml`. It terminates
+  TLS and reverse-proxies to the container's published port. This repo does not configure Nginx.
+- The container runs only the Next.js app (`node server.js`, Next's `output: "standalone"`
+  server). No database, cache, queue or second container — same no-new-services rule as above.
+- The image is multi-stage (`Dockerfile`): `deps` (`npm ci`, locked by `package-lock.json`) →
+  `builder` (`next build`, produces `.next/standalone` + `.next/static`) → `runner` (minimal
+  `node:24-alpine`, non-root `nextjs` user, only the traced runtime files). Dev dependencies
+  (vitest, playwright, eslint, prettier, typescript) are never present in the runtime image —
+  Next's output tracing only copies what each page actually imports.
+
+### Build
+
+```
+docker build \
+  --build-arg NEXT_PUBLIC_SITE_URL=https://examphotofixer.com \
+  --build-arg NEXT_PUBLIC_SITE_INDEXABLE=true \
+  -t examphotofixer:$(git rev-parse --short HEAD) \
+  -t examphotofixer:latest \
+  .
+```
+
+All `NEXT_PUBLIC_*`/`GOOGLE_SITE_VERIFICATION` values are **build-time only** (see the table
+below) — pass them as `--build-arg`, not as a container environment variable; `docker run -e`
+has no effect on them. Rebuild and redeploy to change any of them, exactly as on Vercel.
+
+### Start / stop / restart / logs / health
+
+```
+docker run -d --name examphotofixer --init -p 127.0.0.1:3000:3000 examphotofixer:latest
+docker stop examphotofixer
+docker restart examphotofixer
+docker logs -f examphotofixer
+docker inspect --format '{{.State.Health.Status}}' examphotofixer   # healthy | unhealthy | starting
+```
+
+`--init` (or Compose's `init: true`) gives the container a real PID 1 that reaps zombies and
+forwards signals, without adding an OS package. The image declares a `HEALTHCHECK` that polls
+the app's own homepage (no dedicated `/health` route — this app has no server state to probe
+beyond "does it respond," matching the no-`/health`-endpoint reasoning used for `npm run smoke`
+elsewhere in this file).
+
+For local, production-like verification (not used on the VPS — see `docker-compose.yml`'s
+header comment):
+
+```
+docker compose build
+docker compose up -d
+docker compose logs -f
+docker compose down
+```
+
+### Update (redeploy)
+
+```
+git pull
+docker build --build-arg NEXT_PUBLIC_SITE_URL=... --build-arg NEXT_PUBLIC_SITE_INDEXABLE=true \
+  -t examphotofixer:$(git rev-parse --short HEAD) -t examphotofixer:latest .
+docker stop examphotofixer && docker rm examphotofixer
+docker run -d --name examphotofixer --init -p 127.0.0.1:3000:3000 examphotofixer:latest
+npm run smoke -- https://examphotofixer.com --host-checks
+```
+
+### Rollback
+
+Tag every build with the git short SHA (`examphotofixer:<sha>`), not only `latest` (Phase 15).
+To roll back:
+
+```
+docker stop examphotofixer && docker rm examphotofixer
+docker run -d --name examphotofixer --init -p 127.0.0.1:3000:3000 examphotofixer:<previous-sha>
+```
+
+No database or volume to migrate back — same "nothing to migrate" guarantee as the Vercel
+rollback below. Keep at least the last few `<sha>`-tagged images on the VPS (`docker image ls`)
+before pruning.
+
+### Ports
+
+Only `3000` is published, and only to `127.0.0.1` (not `0.0.0.0`) — the container is never
+reachable directly from the internet; host Nginx is the only public listener. `docker-compose.yml`
+binds the same way for local testing.
+
+### Security considerations
+
+- Runs as a non-root user (`nextjs`, uid 1001) created in the image; verified with
+  `docker exec <container> id`.
+- No `.env*` files, Git history, SSH keys or other secrets are baked into the image —
+  `.dockerignore` excludes them from the build context, and build-time values are public
+  `NEXT_PUBLIC_*`/non-secret values only (see Environment variables below).
+- Base image is `node:24-alpine`; no extra OS packages are installed beyond what the base
+  image and `npm ci` already bring in.
+- `X-Powered-By` is removed; the same security headers and CSP as every other deployment
+  target apply unchanged (`src/config/security-headers.ts`).
 
 ## Prerequisites
 
@@ -36,7 +149,8 @@ used: headers and redirects live in `next.config.ts`.
 ## Environment variables
 
 All are build-time: **rebuild/redeploy after changing any of them.** There are no secrets.
-`NEXT_PUBLIC_*` values are visible in client JavaScript and must never hold credentials.
+`NEXT_PUBLIC_*` values are visible in client JavaScript and must never hold credentials. Under
+Docker, set them as `--build-arg` (see "Docker" above), not as a container runtime variable.
 
 | Name                             | Scope       | Production                   | Preview / local | Default if unset             |
 | -------------------------------- | ----------- | ---------------------------- | --------------- | ---------------------------- |
@@ -66,6 +180,8 @@ npm run test:e2e       # needs browsers: npx playwright install --with-deps
 - **Vercel CLI:** `vercel link`, `vercel env add …`, `vercel deploy` (preview), `vercel deploy --prod`.
 - **Other Node host:** `npm ci && npm run build && npm run start -- --port $PORT` behind an
   HTTPS reverse proxy that passes the `Host` header; serve HTTP → HTTPS redirects at the proxy.
+- **Self-hosted VPS (Docker + host Nginx):** see "Docker" above for the exact build/run/update
+  commands; host Nginx plays the same "HTTPS reverse proxy" role as in the line above.
 
 ## Domain, DNS and HTTPS
 
@@ -168,6 +284,8 @@ No monitoring or error-reporting provider is configured, and none was added in P
 - **Rollback (Vercel):** Deployments → pick the last good production deployment → "Instant
   Rollback" (or `vercel rollback`). Nothing to migrate: there is no database or stored state.
 - **Rollback (Git):** `git revert <bad-commit>` on `main` and push; the platform redeploys.
+- **Rollback (Docker/VPS):** see "Docker" → "Rollback" above — run the previous `examphotofixer:<sha>`
+  image; nothing to migrate.
 - **Redeploy from scratch:** clone the repository → create a hosting project → set the
   environment variables from the table above → deploy `main` → re-add the domains and DNS
   records → run the smoke test.
