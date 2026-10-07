@@ -60,7 +60,6 @@ RUN addgroup --system --gid 1001 nodejs \
 # Next.js "standalone" output: a minimal server.js plus only the node_modules each page traced
 # as actually needed (docs: node_modules/next/dist/docs/.../output.md). public/ and .next/static
 # are not included by standalone and must be copied in manually.
-COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
