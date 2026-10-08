@@ -1,9 +1,13 @@
 # Analytics
 
-Status (P9): **event foundation implemented; no provider installed.** No analytics script,
-SDK, cookie or network request exists. Events are produced in the browser and delivered only
-to a local DOM event (`epf:analytics`) that tests and local debugging listen to. **No real
-analytics data exists yet**; every number in tests and docs is a fixture.
+Status (P9 + GA4): **event foundation implemented; an optional GA4 provider exists behind
+`NEXT_PUBLIC_GA_MEASUREMENT_ID`.** Events are always produced in the browser and delivered to a
+local DOM event (`epf:analytics`) that tests and local debugging listen to. With no measurement
+ID configured (the default locally, in CI and in every existing test build), no analytics
+script, SDK, cookie or network request exists — nothing has changed from before. With a real
+measurement ID configured at build time, the same sanitized events are also sent to GA4 (see
+"GA4 provider" below). **No real analytics data exists yet**; every number in tests and docs is
+a fixture.
 
 ## API
 
@@ -20,21 +24,72 @@ analytics data exists yet**; every number in tests and docs is a fixture.
 | `reasons.ts`                        | Stable validation reason codes derived from the engine's report.                      |
 | `tool-events.ts` (`trackJobResult`) | Maps a finished job to exactly one result event.                                      |
 | `funnel.ts`                         | Conversion formulas.                                                                  |
-| `components/AnalyticsRoot.tsx`      | `page_view`, landing acquisition, and clicks on `data-analytics-event` links.         |
+| `providers/ga4.ts`                  | Optional GA4 (gtag.js) provider adapter; see "GA4 provider" below.                    |
+| `components/AnalyticsRoot.tsx`      | `page_view`, landing acquisition, clicks on `data-analytics-event` links, GA4 wiring. |
 
 Guarantees:
 
 - **Safe no-op.** With no provider, nothing leaves the browser. A throwing provider, or a
   failing DOM dispatch, is swallowed; the tools keep working (e2e: "tools keep working end to
   end when analytics throws").
-- **Kill switch.** `NEXT_PUBLIC_ANALYTICS_DISABLED=true` makes `trackEvent` a no-op.
+- **Kill switch.** `NEXT_PUBLIC_ANALYTICS_DISABLED=true` makes `trackEvent` a no-op, and also
+  stops the GA4 script from ever loading (`resolveGa4MeasurementId()` returns `null`).
 - **Not in the engine.** `src/lib/image` and `src/lib/validation` (the worker) never import
   analytics (unit test `boundaries.test.ts`). Events are sent from UI code only, after the fact,
   and never block processing.
 - **No client components added to guides.** Guide and source-link clicks are handled by one
   delegated listener in the root layout, reading `data-analytics-*` attributes that server
   components render.
-- **No dependencies.** `package.json` dependencies remain `next`, `react`, `react-dom`.
+- **No SDK dependency.** `package.json` `dependencies` remain `next`, `react`, `react-dom`
+  (unit test `boundaries.test.ts`); GA4 is loaded as a plain `<script>` tag (gtag.js), not an
+  npm package.
+
+## GA4 provider
+
+Set `NEXT_PUBLIC_GA_MEASUREMENT_ID` (format `G-XXXXXXXXXX`, from the GA4 property's Data
+Streams page) at build time to send events to Google Analytics 4. Unset, malformed, or
+`NEXT_PUBLIC_ANALYTICS_DISABLED=true` → `resolveGa4MeasurementId()` returns `null`, the GA4
+`<script>` is never inserted, `window.gtag` is never called, and nothing changes from the
+no-provider behaviour above.
+
+- **Cookieless by design.** `loadGa4` configures GA4 with `client_storage: "none"`, so it never
+  sets `_ga`/`_ga_*` (or any other) cookie. This keeps the site's "no cookies" commitment
+  (`docs/PRIVACY.md`) true whether or not GA4 is enabled, at the cost of GA4's own
+  session/returning-visitor accuracy: without a persisted client ID, GA4 cannot reliably link
+  two page loads to the same visitor, so session duration, "sessions per user" and similar GA4
+  metrics undercount. Event counts and their properties are unaffected.
+- **One central adapter.** `providers/ga4.ts`'s `GA4_EVENT_NAME` map sends every existing event
+  name straight through to GA4 unchanged (no renaming to GA4's "recommended event" names); it's
+  the one place a future divergence would be made, and it's exhaustive over
+  `AnalyticsEventName` so a new taxonomy event missing from it is a type error.
+- **Same sanitized payload.** GA4 receives exactly `event.props` as `sendToGa4` gets it from
+  `setAnalyticsProvider` — already allowlisted and sanitized by `trackEvent`/`sanitizeProps`.
+  Nothing is added back in; GA4 can only ever receive what any other provider would.
+- **No duplicate `page_view`.** `loadGa4` sets `send_page_view: false` on GA4's `config` call,
+  so GA4's own automatic page_view (sent on script load) never fires; the single `page_view`
+  `AnalyticsRoot` already sends once per route is GA4's only source for it. In the GA4 Admin UI,
+  leave the Enhanced Measurement "Page changes based on browser history events" toggle off for
+  this reason — turning it on would make GA4 send a second page_view on client-side navigation.
+  Enhanced Measurement's other automatic events (scroll, outbound click, file download, …) are
+  unaffected and are not duplicated by anything this site sends itself.
+- **Client-side only.** `AnalyticsRoot` is a client component; its GA4 effect only runs in the
+  browser, and `loadGa4`/`sendToGa4` no-op (rather than throw) if called where `window` is
+  undefined.
+- **CSP.** `src/config/security-headers.ts` widens `script-src`/`connect-src` to GA4's origins
+  (`GA4_SCRIPT_SRC`/`GA4_CONNECT_SRC`) only when `resolveGa4MeasurementId()` is non-null at
+  build time (`next.config.ts`); with no measurement ID the CSP is unchanged (`'self' blob:'`
+  for `connect-src`). `npm run smoke`'s security-header check and `security-headers.test.ts`
+  accept only GA4's specific origins as additions, nothing broader.
+- **Events sent to GA4.** The same sixteen events listed above, unchanged: `page_view`,
+  `tool_viewed`, `exam_selected`, `image_selected`, `processing_started`,
+  `processing_completed`, `processing_failed`, `validation_failed`, `result_ready`,
+  `result_ready_with_warning`, `download_started`, `download_completed`,
+  `pack_asset_completed`, `pack_completed`, `guide_tool_clicked`, `requirement_source_opened`,
+  each with the same allowlisted properties (see "Properties" below). None carry file contents,
+  file names, image data, EXIF/GPS or anything the user typed — see "Never collected".
+- **Setup.** Create a GA4 property and a Web data stream, copy its Measurement ID into
+  `NEXT_PUBLIC_GA_MEASUREMENT_ID` for the production build only (same build-time rules as every
+  other `NEXT_PUBLIC_*` value; see `docs/DEPLOYMENT.md`), and rebuild/redeploy.
 
 ## Event taxonomy
 
@@ -176,27 +231,36 @@ itself is discarded) and at most `utm_source`, `utm_medium`, `utm_campaign`. Oth
 parameters, including search terms, are never read. Later page views in the same visit carry
 no acquisition data.
 
-No cookies, local storage or identifiers are used by analytics, and nothing is sent anywhere,
-so no consent banner is needed today. The core tools never depend on analytics or consent.
-**Before adding a provider:** prefer a cookieless one; send only the sanitized `{ name, props }`;
-update `/privacy`, `docs/PRIVACY.md` and this file in the same change; add its origin to the
-CSP `connect-src` in `src/config/security-headers.ts` (today `'self' blob:` only, so the browser
-blocks any provider until then); add consent handling if it sets cookies or identifiers.
+No cookies, local storage or identifiers are used by analytics (GA4 is deliberately configured
+cookieless; see "GA4 provider" above), so no consent banner is needed today. The core tools
+never depend on analytics or consent. **Before adding another provider:** prefer a cookieless
+one; send only the sanitized `{ name, props }`; update `/privacy`, `docs/PRIVACY.md` and this
+file in the same change; add its origin to the CSP `connect-src` in
+`src/config/security-headers.ts` (today `'self' blob:'`, plus GA4's origins only when GA4 is
+enabled, so the browser blocks any other provider until its origin is added); add consent
+handling if it sets cookies or identifiers.
 
-## Adding a provider (future)
+## Adding another provider
+
+GA4 (above) is the first implemented provider; the same pattern applies to a second one:
 
 1. Choose a cookieless provider if possible; check its data residency and whether it needs
    consent. Do not add a paid SDK or a script tag on tool pages without review (CLAUDE.md).
 2. Register one function, client-side only, e.g. in `AnalyticsRoot`:
    `setAnalyticsProvider((event) => navigator.sendBeacon(ENDPOINT, JSON.stringify(event)))`.
-   Send only `event` (already sanitized); never add identifiers, the URL or the referrer.
-3. Add the endpoint's origin to `connect-src` in `src/config/security-headers.ts` (the CSP
-   blocks it otherwise) and update the unit and smoke checks that pin `connect-src 'self' blob:`. Update `/privacy`, `docs/PRIVACY.md` and this file in the same change; add
-   consent handling if it sets cookies or identifiers.
+   Send only `event` (already sanitized); never add identifiers, the URL or the referrer. Only
+   one provider function is registered at a time — adding a second means combining both inside
+   one function passed to `setAnalyticsProvider`.
+3. Add the endpoint's origin to `connect-src` (and `script-src` if it loads a script) in
+   `src/config/security-headers.ts`, gated the same way GA4's origins are (behind a build-time
+   "is this provider configured" check, never unconditionally), and update the unit and smoke
+   checks. Update `/privacy`, `docs/PRIVACY.md` and this file in the same change; add consent
+   handling if it sets cookies or identifiers.
 4. Extend `e2e/analytics.spec.ts` to intercept the endpoint and run the same payload checks.
 
 **Disabling:** set `NEXT_PUBLIC_ANALYTICS_DISABLED=true` at build time; `trackEvent` then
-returns before building any event. Tools are unaffected.
+returns before building any event, and GA4's script never loads either
+(`resolveGa4MeasurementId()` returns `null`). Tools are unaffected.
 
 ## Known limitations
 

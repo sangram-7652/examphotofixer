@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { siteConfig } from "@/config/site";
 import { buildPageMetadata } from "@/lib/seo/metadata";
+import { resolveGa4MeasurementId } from "@/lib/analytics/providers/ga4";
 
 export const metadata: Metadata = buildPageMetadata({
   title: "Privacy Policy",
@@ -10,6 +11,7 @@ export const metadata: Metadata = buildPageMetadata({
 
 // DRAFT: requires legal review before public launch. Keep in sync with docs/PRIVACY.md.
 export default function PrivacyPage() {
+  const gaEnabled = resolveGa4MeasurementId() !== null;
   return (
     <article className="mx-auto max-w-3xl px-4 py-8 [&_h2]:mt-8 [&_h2]:font-display [&_h2]:text-xl [&_h2]:font-semibold [&_p]:mt-3">
       <h1 className="font-display text-3xl font-bold tracking-tight sm:text-4xl">Privacy Policy</h1>
@@ -28,9 +30,19 @@ export default function PrivacyPage() {
         The site prepares usage events without any identifiers, such as &ldquo;a photo was
         processed&rdquo; or &ldquo;a guide link was clicked&rdquo;, to understand which pages and
         tools are useful. They never include your files, file names, image contents, photo location
-        or camera details, or anything you type. At present these events are not sent to any
-        analytics service, and no cookies are used. If that changes, this page will be updated
-        first.
+        or camera details, or anything you type.{" "}
+        {gaEnabled ? (
+          <>
+            These events are sent to Google Analytics 4, configured so it never sets a cookie or any
+            other persistent identifier (no cookies are used), so visits cannot be linked together
+            across pages or return visits.
+          </>
+        ) : (
+          <>
+            At present these events are not sent to any analytics service, and no cookies are used.
+          </>
+        )}{" "}
+        If that changes, this page will be updated first.
       </p>
 
       <h2>What our servers receive</h2>

@@ -116,9 +116,17 @@ describe("page gate", () => {
   });
 });
 
+const GA_HEADERS = Object.fromEntries(
+  securityHeaders(false, true).map((h) => [h.key.toLowerCase(), h.value]),
+);
+
 describe("security headers gate", () => {
   it("passes the configured headers", () => {
     expect(checkSecurityHeaders(HEADERS)).toMatchObject({ ok: true });
+  });
+
+  it("passes when GA4's own origins widen connect-src", () => {
+    expect(checkSecurityHeaders(GA_HEADERS)).toMatchObject({ ok: true });
   });
 
   it("fails missing headers and a widened connect-src", () => {

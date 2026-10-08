@@ -2,18 +2,29 @@
 
 import { usePathname } from "next/navigation";
 import { useEffect, useLayoutEffect, useRef } from "react";
-import { trackEvent } from "@/lib/analytics";
+import { setAnalyticsProvider, trackEvent } from "@/lib/analytics";
 import { normalizeRoute, pageCategory, referrerCategory, utmParams } from "@/lib/analytics/context";
+import { loadGa4, resolveGa4MeasurementId, sendToGa4 } from "@/lib/analytics/providers/ga4";
 
 /**
  * Site-wide analytics that server-rendered pages can't do themselves: a
- * `page_view` per route (acquisition on the landing view only), and clicks on
- * links marked with `data-analytics-event` (guide → tool, requirement source).
- * Renders nothing and never blocks the page.
+ * `page_view` per route (acquisition on the landing view only), clicks on
+ * links marked with `data-analytics-event` (guide → tool, requirement source),
+ * and — when configured — wiring GA4 in as the event provider. Renders
+ * nothing and never blocks the page.
  */
 export function AnalyticsRoot() {
   const pathname = usePathname();
   const landed = useRef(false);
+
+  // Runs once: registering a provider mid-session would change where events already
+  // dispatched this page view went, so this never depends on `pathname`.
+  useEffect(() => {
+    const measurementId = resolveGa4MeasurementId();
+    if (!measurementId) return;
+    loadGa4(measurementId);
+    setAnalyticsProvider(sendToGa4);
+  }, []);
 
   // A layout effect runs before the page's own (passive) effects in the same commit, so the
   // page_view precedes e.g. tool_viewed, on landing and after client-side navigation.

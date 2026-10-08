@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { alternateHostRedirect, contentSecurityPolicy, securityHeaders } from "./security-headers";
+import {
+  alternateHostRedirect,
+  contentSecurityPolicy,
+  GA4_CONNECT_SRC,
+  GA4_SCRIPT_SRC,
+  securityHeaders,
+} from "./security-headers";
 
 function directives(csp: string): Map<string, string[]> {
   return new Map(
@@ -39,6 +45,35 @@ describe("content security policy", () => {
 
   it("allows unsafe-eval only for development tooling", () => {
     expect(directives(contentSecurityPolicy(true)).get("script-src")).toContain("'unsafe-eval'");
+  });
+
+  it("stays exactly 'self' blob: when GA4 is not enabled (the default)", () => {
+    expect(prod.get("connect-src")).toEqual(["'self'", "blob:"]);
+  });
+});
+
+describe("content security policy with GA4 enabled", () => {
+  const gaProd = directives(contentSecurityPolicy(false, true));
+
+  it("adds only GA4's own origins to connect-src and script-src", () => {
+    expect(gaProd.get("connect-src")).toEqual(["'self'", "blob:", ...GA4_CONNECT_SRC]);
+    expect(gaProd.get("script-src")).toEqual(["'self'", "'unsafe-inline'", GA4_SCRIPT_SRC]);
+  });
+
+  it("adds no origin outside Google's analytics domains", () => {
+    const added = gaProd.get("connect-src")!.filter((s) => !["'self'", "blob:"].includes(s));
+    for (const source of added) {
+      expect(source).toMatch(
+        /^https:\/\/(www\.|\*\.)?(google-analytics\.com|analytics\.google\.com|googletagmanager\.com)$/,
+      );
+    }
+  });
+
+  it("leaves every other directive unchanged", () => {
+    const prod = directives(contentSecurityPolicy(false));
+    for (const name of ["img-src", "worker-src", "object-src", "frame-ancestors", "form-action"]) {
+      expect(gaProd.get(name)).toEqual(prod.get(name));
+    }
   });
 });
 

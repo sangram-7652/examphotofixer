@@ -1,8 +1,12 @@
 import type { NextConfig } from "next";
+import { resolveGa4MeasurementId } from "./src/lib/analytics/providers/ga4";
 import { alternateHostRedirect, securityHeaders } from "./src/config/security-headers";
 import { siteConfig } from "./src/config/site";
 
 const hostRedirect = alternateHostRedirect(siteConfig.url);
+// Build-time only, like every NEXT_PUBLIC_* value: widens the CSP to GA4's origins only when a
+// real measurement ID is configured (docs/ANALYTICS.md), never unconditionally.
+const gaEnabled = resolveGa4MeasurementId() !== null;
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
@@ -13,7 +17,7 @@ const nextConfig: NextConfig = {
     return [
       {
         source: "/:path*",
-        headers: securityHeaders(process.env.NODE_ENV === "development"),
+        headers: securityHeaders(process.env.NODE_ENV === "development", gaEnabled),
       },
     ];
   },

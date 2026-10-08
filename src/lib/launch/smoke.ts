@@ -11,6 +11,8 @@
  * stripping.
  */
 
+import { GA4_CONNECT_SRC } from "@/config/security-headers";
+
 export interface SmokeResponse {
   status: number;
   /** Lower-cased header names. */
@@ -203,15 +205,26 @@ export function checkPage(html: string, canonicalUrl: string, options: SmokeOpti
   return problems;
 }
 
+// The only origins connect-src may ever carry: the baseline ('self', blob:) plus GA4's own
+// origins when GA4 is configured (src/config/security-headers.ts). Anything else widening
+// connect-src — any other third-party endpoint — fails this check until it's added here too.
+const BASE_CONNECT_SRC = ["'self'", "blob:"];
+const ALLOWED_CONNECT_SRC = new Set([...BASE_CONNECT_SRC, ...GA4_CONNECT_SRC]);
+
 export function checkSecurityHeaders(headers: Record<string, string>): SmokeCheck {
   const missing = REQUIRED_SECURITY_HEADERS.filter((name) => !headers[name]);
   const csp = headers["content-security-policy"] ?? "";
   const connect = /connect-src ([^;]*)/.exec(csp)?.[1].trim();
+  const connectTokens = connect ? connect.split(/\s+/).filter(Boolean) : [];
+  const missingBase = BASE_CONNECT_SRC.filter((token) => !connectTokens.includes(token));
+  const unknownTokens = connectTokens.filter((token) => !ALLOWED_CONNECT_SRC.has(token));
   const problems = [...missing.map((name) => `missing ${name}`)];
-  if (csp && connect !== "'self' blob:") problems.push(`connect-src is "${connect ?? "(unset)"}"`);
+  if (csp && (missingBase.length > 0 || unknownTokens.length > 0)) {
+    problems.push(`connect-src is "${connect ?? "(unset)"}"`);
+  }
   if (/unsafe-eval/.test(csp)) problems.push("CSP allows unsafe-eval");
   return {
-    name: "security headers present (CSP connect-src 'self' blob:)",
+    name: "security headers present (CSP connect-src 'self' blob:, optionally + GA4)",
     ok: problems.length === 0,
     detail: problems.join("; ") || "ok",
   };

@@ -158,6 +158,7 @@ Docker, set them as `--build-arg` (see "Docker" above), not as a container runti
 | `NEXT_PUBLIC_SITE_INDEXABLE`     | public      | `true`                       | **unset**       | not indexable                |
 | `NEXT_PUBLIC_CONTACT_EMAIL`      | public      | owner's contact address      | optional        | no address shown             |
 | `NEXT_PUBLIC_ANALYTICS_DISABLED` | public      | unset (no provider anyway)   | unset           | events enabled locally       |
+| `NEXT_PUBLIC_GA_MEASUREMENT_ID`  | public      | GA4 property's `G-...` ID    | unset           | no GA4 script, no events     |
 | `GOOGLE_SITE_VERIFICATION`       | server-only | only for HTML-tag method     | unset           | no meta tag                  |
 | `ENGINE_HARNESS`                 | test-only   | **never**                    | e2e only        | harness 404                  |
 
@@ -228,7 +229,11 @@ manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; fra
   hydration scripts need either this or per-request nonces, and nonces force every page to be
   rendered dynamically (no static HTML, no CDN caching). Next's hash-based SRI is experimental.
   The directives that protect users' files (`connect-src`, `worker-src`, `form-action`,
-  `object-src`, `frame-ancestors`) are strict. No `unsafe-eval` in production; no wildcards.
+  `object-src`, `frame-ancestors`) are strict. No `unsafe-eval` in production; no broad wildcards.
+- When `NEXT_PUBLIC_GA_MEASUREMENT_ID` is set, `script-src` and `connect-src` also allow GA4's
+  own origins (`https://www.googletagmanager.com`, `https://www.google-analytics.com` and its
+  regional subdomains) — see `docs/ANALYTICS.md` "GA4 provider". With no measurement ID
+  configured the CSP above is exactly what ships, unchanged.
 - Verified by `e2e/launch.spec.ts` on Chromium, Firefox, WebKit and mobile: preset and generic
   tools process, preview (blob:) and download with zero CSP violations; a deliberate
   cross-origin `fetch` from a tool page was confirmed blocked and reported on all four (P10 audit).

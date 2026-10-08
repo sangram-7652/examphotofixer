@@ -14,8 +14,12 @@
  * - `frame-ancestors 'none'`, `object-src 'none'`, `base-uri 'self'`, `form-action 'self'`.
  *
  * No `unsafe-eval` in production (development needs it for React's debugging tools), and no
- * wildcard sources. Adding an analytics or monitoring provider requires adding its origin to
- * `connect-src` here (see docs/ANALYTICS.md).
+ * broad wildcard sources. Adding an analytics or monitoring provider requires adding its origin
+ * to `connect-src` here (see docs/ANALYTICS.md). GA4 (`src/lib/analytics/providers/ga4.ts`) is
+ * the one implemented example: its origins (`GA4_SCRIPT_SRC`/`GA4_CONNECT_SRC` below) are added
+ * only when `gaEnabled` is true, i.e. only when a real measurement ID is configured — the CSP
+ * stays exactly `connect-src 'self' blob:` otherwise, matching every existing test and the
+ * smoke check.
  */
 
 export interface SecurityHeader {
@@ -23,15 +27,35 @@ export interface SecurityHeader {
   value: string;
 }
 
-export function contentSecurityPolicy(isDev: boolean): string {
+/** gtag.js itself; GA4's event/config pings also go here (see GA4_CONNECT_SRC). */
+export const GA4_SCRIPT_SRC = "https://www.googletagmanager.com";
+
+/**
+ * GA4 can route collection requests to a regional subdomain for data residency, so both the
+ * bare host and a subdomain wildcard are needed; still scoped to Google's own analytics domains,
+ * never a bare `*`.
+ */
+export const GA4_CONNECT_SRC = [
+  "https://www.google-analytics.com",
+  "https://*.google-analytics.com",
+  "https://*.analytics.google.com",
+  GA4_SCRIPT_SRC,
+];
+
+export function contentSecurityPolicy(isDev: boolean, gaEnabled = false): string {
   const directives: Record<string, string[]> = {
     "default-src": ["'self'"],
-    "script-src": ["'self'", "'unsafe-inline'", ...(isDev ? ["'unsafe-eval'"] : [])],
+    "script-src": [
+      "'self'",
+      "'unsafe-inline'",
+      ...(isDev ? ["'unsafe-eval'"] : []),
+      ...(gaEnabled ? [GA4_SCRIPT_SRC] : []),
+    ],
     "style-src": ["'self'", "'unsafe-inline'"],
     "img-src": ["'self'", "blob:", "data:"],
     "font-src": ["'self'"],
     // blob: lets page code read its own in-memory object URLs; blob: can't reach the network.
-    "connect-src": ["'self'", "blob:"],
+    "connect-src": ["'self'", "blob:", ...(gaEnabled ? GA4_CONNECT_SRC : [])],
     "worker-src": ["'self'"],
     "manifest-src": ["'self'"],
     "object-src": ["'none'"],
@@ -44,9 +68,9 @@ export function contentSecurityPolicy(isDev: boolean): string {
     .join("; ");
 }
 
-export function securityHeaders(isDev: boolean): SecurityHeader[] {
+export function securityHeaders(isDev: boolean, gaEnabled = false): SecurityHeader[] {
   return [
-    { key: "Content-Security-Policy", value: contentSecurityPolicy(isDev) },
+    { key: "Content-Security-Policy", value: contentSecurityPolicy(isDev, gaEnabled) },
     // One year; no includeSubDomains/preload: those affect every subdomain and are hard to undo.
     { key: "Strict-Transport-Security", value: "max-age=31536000" },
     { key: "X-Content-Type-Options", value: "nosniff" },
