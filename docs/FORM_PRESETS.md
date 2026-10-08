@@ -45,16 +45,33 @@ that signature/LTI should be on white paper in black/blue ink, not blurred or sm
 stored as `guidance`, worded per document (signature vs. left thumb impression). All CCC presets
 share one frozen `source` object.
 
+The same page also gives a physical print size — photo "3.5 cm Width X 4.5 cm Height", LTI/signature
+"4.5 cm Width X 3.5 cm Height" — stored as `physicalSize` (informational; the pixel size governs
+the upload) and shown as an extra row in `RequirementsTable`. The CCC photo preset also carries
+`captureCaveat`, shown next to the mobile capture button, since the guideline asks for a
+professionally taken photo rather than a mobile-phone one.
+
+**Page number confirmed.** Page 3 is both the PDF's own page index and its printed footer page
+number for this document (no cover-page offset) — re-confirmed directly against the SHA-256 above
+with `pdftotext -layout` (2026-10-08); see EXAM_REQUIREMENT_VERIFICATION.md.
+
 **Versions matter.** Older versions of the NIELIT guidelines list different values. Values are
 always shown together with the version and date they come from; never present a historical
 value as current. When a new version appears, update `source` and the numbers in one change.
 
-Source for all IBPS presets: **IBPS CRP RRBs XV Detailed Notification (01.09.2026)** —
+Source for all IBPS presets: **IBPS CRP RRBs-XV Detailed Notification (01.09.2026)** —
 <https://www.ibps.in/wp-content/uploads/CRP-RRBs-XV-notification.pdf>, Annexure III (SHA-256
 `105b0652…1b760508`). Photograph printed page 56; signature, left thumb impression and
 hand-written declaration page 57; JPG/JPEG and "minimum of 200 dpi" for every image page 58
 (`sourcePages`). Same text in CRP PO/MT-XVI and SPL-XVI. Verified 2026-09-24 (photo),
 re-verified unchanged and extended to the other three images on 2026-09-25.
+
+**Scope.** "XV" names this recruitment cycle, not a document revision, so `document` is "CRP
+RRBs-XV Detailed Notification" rather than showing it as "Version XV" (`versionFragment` in
+`lib/presets/source.ts` skips the version fragment once it's already in `document`). `source.
+scopeNote` carries the "verified for CRP RRBs-XV only" disclaimer shown in the Source and
+verification section — these values are **not** claimed for IBPS PO, Clerk or SO, whose
+notifications haven't been independently verified.
 
 | id                 | Size (px), preferred | KB     | DPI         | Format   | Status   |
 | ------------------ | -------------------- | ------ | ----------- | -------- | -------- |
@@ -89,6 +106,6 @@ fails if a preset differs from its latest snapshot. Change values only by adding
 | ------------ | --------------------- | ----- | ------------------------------------------ | -------- | -------- |
 | `ibps-photo` | 200 × 230 (preferred) | 20–50 | ≥ 200 (scanner minimum; no maximum stated) | JPG/JPEG | verified |
 
-Source: IBPS CRP RRBs XV Detailed Notification (01.09.2026), Annexure III, printed pages 56 and 58.
+Source: IBPS CRP RRBs-XV Detailed Notification (01.09.2026), Annexure III, printed pages 56 and 58.
 Full audit trail: `EXAM_REQUIREMENT_VERIFICATION.md`. `DpiRange.max` may be `null` when a source
 states only a minimum; `preferredDimensions` marks sizes the source calls "preferred".

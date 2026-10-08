@@ -22,6 +22,10 @@ test("home page shows hero, exam search and tools", async ({ page }) => {
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
     "Fix your exam photo before you upload it.",
   );
+  // Explicit geography + current verified scope (P14 AI-discoverability fix): never a generic
+  // "every exam" claim, and must name the actual narrowed IBPS scope, not bare "IBPS".
+  await expect(page.getByText("ExamPhotoFixer helps users in India")).toBeVisible();
+  await expect(page.getByText("CCC and IBPS CRP RRBs-XV")).toBeVisible();
   const search = page.getByRole("searchbox", { name: "Search your exam" });
   await expect(search).toBeVisible();
   await search.fill("nielit");

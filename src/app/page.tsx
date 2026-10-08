@@ -7,10 +7,10 @@ import { JsonLd } from "@/components/JsonLd";
 import { SpecFrame } from "@/components/SpecFrame";
 import { ToolCard } from "@/components/ToolCard";
 import { siteConfig } from "@/config/site";
-import { listExams, listPresets } from "@/lib/presets";
+import { listExams, listPresets, verifiedScopeSummary } from "@/lib/presets";
 import { describePreset } from "@/lib/presets/describe";
 import { formatIsoDate, isVerifiedSource, sourceCitation } from "@/lib/presets/source";
-import { websiteJsonLd } from "@/lib/seo/json-ld";
+import { organizationJsonLd, websiteJsonLd } from "@/lib/seo/json-ld";
 import { buildPageMetadata } from "@/lib/seo/metadata";
 import { genericTools, TOOLS, toolsForExam } from "@/lib/tools/registry";
 
@@ -64,7 +64,7 @@ export default function HomePage() {
 
   return (
     <>
-      <JsonLd data={websiteJsonLd()} />
+      <JsonLd data={[websiteJsonLd(), organizationJsonLd()]} />
 
       <section className="border-b border-border">
         <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 py-14 sm:py-20 lg:grid-cols-[1.25fr_1fr]">
@@ -76,6 +76,10 @@ export default function HomePage() {
             <p className="mt-5 max-w-xl text-lg text-muted">
               Resize, compress and prepare application images to match verified requirements —
               directly in your browser.
+            </p>
+            <p className="mt-3 max-w-xl text-sm text-muted">
+              ExamPhotoFixer helps users in India prepare exam application photos and documents.
+              Requirements are currently verified for {verifiedScopeSummary()}.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Link href="#exams" className="btn-primary">

@@ -19,6 +19,16 @@ export function websiteJsonLd(): JsonLdObject {
   };
 }
 
+/** Only fields we can state truthfully today — no logo, contact, sameAs or founder. */
+export function organizationJsonLd(): JsonLdObject {
+  return {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: siteConfig.name,
+    url: absoluteUrl("/"),
+  };
+}
+
 export function toolJsonLd(tool: ToolDefinition): JsonLdObject {
   return {
     "@context": "https://schema.org",

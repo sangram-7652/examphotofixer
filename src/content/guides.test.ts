@@ -7,6 +7,7 @@ import {
   buildGuide,
   getGuide,
   guidePath,
+  guidePresets,
   guidesForTool,
   listGuides,
   type Guide,
@@ -47,6 +48,16 @@ describe("guide registry", () => {
         expect(getTool(link.toolId).status).toBe("live");
         expect(link.text.toLowerCase()).not.toMatch(/click here|read more/);
       }
+    }
+  });
+
+  it("every guide's presets share one verified source, so its 'Last reviewed' date (derived from source.verifiedOn) can't drift from the source it cites", () => {
+    for (const guide of listGuides()) {
+      const presets = guidePresets(guide);
+      expect(presets.length, guide.slug).toBeGreaterThan(0);
+      const [first, ...rest] = presets;
+      for (const preset of rest) expect(preset.source, guide.slug).toBe(first.source);
+      expect(first.source.verifiedOn, guide.slug).not.toBeNull();
     }
   });
 

@@ -5,6 +5,7 @@ import {
   formatPages,
   isVerifiedSource,
   presetSourcePages,
+  versionFragment,
 } from "@/lib/presets/source";
 import type { ImagePreset } from "@/lib/presets/types";
 
@@ -53,7 +54,7 @@ export function RequirementsSummary({
           </span>
           <span className="hidden sm:inline">
             {source.authority} {source.document ? `· ${source.document}` : ""}
-            {source.version ? ` · version ${source.version}` : ""}
+            {versionFragment(source) ? ` · version ${versionFragment(source)}` : ""}
             {pages ? ` · ${pages}` : ""} · checked{" "}
             <time dateTime={source.verifiedOn!}>{formatIsoDate(source.verifiedOn!)}</time>
           </span>

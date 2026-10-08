@@ -78,6 +78,21 @@ test("every sitemap URL: 200, one canonical to itself, title, description, one H
       `${path} og:title`,
     ).toBeTruthy();
     expect(count(html, /<h1[\s>]/g), `${path} h1 count`).toBe(1);
+    // Guides are editorial content with real review dates; tools and other pages stay "website".
+    const isGuide = /^\/guides\/[^/]+$/.test(path);
+    expect(one(html, /<meta property="og:type" content="([^"]+)"/), `${path} og:type`).toBe(
+      isGuide ? "article" : "website",
+    );
+    if (isGuide) {
+      expect(
+        one(html, /<meta property="article:published_time" content="([^"]+)"/),
+        `${path} article:published_time`,
+      ).toBeTruthy();
+      expect(
+        one(html, /<meta property="article:modified_time" content="([^"]+)"/),
+        `${path} article:modified_time`,
+      ).toBeTruthy();
+    }
     // No page-level noindex beyond the site-wide setting.
     expect(one(html, /<meta name="robots" content="([^"]+)"/), `${path} robots`).toBe(siteRobots);
 
@@ -89,15 +104,12 @@ test("every sitemap URL: 200, one canonical to itself, title, description, one H
     }) as { "@type": string; mainEntity?: { name: string; acceptedAnswer: { text: string } }[] }[];
     const types = entries.map((e) => e["@type"]);
     expect(new Set(types).size, `${path} duplicate schema types`).toBe(types.length);
-    for (const forbidden of [
-      "Review",
-      "AggregateRating",
-      "Rating",
-      "Organization",
-      "GovernmentOrganization",
-    ]) {
+    // Organization is allowed (homepage only, name+url — see the dedicated check below) but
+    // never GovernmentOrganization, which would misrepresent affiliation.
+    for (const forbidden of ["Review", "AggregateRating", "Rating", "GovernmentOrganization"]) {
       expect(types, path).not.toContain(forbidden);
     }
+    if (path !== "/") expect(types, path).not.toContain("Organization");
     const faq = entries.find((e) => e["@type"] === "FAQPage");
     // Every disclosure in the page content is a marked FAQ item (the header menu is outside <main>).
     const main = html.slice(html.indexOf("<main"), html.indexOf("</main>"));
@@ -121,6 +133,29 @@ test("every sitemap URL: 200, one canonical to itself, title, description, one H
     const crumbs = entries.find((e) => e["@type"] === "BreadcrumbList");
     if (crumbs) expect(html, `${path} visible breadcrumb`).toContain('aria-label="Breadcrumb"');
   }
+});
+
+test("homepage: WebSite and Organization JSON-LD, with only truthful Organization fields", async ({
+  request,
+}) => {
+  const html = await (await request.get("/")).text();
+  const blocks = [...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)];
+  expect(blocks.length, "homepage JSON-LD blocks").toBe(1); // one script tag, one array
+  const entries = JSON.parse(blocks[0][1]) as Record<string, unknown>[];
+  const types = entries.map((e) => e["@type"]);
+  expect(types).toContain("WebSite");
+  expect(types).toContain("Organization");
+  expect(new Set(types).size, "duplicate schema types").toBe(types.length);
+
+  const org = entries.find((e) => e["@type"] === "Organization")!;
+  expect(org.name).toBe("ExamPhotoFixer");
+  expect(org.url).toBe("https://examphotofixer.com");
+  // Only name, url and @context/@type — nothing fabricated (no logo, contact, sameAs, ratings…).
+  expect(Object.keys(org).sort()).toEqual(["@context", "@type", "name", "url"]);
+
+  const site = entries.find((e) => e["@type"] === "WebSite")!;
+  expect(site.name).toBe("ExamPhotoFixer");
+  expect(site.url).toBe("https://examphotofixer.com");
 });
 
 test("no broken internal links on any sitemap page", async ({ request }) => {

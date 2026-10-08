@@ -4,7 +4,7 @@ import type { ImagePreset, RequirementSource } from "./types";
  * IBPS Common Recruitment Process — uploaded photograph, signature, left thumb
  * impression and hand-written declaration.
  *
- * Canonical source: "CRP RRBs XV" Detailed Notification dated 01.09.2026,
+ * Canonical source: CRP RRBs-XV Detailed Notification dated 01.09.2026,
  * Annexure III "Guidelines for Scanning and Upload of Documents" — photograph on
  * printed page 56; signature, left thumb impression and hand-written declaration
  * on printed page 57; file format and scanner resolution (all images) on printed
@@ -17,7 +17,9 @@ import type { ImagePreset, RequirementSource } from "./types";
 const IBPS_CRP_RRBS_XV: RequirementSource = Object.freeze({
   id: "ibps-crp-rrbs-xv-notification",
   authority: "IBPS",
-  document: "CRP RRBs Detailed Notification",
+  // "XV" names this recruitment cycle, not a document revision, so it's part of the title here
+  // rather than shown as "Version XV" (see versionFragment in lib/presets/source.ts).
+  document: "CRP RRBs-XV Detailed Notification",
   url: "https://www.ibps.in/wp-content/uploads/CRP-RRBs-XV-notification.pdf",
   version: "XV",
   published: "01.09.2026",
@@ -25,6 +27,11 @@ const IBPS_CRP_RRBS_XV: RequirementSource = Object.freeze({
   sha256: "105b0652fb7f2564adc452685248734e8546235b332b84c93f81acdb1b760508",
   verifiedOn: "2026-09-25",
   status: "verified",
+  // Published date as printed: 1 September 2026 (01.09.2026, DD.MM.YYYY).
+  scopeNote:
+    "Verified against the IBPS CRP RRBs-XV notification dated 1 September 2026. Other IBPS " +
+    "recruitments (for example PO, Clerk or SO) may publish different requirements — always " +
+    "check the official notification for the recruitment you're applying to.",
   notes:
     "Common Recruitment Process for RRBs, round XV (Officers and Office Assistants). Annexure III: " +
     "photograph on printed page 56 (PDF page 58); signature, left thumb impression and hand-written " +

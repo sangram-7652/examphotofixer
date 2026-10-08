@@ -109,6 +109,12 @@ test("source & verification cites NIELIT Version 1.11 (2023) with a safe new-tab
   }
 });
 
+test("requirements table shows the guideline's physical print size", async ({ page }) => {
+  const table = page.getByRole("region", { name: "CCC Photo requirements" });
+  await expect(table.getByText("Physical size")).toBeVisible();
+  await expect(table.getByText("3.5 × 4.5 cm (width × height)")).toBeVisible();
+});
+
 test("happy path: upload → crop → real progress → READY → download → start again", async ({
   page,
 }) => {
@@ -297,6 +303,8 @@ test("mobile layout: tool is in the first screen, no horizontal scroll", async (
   expect(box.y + box.height).toBeLessThanOrEqual(page.viewportSize()!.height);
   expect(box.height).toBeGreaterThanOrEqual(44); // comfortable touch target
   await expect(page.getByRole("button", { name: "Capture image" })).toBeVisible();
+  // The guideline asks for a professionally taken photo, not a mobile-phone photo.
+  await expect(page.getByText(/not a mobile-phone photo/)).toBeVisible();
 
   const noOverflow = () =>
     page.evaluate(

@@ -69,6 +69,8 @@ export function GuidePage({ guide }: { guide: Guide }) {
     presets.length > 0 && presets.every((preset) => preset.source === presets[0].source)
       ? presets[0]
       : null;
+  // The same date the "Source and verification" section shows as verified — can't drift apart.
+  const reviewedOn = sharedSource?.source.verifiedOn ?? null;
   // Related = other guides about the same exam.
   const exams = new Set(presets.map((preset) => preset.exam));
   const related = listGuides().filter(
@@ -90,9 +92,11 @@ export function GuidePage({ guide }: { guide: Guide }) {
       >
         {body.shortAnswer}
       </p>
-      <p className="mt-2 text-sm text-muted">
-        Last reviewed <time dateTime={guide.reviewedOn}>{formatIsoDate(guide.reviewedOn)}</time>
-      </p>
+      {reviewedOn ? (
+        <p className="mt-2 text-sm text-muted">
+          Last reviewed <time dateTime={reviewedOn}>{formatIsoDate(reviewedOn)}</time>
+        </p>
+      ) : null}
 
       <nav
         aria-label="Tools for this guide"

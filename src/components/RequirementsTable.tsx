@@ -11,6 +11,14 @@ export function RequirementsTable({ preset }: { preset: ImagePreset }) {
       "Dimensions",
       `${preset.width} × ${preset.height} pixels (width × height)${preset.preferredDimensions ? ", stated as preferred" : ""}`,
     ],
+    ...(preset.physicalSize
+      ? ([
+          [
+            "Physical size",
+            `${preset.physicalSize.widthCm} × ${preset.physicalSize.heightCm} cm (width × height)`,
+          ],
+        ] as [string, string][])
+      : []),
     ["File size", `${preset.fileSizeKB.min}–${preset.fileSizeKB.max} KB`],
     ["Format", preset.formats.map((format) => FORMAT_LABELS[format]).join(", ")],
     ["DPI", dpiText(preset.dpi)],

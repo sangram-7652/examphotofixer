@@ -50,6 +50,13 @@ export interface RequirementSource {
   verifiedOn: string | null;
   status: VerificationStatus;
   notes?: string;
+  /**
+   * Shown in the "Source and verification" section when this source's applicability is
+   * narrower than its authority's name suggests (e.g. verified for one notification or
+   * recruitment cycle, not every document the authority publishes). Never invent one; only
+   * set when the narrower scope is true of the actual source.
+   */
+  scopeNote?: string;
 }
 
 export interface NumericRange {
@@ -90,6 +97,18 @@ export interface ImagePreset {
   sourcePages?: readonly number[];
   /** Non-technical instructions from the same source (e.g. background, recency), paraphrased closely. */
   guidance?: readonly string[];
+  /**
+   * Physical print size as stated by the source (width × height, in cm). Informational only —
+   * the pixel size governs the upload, so this is never validated by the engine. Never invent
+   * or hardcode outside this field; add it only once verified against the same source document.
+   */
+  physicalSize?: { widthCm: number; heightCm: number };
+  /**
+   * Shown next to the capture control when the source asks for a particular way of taking this
+   * document (e.g. "professionally, not on a mobile phone") that a live camera capture may not
+   * satisfy. Never invent one; word it from the same source as `guidance`.
+   */
+  captureCaveat?: string;
   source: RequirementSource;
 }
 
@@ -100,4 +119,10 @@ export interface ExamDefinition {
   conductingBody: string;
   /** `active` exams have presets and tools; `planned` exams are searchable but have no requirements yet. */
   status: "active" | "planned";
+  /**
+   * How to name this exam's verified scope where `shortName` alone would overclaim (e.g. "IBPS"
+   * covers many recruitments, but only one notification cycle is actually verified here). Falls
+   * back to `shortName` when unset. Keep in sync with the preset `source` it names.
+   */
+  scopeLabel?: string;
 }

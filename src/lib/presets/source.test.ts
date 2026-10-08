@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { CCC_PHOTO } from "./ccc";
-import { formatIsoDate, isPdf, isVerifiedSource, sourceCitation } from "./source";
+import { IBPS_PHOTO } from "./ibps";
+import { formatIsoDate, isPdf, isVerifiedSource, sourceCitation, versionFragment } from "./source";
 
 describe("source helpers", () => {
   it("builds the citation from source fields", () => {
@@ -10,6 +11,17 @@ describe("source helpers", () => {
     expect(
       sourceCitation({ ...CCC_PHOTO.source, document: null, version: null, published: null }),
     ).toBe("NIELIT");
+  });
+
+  it("never shows 'Version X' when X is an edition/cycle already named in the document title", () => {
+    // IBPS's "XV" is a recruitment cycle, not a document revision — it's part of `document`.
+    expect(versionFragment(IBPS_PHOTO.source)).toBe("");
+    expect(sourceCitation(IBPS_PHOTO.source)).toBe(
+      "IBPS CRP RRBs-XV Detailed Notification (01.09.2026)",
+    );
+    expect(sourceCitation(IBPS_PHOTO.source)).not.toContain("Version");
+    // A genuine document version (CCC's "1.11") is unaffected.
+    expect(versionFragment(CCC_PHOTO.source)).toBe("1.11");
   });
 
   it("formats ISO dates without locale dependence", () => {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { TOOLS } from "@/lib/tools/registry";
-import { EXAMS, getPreset, listPresets, presetsForExam } from ".";
+import { EXAMS, getPreset, listPresets, presetsForExam, verifiedScopeSummary } from ".";
 
 describe("preset registry", () => {
   it("has unique preset ids", () => {
@@ -51,6 +51,13 @@ describe("preset registry", () => {
   it("has no presets for planned exams (requirements are never invented)", () => {
     for (const exam of Object.values(EXAMS).filter((e) => e.status === "planned")) {
       expect(presetsForExam(exam.id)).toEqual([]);
+    }
+  });
+
+  it("names only the active, verified scope — never a planned exam, never bare 'IBPS'", () => {
+    expect(verifiedScopeSummary()).toBe("CCC and IBPS CRP RRBs-XV");
+    for (const exam of Object.values(EXAMS).filter((e) => e.status === "planned")) {
+      expect(verifiedScopeSummary()).not.toContain(exam.shortName);
     }
   });
 
@@ -107,6 +114,23 @@ describe("CCC presets match Version 1.11 (2023), page 3", () => {
     expect(preset.dpi).toEqual({ min: 96, max: 200 });
     expect(preset.formats).toEqual(["jpeg"]);
   });
+
+  // Page 3: "Size- 3.5 cm Width X 4.5 cm Height" (photo), "Size- 4.5 cm Width X 3.5 cm Height"
+  // (signature/thumb) — informational physical print size, verified against the same SHA-256.
+  it("photo physical size is 3.5 x 4.5 cm; signature and thumb are 4.5 x 3.5 cm", () => {
+    expect(getPreset("ccc-photo").physicalSize).toEqual({ widthCm: 3.5, heightCm: 4.5 });
+    for (const id of ["ccc-signature", "ccc-left-thumb"]) {
+      expect(getPreset(id).physicalSize, id).toEqual({ widthCm: 4.5, heightCm: 3.5 });
+    }
+  });
+
+  it("asks for a professionally taken photo, and caveats the capture control accordingly", () => {
+    const photo = getPreset("ccc-photo");
+    expect(photo.captureCaveat).toMatch(/not a mobile-phone photo/);
+    // Signature/thumb guidance doesn't mention how the image was taken, so no caveat there.
+    expect(getPreset("ccc-signature").captureCaveat).toBeUndefined();
+    expect(getPreset("ccc-left-thumb").captureCaveat).toBeUndefined();
+  });
 });
 
 describe("tool registry", () => {
@@ -121,6 +145,15 @@ describe("tool registry", () => {
   it("has unique ids and paths", () => {
     expect(new Set(TOOLS.map((t) => t.id)).size).toBe(TOOLS.length);
     expect(new Set(TOOLS.map((t) => t.path)).size).toBe(TOOLS.length);
+  });
+
+  it("never names the CRP RRBs-XV cycle without 'IBPS' immediately next to it", () => {
+    for (const tool of TOOLS) {
+      expect(tool.metaTitle).not.toContain("Version XV");
+      if (tool.metaTitle.includes("CRP RRBs-XV")) {
+        expect(tool.metaTitle, tool.id).toContain("IBPS CRP RRBs-XV");
+      }
+    }
   });
 });
 
@@ -142,6 +175,7 @@ describe("IBPS photo matches CRP RRBs XV (01.09.2026), Annexure III", () => {
   it("cites its source with URL, version, date, page, checksum and verification date", () => {
     expect(getPreset("ibps-photo").source).toMatchObject({
       authority: "IBPS",
+      document: "CRP RRBs-XV Detailed Notification",
       url: "https://www.ibps.in/wp-content/uploads/CRP-RRBs-XV-notification.pdf",
       version: "XV",
       published: "01.09.2026",
@@ -153,6 +187,13 @@ describe("IBPS photo matches CRP RRBs XV (01.09.2026), Annexure III", () => {
     expect(Object.isFrozen(getPreset("ibps-photo").source)).toBe(true);
     // Photograph on printed page 56; format and scanner resolution on page 58.
     expect(getPreset("ibps-photo").sourcePages).toEqual([56, 58]);
+  });
+
+  it("scopes itself to CRP RRBs-XV, not every IBPS recruitment", () => {
+    const { scopeNote } = getPreset("ibps-photo").source;
+    expect(scopeNote).toMatch(/CRP RRBs-XV/);
+    expect(scopeNote).toMatch(/1 September 2026/);
+    expect(scopeNote).toMatch(/other IBPS recruitments/i);
   });
 
   it("does not share CCC's source", () => {

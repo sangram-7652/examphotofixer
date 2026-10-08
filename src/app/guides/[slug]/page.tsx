@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { GuidePage } from "@/components/GuidePage";
-import { getGuide, guidePath, listGuides } from "@/content/guides";
+import { getGuide, guideArticleDates, guidePath, listGuides } from "@/content/guides";
 import { buildPageMetadata } from "@/lib/seo/metadata";
 
 // Only published guides exist; any other slug is a real 404.
@@ -19,6 +19,7 @@ export async function generateMetadata({ params }: PageProps<"/guides/[slug]">):
     title: guide.metaTitle,
     description: guide.description,
     path: guidePath(guide),
+    article: guideArticleDates(guide) ?? undefined,
   });
 }
 

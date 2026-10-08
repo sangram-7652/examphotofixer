@@ -51,6 +51,9 @@ for (const { path, h1, noun, preset } of TOOLS) {
       await expect(required.getByText(KB)).toBeVisible();
       await expect(required.getByText("JPG/JPEG")).toBeVisible();
       await expect(required.getByText(`${preset.dpi.min}–${preset.dpi.max}`)).toBeVisible();
+      const requirementsTable = page.getByRole("region", { name: `${preset.label} requirements` });
+      await expect(requirementsTable.getByText("Physical size")).toBeVisible();
+      await expect(requirementsTable.getByText("4.5 × 3.5 cm (width × height)")).toBeVisible();
       for (const line of preset.guidance ?? []) {
         await expect(page.getByText(line).first()).toBeVisible();
       }

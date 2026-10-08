@@ -10,7 +10,7 @@ import { genericTools, toolsForExam } from "@/lib/tools/registry";
 export const metadata: Metadata = buildPageMetadata({
   title: "All Tools – Exam Photo, Signature & Image Tools",
   description:
-    "Every ExamPhotoFixer tool: CCC photo, signature and thumb impression resizers, the CCC Complete Pack and the IBPS photo resizer, plus a general image resizer and image compressor.",
+    "Every ExamPhotoFixer tool: CCC photo, signature and thumb impression resizers; IBPS photo, signature, thumb impression and hand-written declaration resizers; the CCC and IBPS Complete Packs; plus a general image resizer and compressor.",
   path: "/tools",
 });
 

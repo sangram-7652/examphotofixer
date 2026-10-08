@@ -11,6 +11,10 @@ import type { ImagePreset, RequirementSource } from "./types";
  * Older versions of these guidelines list different values. Do not change any
  * number here without a newer official version; update `source` in the same
  * change. See docs/FORM_PRESETS.md.
+ *
+ * Page 3 is both the PDF's own page index and its printed footer page number for this document
+ * (no cover page offset) — confirmed directly against the SHA-256 below with `pdftotext`; see
+ * docs/EXAM_REQUIREMENT_VERIFICATION.md.
  */
 const CCC_SOURCE: RequirementSource = Object.freeze({
   id: "nielit-ccc-guidelines-v1.11",
@@ -46,6 +50,11 @@ export const CCC_PHOTO: ImagePreset = {
     "The guidelines ask for a professionally taken photo rather than one taken on a mobile phone.",
     "Your face must be clearly visible: no goggles, and no part of the face covered.",
   ],
+  // "Size- 3.5 cm Width X 4.5 cm Height" (page 3, section A(i)); informational, see physicalSize.
+  physicalSize: { widthCm: 3.5, heightCm: 4.5 },
+  captureCaveat:
+    "CCC guidance specifies a professionally taken photo, not a mobile-phone photo. Use Capture " +
+    "only when it matches the applicable official requirements.",
   source: CCC_SOURCE,
 };
 
@@ -63,6 +72,8 @@ export const CCC_SIGNATURE: ImagePreset = {
     "Sign on white paper using black or blue ink.",
     "The image must not be blurred or smudged.",
   ],
+  // "Size- 4.5 cm Width X 3.5 cm Height" (page 3, section B(i)); informational, see physicalSize.
+  physicalSize: { widthCm: 4.5, heightCm: 3.5 },
   source: CCC_SOURCE,
 };
 
@@ -80,6 +91,8 @@ export const CCC_LEFT_THUMB: ImagePreset = {
     "Take the left thumb impression on white paper using black or blue ink.",
     "The image must not be blurred or smudged.",
   ],
+  // "Size- 4.5 cm Width X 3.5 cm Height" (page 3, section B(i)); informational, see physicalSize.
+  physicalSize: { widthCm: 4.5, heightCm: 3.5 },
   source: CCC_SOURCE,
 };
 

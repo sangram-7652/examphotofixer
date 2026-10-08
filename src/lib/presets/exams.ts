@@ -18,6 +18,9 @@ export const EXAMS: Readonly<Record<ExamId, ExamDefinition>> = {
     fullName: "Institute of Banking Personnel Selection",
     conductingBody: "IBPS",
     status: "active",
+    // Only the CRP RRBs-XV notification is verified (src/lib/presets/ibps.ts); IBPS also runs
+    // other recruitments (PO, Clerk, SO) this product doesn't claim to cover.
+    scopeLabel: "IBPS CRP RRBs-XV",
   },
   ssc: {
     id: "ssc",
@@ -44,4 +47,17 @@ export const EXAMS: Readonly<Record<ExamId, ExamDefinition>> = {
 
 export function listExams(): ExamDefinition[] {
   return Object.values(EXAMS);
+}
+
+/**
+ * "CCC and IBPS CRP RRBs-XV" — the active exams' verified scope, joined for a sentence. Reads
+ * `scopeLabel`/`shortName` from the registry so this can't list an exam that isn't actually
+ * `active`, and can't drift from the scope named in that exam's own preset `source`.
+ */
+export function verifiedScopeSummary(): string {
+  const labels = listExams()
+    .filter((exam) => exam.status === "active")
+    .map((exam) => exam.scopeLabel ?? exam.shortName);
+  if (labels.length <= 1) return labels.join("");
+  return `${labels.slice(0, -1).join(", ")} and ${labels[labels.length - 1]}`;
 }

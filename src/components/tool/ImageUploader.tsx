@@ -12,13 +12,21 @@ interface ImageUploaderProps {
   noun: string;
   error?: string | null;
   busy?: boolean;
+  /** Shown next to the capture button when the source cautions against this capture method. */
+  captureCaveat?: string;
 }
 
 /**
  * File picker with drag-and-drop and camera capture. Files are handed to the
  * parent; nothing is uploaded anywhere.
  */
-export function ImageUploader({ onSelect, noun, error, busy = false }: ImageUploaderProps) {
+export function ImageUploader({
+  onSelect,
+  noun,
+  error,
+  busy = false,
+  captureCaveat,
+}: ImageUploaderProps) {
   const browseRef = useRef<HTMLInputElement>(null);
   const cameraRef = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState(false);
@@ -101,8 +109,8 @@ export function ImageUploader({ onSelect, noun, error, busy = false }: ImageUplo
         </button>
       </div>
       <p className="mt-3 text-sm text-muted sm:hidden">
-        Using the camera? Follow the application&apos;s official image instructions shown on this
-        page.
+        {captureCaveat ??
+          "Using the camera? Follow the application's official image instructions shown on this page."}
       </p>
       <p id={hintId} className="mt-3 text-sm text-muted">
         JPG, PNG or WebP · up to 25 MB ·{" "}

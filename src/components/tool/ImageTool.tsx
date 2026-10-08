@@ -410,7 +410,13 @@ export function ImageTool({
             Choose your {noun}
           </Heading>
           <RequirementsSummary preset={preset} headingLevel={headingLevel} />
-          <ImageUploader noun={noun} onSelect={handleFile} error={state.error} busy={state.busy} />
+          <ImageUploader
+            noun={noun}
+            onSelect={handleFile}
+            error={state.error}
+            busy={state.busy}
+            captureCaveat={preset.captureCaveat}
+          />
         </div>
       ) : null}
 

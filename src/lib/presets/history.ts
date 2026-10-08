@@ -202,3 +202,8 @@ export function requirementVersions(presetId: string): {
 export function latestEvent(sourceId: string): VerificationEvent | undefined {
   return [...VERIFICATION_HISTORY].reverse().find((event) => event.sourceId === sourceId);
 }
+
+/** The date a source was first verified (its earliest event — always appended first). */
+export function firstVerifiedOn(sourceId: string): string | undefined {
+  return VERIFICATION_HISTORY.find((event) => event.sourceId === sourceId)?.date;
+}

@@ -3,7 +3,7 @@ import { IBPS_PRESETS } from "./ibps";
 import type { ExamId, ImagePreset } from "./types";
 
 export * from "./types";
-export { EXAMS, listExams } from "./exams";
+export { EXAMS, listExams, verifiedScopeSummary } from "./exams";
 
 const ALL_PRESETS: readonly ImagePreset[] = [...CCC_PRESETS, ...IBPS_PRESETS];
 

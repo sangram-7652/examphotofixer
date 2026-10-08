@@ -99,7 +99,7 @@ export const TOOLS: readonly ToolDefinition[] = [
     presetIds: ["ibps-photo"],
     name: "IBPS Photo Resizer",
     h1: "IBPS Photo Resizer",
-    metaTitle: "IBPS Photo Resizer – Resize Photo for IBPS Bank Exam Forms",
+    metaTitle: "IBPS Photo Resizer – Resize Photo for IBPS CRP RRBs-XV Forms",
     metaDescription:
       "Resize your photo to the size, file size, format and DPI in IBPS's published scanning guidelines for its bank recruitment forms, and check it before you upload — processed in your browser.",
     summary: "Resize and check your photo for IBPS bank recruitment application forms.",
@@ -113,7 +113,7 @@ export const TOOLS: readonly ToolDefinition[] = [
     presetIds: ["ibps-signature"],
     name: "IBPS Signature Resizer",
     h1: "IBPS Signature Resizer",
-    metaTitle: "IBPS Signature Resizer – Resize Signature for IBPS Bank Exam Forms",
+    metaTitle: "IBPS Signature Resizer – Resize Signature for IBPS CRP RRBs-XV Forms",
     metaDescription:
       "Resize your signature to the size, file size, format and DPI in IBPS's published scanning guidelines, and check it before you upload — processed in your browser.",
     summary: "Resize and check your signature for IBPS bank recruitment application forms.",
@@ -127,7 +127,7 @@ export const TOOLS: readonly ToolDefinition[] = [
     presetIds: ["ibps-left-thumb"],
     name: "IBPS Left Thumb Impression Resizer",
     h1: "IBPS Left Thumb Impression Resizer",
-    metaTitle: "IBPS Thumb Impression Resizer – Left Thumb Image for IBPS Forms",
+    metaTitle: "IBPS Thumb Impression Resizer – Left Thumb Image for IBPS CRP RRBs-XV",
     metaDescription:
       "Resize your left thumb impression to the size, file size, format and DPI in IBPS's published scanning guidelines, and check it before you upload — processed in your browser.",
     summary: "Resize and check your left thumb impression for IBPS application forms.",
@@ -141,7 +141,7 @@ export const TOOLS: readonly ToolDefinition[] = [
     presetIds: ["ibps-declaration"],
     name: "IBPS Hand-written Declaration Resizer",
     h1: "IBPS Hand-written Declaration Resizer",
-    metaTitle: "IBPS Handwritten Declaration Resizer – Size, KB and DPI for IBPS Forms",
+    metaTitle: "IBPS Handwritten Declaration Resizer – Size, KB and DPI for IBPS CRP RRBs-XV",
     metaDescription:
       "Resize the image of your hand-written declaration to the size, file size, format and DPI in IBPS's published scanning guidelines, and check it before you upload — processed in your browser.",
     summary: "Resize and check your hand-written declaration image for IBPS forms.",

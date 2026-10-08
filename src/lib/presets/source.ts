@@ -24,12 +24,24 @@ export function formatIsoDate(iso: string): string {
 }
 
 /**
+ * The printed `version`, or "" when it isn't a real document revision to show as "Version X" —
+ * e.g. an edition/cycle identifier (like IBPS's "XV") that's already named in `document`. Shared
+ * by every place that renders a source's version, so this only needs deciding once per source.
+ */
+export function versionFragment(source: RequirementSource): string {
+  if (!source.version) return "";
+  if (source.document?.includes(source.version)) return "";
+  return source.version;
+}
+
+/**
  * Human-readable citation, e.g.
  * "NIELIT CCC Examination Application Guidelines, Version 1.11 (2023)".
  */
 export function sourceCitation(source: RequirementSource): string {
   const title = source.document ? `${source.authority} ${source.document}` : source.authority;
-  const version = source.version ? `, Version ${source.version}` : "";
+  const fragment = versionFragment(source);
+  const version = fragment ? `, Version ${fragment}` : "";
   const published = source.published ? ` (${source.published})` : "";
   return `${title}${version}${published}`;
 }

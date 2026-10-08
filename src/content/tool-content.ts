@@ -33,7 +33,7 @@ function cccPhotoContent(preset: ImagePreset): ToolContent {
     howItWorks: [
       "Choose your photo — for example a scan or digital copy of a recent passport-style photo. Check the photo guidelines further down this page.",
       `Drag and zoom so your face fills the frame. The frame already has the required ${preset.width}:${preset.height} shape, so your photo is cropped, never stretched.`,
-      `Tap “Process photo”. We fix the orientation, resize to exactly ${d.size}, compress it to fit ${d.kb} at the best possible quality, and set the DPI.`,
+      `Tap “Process photo”. We fix the orientation, resize to exactly ${d.size}, compress toward ${d.kb} at the best possible quality, and set the DPI.`,
       "Check the results list, then download the JPG and upload it to the CCC form.",
     ],
     commonProblems: [
@@ -43,7 +43,7 @@ function cccPhotoContent(preset: ImagePreset): ToolContent {
       },
       {
         title: "“File size too large”",
-        body: `Camera photos are often several megabytes. The tool compresses to fit within ${d.kb} while keeping the highest quality that fits.`,
+        body: `Camera photos are often several megabytes. The tool compresses toward ${d.kb} at the best possible quality and checks the final file against that range.`,
       },
       {
         title: "Photo appears sideways",
@@ -106,7 +106,7 @@ function cccInkContent(preset: ImagePreset, kind: "signature" | "thumb"): ToolCo
     howItWorks: [
       `Prepare your ${noun} as the guidelines describe (see “The same guidelines also ask” below), then scan it or capture an image of it.`,
       `Choose the image and drag or zoom so the ${short} fills the frame. The frame has the required ${preset.width}:${preset.height} shape, so nothing is stretched.`,
-      `Tap “Process ${short}”. We resize to exactly ${d.size}, compress to fit ${d.kb} at the best possible quality, and set the DPI.`,
+      `Tap “Process ${short}”. We resize to exactly ${d.size}, compress toward ${d.kb} at the best possible quality, and set the DPI.`,
       "Check the results list, then download the JPG and upload it to the CCC form.",
     ],
     commonProblems: [
@@ -334,13 +334,13 @@ function ibpsPhotoContent(preset: ImagePreset): ToolContent {
     howItWorks: [
       "Choose a recent passport-style colour photo (see the guideline notes further down this page).",
       `Drag and zoom so your face fills the frame. The frame has the ${preset.width}:${preset.height} shape, so your photo is cropped, never stretched.`,
-      `Tap “Process photo”. We fix the orientation, resize to ${d.size}, compress to fit ${d.kb} at the best possible quality, and write ${chooseOutputDpi(preset.dpi)} DPI into the file.`,
+      `Tap “Process photo”. We fix the orientation, resize to the preferred ${d.size}, compress toward ${d.kb} at the best possible quality, and write ${chooseOutputDpi(preset.dpi)} DPI into the file.`,
       "Check the results list, download the JPG and upload it in the photograph field of the IBPS application.",
     ],
     commonProblems: [
       {
         title: "Photo rejected as too large",
-        body: `Phone photos are usually several megabytes. The tool compresses to fit within ${d.kb} while keeping the highest quality that fits.`,
+        body: `Phone photos are usually several megabytes. The tool compresses toward ${d.kb} at the best possible quality and checks the final file against that range.`,
       },
       {
         title: "Two photo steps in the application",
@@ -403,7 +403,7 @@ function ibpsDocumentContent(
     howItWorks: [
       `Prepare your ${noun} as the notification describes (see “The same guidelines also ask” below), then scan it or take a clear, well-lit picture of it.`,
       `Choose the image and drag or zoom so the ${short} fills the frame. The frame has the ${preset.width}:${preset.height} shape, so nothing is stretched.`,
-      `Tap “Process ${short}”. We resize to exactly ${d.size}, compress to fit ${d.kb} at the best possible quality, and write ${chooseOutputDpi(preset.dpi)} DPI into the file.`,
+      `Tap “Process ${short}”. We resize to the preferred ${d.size}, compress toward ${d.kb} at the best possible quality, and write ${chooseOutputDpi(preset.dpi)} DPI into the file.`,
       `Check the results list, download the JPG and upload it in the ${noun} field of the IBPS application.`,
     ],
     commonProblems: [

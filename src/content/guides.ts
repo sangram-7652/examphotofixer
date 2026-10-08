@@ -7,6 +7,7 @@
 import { chooseOutputDpi } from "@/lib/image/dpi";
 import { getPreset } from "@/lib/presets";
 import { describePreset } from "@/lib/presets/describe";
+import { firstVerifiedOn } from "@/lib/presets/history";
 import { sourceCitation } from "@/lib/presets/source";
 import type { ImagePreset } from "@/lib/presets/types";
 import { getTool, type ToolId } from "@/lib/tools/registry";
@@ -44,12 +45,14 @@ export interface Guide {
   description: string;
   /** One line for guide lists and tool pages. */
   summary: string;
-  /** Presets whose requirements the guide shows (tables + source). */
+  /**
+   * Presets whose requirements the guide shows (tables + source). These must share one
+   * `source`: its `verifiedOn` is the guide's displayed "Last reviewed" date (GuidePage), so the
+   * two can never drift apart. There is no separate `reviewedOn` field — don't add one back.
+   */
   presetIds: readonly string[];
   /** Guide → tool links, with descriptive anchor text. */
   toolLinks: readonly { toolId: ToolId; text: string }[];
-  /** ISO date the guide text was last reviewed. */
-  reviewedOn: string;
   build: (presets: ImagePreset[]) => GuideBody;
 }
 
@@ -57,8 +60,6 @@ const p = (...content: Inline[]): GuideBlock => ({ kind: "p", content });
 const list = (...items: Inline[][]): GuideBlock => ({ kind: "list", items });
 const steps = (...items: Inline[][]): GuideBlock => ({ kind: "steps", items });
 const toolLink = (toolId: ToolId, text: string): Inline => ({ href: getTool(toolId).path, text });
-
-const REVIEWED_ON = "2026-09-24";
 
 const NO_GUARANTEE =
   "Meeting these technical values doesn't guarantee your application will be accepted — the exam body decides. Always check the current official instructions before you upload.";
@@ -113,7 +114,6 @@ const GUIDES: readonly Guide[] = [
         text: "Prepare photo, signature and thumb together in the CCC Complete Pack",
       },
     ],
-    reviewedOn: REVIEWED_ON,
     build: ([photo]) => {
       const d = describePreset(photo);
       return {
@@ -172,7 +172,6 @@ const GUIDES: readonly Guide[] = [
       { toolId: "ccc-signature", text: "Resize your signature with the CCC Signature Resizer" },
       { toolId: "ccc-pack", text: "Prepare all three CCC images in the CCC Complete Pack" },
     ],
-    reviewedOn: REVIEWED_ON,
     build: ([signature]) => {
       const d = describePreset(signature);
       return {
@@ -237,7 +236,6 @@ const GUIDES: readonly Guide[] = [
       },
       { toolId: "ccc-pack", text: "Prepare all three CCC images in the CCC Complete Pack" },
     ],
-    reviewedOn: REVIEWED_ON,
     build: ([thumb]) => {
       const d = describePreset(thumb);
       return {
@@ -296,7 +294,6 @@ const GUIDES: readonly Guide[] = [
       { toolId: "image-resizer", text: "Change dimensions with the Image Resizer" },
       { toolId: "image-compressor", text: "Reduce file size with the Image Compressor" },
     ],
-    reviewedOn: REVIEWED_ON,
     build: ([photo]) => {
       const d = describePreset(photo);
       return {
@@ -331,7 +328,7 @@ const GUIDES: readonly Guide[] = [
             heading: "File is larger than allowed",
             blocks: [
               p(
-                `Full-size photos are often several megabytes. The CCC Photo Resizer compresses to fit within ${d.kb}. For other forms with their own limit, the `,
+                `Full-size photos are often several megabytes. The CCC Photo Resizer compresses toward ${d.kb} and checks the final file against it. For other forms with their own limit, the `,
                 toolLink("image-compressor", "Image Compressor"),
                 " keeps the dimensions and reduces the file below a maximum you choose.",
               ),
@@ -440,7 +437,6 @@ const GUIDES: readonly Guide[] = [
       { toolId: "ibps-photo", text: "Resize your photo with the IBPS Photo Resizer" },
       { toolId: "ibps-pack", text: "Prepare all four IBPS images in the IBPS Complete Pack" },
     ],
-    reviewedOn: REVIEWED_ON,
     build: ([photo]) => {
       const d = describePreset(photo);
       return {
@@ -543,7 +539,6 @@ const GUIDES: readonly Guide[] = [
       },
       { toolId: "ibps-pack", text: "Prepare all four IBPS images in the IBPS Complete Pack" },
     ],
-    reviewedOn: "2026-09-25",
     build: ([signature, thumb, declaration]) => {
       const s = describePreset(signature);
       const t = describePreset(thumb);
@@ -705,4 +700,22 @@ export function buildGuide(guide: Guide): GuideBody {
 /** Guides that link to a tool, for "Related guides" on tool pages. */
 export function guidesForTool(toolId: ToolId): Guide[] {
   return GUIDES.filter((guide) => guide.toolLinks.some((link) => link.toolId === toolId));
+}
+
+/**
+ * Real dates for the guide's Open Graph article metadata, from the same verification history as
+ * its requirements (never a fabricated publish date): first verified = published, most recently
+ * verified = modified. `null` when the guide's presets don't share one verified source.
+ */
+export function guideArticleDates(
+  guide: Guide,
+): { publishedTime: string; modifiedTime: string } | null {
+  const presets = guidePresets(guide);
+  if (presets.length === 0 || !presets.every((preset) => preset.source === presets[0].source)) {
+    return null;
+  }
+  const { source } = presets[0];
+  const publishedTime = firstVerifiedOn(source.id);
+  if (!publishedTime || !source.verifiedOn) return null;
+  return { publishedTime, modifiedTime: source.verifiedOn };
 }

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { describePreset } from "@/lib/presets/describe";
 import { getPreset } from "@/lib/presets";
-import { formatIsoDate, isVerifiedSource } from "@/lib/presets/source";
+import { formatIsoDate, isVerifiedSource, versionFragment } from "@/lib/presets/source";
 import type { ExamDefinition } from "@/lib/presets/types";
 import { documentNoun, documentTitle } from "@/lib/tools/preset-labels";
 import type { ToolDefinition } from "@/lib/tools/registry";
@@ -73,7 +73,8 @@ export function ExamCard({ exam, tools }: { exam: ExamDefinition; tools: ToolDef
               <span aria-hidden="true">✓</span> Verified requirement
             </span>
             <span>
-              {source.authority}, version {source.version} · checked{" "}
+              {source.authority}
+              {versionFragment(source) ? `, version ${versionFragment(source)}` : ""} · checked{" "}
               <time dateTime={source.verifiedOn!}>{formatIsoDate(source.verifiedOn!)}</time>
             </span>
             <Link href={`${hub.path}#source`} className="text-link">

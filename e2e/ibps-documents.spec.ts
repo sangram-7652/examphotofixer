@@ -86,8 +86,14 @@ for (const { path, h1, noun, preset } of TOOLS) {
         await expect(page.getByText(line).first()).toBeVisible();
       }
       const source = page.getByTestId("requirements-source");
-      await expect(source).toContainText("IBPS CRP RRBs Detailed Notification, Version XV");
+      await expect(source).toContainText("IBPS CRP RRBs-XV Detailed Notification");
+      // "XV" names the recruitment cycle, not a document revision — never shown as "Version XV".
+      await expect(source).not.toContainText("Version XV");
       await expect(source).toContainText("pages 57 and 58");
+      await expect(source).toContainText(
+        "Verified against the IBPS CRP RRBs-XV notification dated 1 September 2026.",
+      );
+      await expect(source).toContainText("Other IBPS recruitments");
       await expect(source.getByRole("link", { name: /^View source/ })).toHaveAttribute(
         "href",
         preset.source.url!,

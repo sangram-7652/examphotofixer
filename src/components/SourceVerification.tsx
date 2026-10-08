@@ -50,6 +50,7 @@ export function SourceVerification({ presets }: { presets: readonly ImagePreset[
         reference their published requirements. Guidelines can change — check the current version
         before you upload.
       </p>
+      {source.scopeNote ? <p className="mt-2 text-muted">{source.scopeNote}</p> : null}
     </section>
   );
 }

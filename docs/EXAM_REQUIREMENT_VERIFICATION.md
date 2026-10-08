@@ -22,6 +22,27 @@ How every exam preset value was verified, so another developer can audit it. Val
 
 See `FORM_PRESETS.md` (Version 1.11 (2023), page 3, verified 2026-09-24, SHA-256 `853cbfca…4a3475aa`).
 
+**Page-number re-confirmation (2026-10-08).** A P13 trust audit flagged that a PDF viewer showed
+the specification on page 4 and asked whether the "page 3" citation uses the printed page number
+or the viewer's page index. Re-downloaded the source (identical SHA-256 `853cbfca…4a3475aa`,
+confirming the same, already-verified document) and read it with `pdftotext -layout -f 3 -l 4`:
+the printed footer on PDF page 3 itself reads "3 Version1.11 (2023)", and PDF page 4's footer
+reads "4 Version1.11 (2023)" — this document has no cover-page offset, so the PDF page index
+and the printed page number are identical here. **"Page 3" is correct and unchanged** (the
+auditor's "page 4" observation isn't reproducible against this file).
+
+The same page 3 extract also gives, for each document, a physical print size not previously
+recorded in any preset:
+
+| Source text                                         | Preset field                                                                      | Validated automatically?                       |
+| --------------------------------------------------- | --------------------------------------------------------------------------------- | ---------------------------------------------- |
+| Photo: "Size- 3.5 cm Width X 4.5 cm Height"         | `ccc-photo` `physicalSize: { widthCm: 3.5, heightCm: 4.5 }`                       | **No** — informational; the pixel size governs |
+| Signature/LTI: "Size- 4.5 cm Width X 3.5 cm Height" | `ccc-signature`, `ccc-left-thumb` `physicalSize: { widthCm: 4.5, heightCm: 3.5 }` | **No** — informational; the pixel size governs |
+
+No tracked value (width/height/KB/DPI/format) changed, so this isn't a new entry in
+`history.ts`/`RequirementSnapshot` — `physicalSize` is informational only, the same way
+`guidance` is, and isn't part of the change-tracked snapshot.
+
 ## IBPS — photograph (`ibps-photo`, P8)
 
 ### Why IBPS
@@ -68,6 +89,14 @@ Corrigenda checked (both leave image specifications unchanged — "All other ter
 | CRP CSA-XVI Detailed Notification (PDF created 2026-07-31; registration 01.08–21.08.2026)               | Annexure IV, printed pp. 52 and 54  | `1c10773a0e692e0bfd7e0565724420ed4d05756420a88eb5805c684876c0f084` |
 
 A normalized diff of the annexures shows only line wrapping and clause letters (J(ix)/K(ix)) differ.
+
+**Citation wording (2026-10-08).** A P13 trust audit found pages showing "Version XV" — "XV"
+names this recruitment cycle, not a document revision, which reads as a more general IBPS
+version than this preset actually covers. Fixed by moving "XV" into `source.document` ("CRP
+RRBs-XV Detailed Notification"); `versionFragment` (`lib/presets/source.ts`) then skips the
+redundant version fragment wherever it's already named in `document`. A `source.scopeNote` was
+also added, shown in the "Source and verification" section on every IBPS tool and guide page:
+these values are verified for CRP RRBs-XV only, not IBPS PO, Clerk, SO or any other recruitment.
 
 ### Exact requirements (verbatim excerpts) → preset mapping
 
