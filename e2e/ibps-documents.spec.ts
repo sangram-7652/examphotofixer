@@ -9,6 +9,7 @@ import {
 } from "../src/lib/presets/ibps";
 import type { ImagePreset } from "../src/lib/presets/types";
 import { buildDownloadFilename, buildPackFilename } from "../src/lib/tools/preset-labels";
+import { TOOLS as REGISTRY_TOOLS } from "../src/lib/tools/registry";
 import { readZip } from "../src/lib/zip/testing/read-zip";
 import {
   downloadBytes,
@@ -238,6 +239,24 @@ test.describe("/ibps-complete-pack", () => {
     const source = page.getByTestId("requirements-source");
     await expect(source).toHaveCount(1);
     await expect(source).toContainText("pages 56, 57 and 58");
+  });
+
+  test("single-document shortcuts: all four individual tools are linked above How it works", async ({
+    page,
+  }) => {
+    const shortcuts = page.getByTestId("single-document-shortcuts");
+    await expect(shortcuts.getByRole("heading", { name: "Only need one document?" })).toBeVisible();
+    const howItWorks = page.getByRole("heading", { name: "How it works", level: 2 });
+    const howItWorksBox = (await howItWorks.boundingBox())!;
+    expect((await shortcuts.boundingBox())!.y).toBeLessThan(howItWorksBox.y);
+
+    const singleDocTools = REGISTRY_TOOLS.filter((t) => t.exam === "ibps" && t.kind === "preset");
+    expect(singleDocTools).toHaveLength(4);
+    for (const singleDocTool of singleDocTools) {
+      const link = shortcuts.getByRole("link", { name: singleDocTool.name });
+      await expect(link).toHaveAttribute("href", singleDocTool.path);
+      expect((await link.boundingBox())!.y).toBeLessThan(howItWorksBox.y);
+    }
   });
 
   test("all four processed → ZIP holds exactly the four validated files; nothing uploaded", async ({

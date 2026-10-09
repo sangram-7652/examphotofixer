@@ -77,6 +77,11 @@ export function ToolPage({ toolId }: { toolId: ToolId }) {
   const related = TOOLS.filter(
     (other) => other.id !== tool.id && (tool.exam === null || other.exam === tool.exam),
   );
+  // Prominent shortcuts to the single-document tools, for a user on the IBPS pack who only
+  // needs one of the four — otherwise the only way to find them is the "Related tools" grid
+  // at the bottom of the page. IBPS-only for now (CCC has no equivalent request yet).
+  const singleDocumentTools =
+    tool.kind === "pack" && tool.exam === "ibps" ? related.filter((t) => t.kind === "preset") : [];
   const crumbs: Crumb[] = [
     { name: "Home", path: "/" },
     { name: "Tools", path: "/tools" },
@@ -95,6 +100,31 @@ export function ToolPage({ toolId }: { toolId: ToolId }) {
         {tool.h1}
       </h1>
       <p className="mt-3 text-muted sm:text-lg">{content?.intro ?? tool.summary}</p>
+
+      {singleDocumentTools.length > 0 ? (
+        <section
+          aria-labelledby="single-document-shortcuts"
+          data-testid="single-document-shortcuts"
+          className="mt-6 rounded-xl border border-brand/20 bg-brand-soft/60 p-4 text-sm"
+        >
+          <h2 id="single-document-shortcuts" className="font-semibold">
+            Only need one document?
+          </h2>
+          <p className="mt-1 text-muted">Go straight to the resizer for just that one:</p>
+          <ul className="mt-3 flex flex-wrap gap-2">
+            {singleDocumentTools.map((other) => (
+              <li key={other.id}>
+                <Link
+                  href={other.path}
+                  className="inline-flex min-h-11 items-center rounded-lg border border-border-strong bg-background px-3 text-sm font-semibold transition-colors hover:border-brand hover:text-brand focus-visible:outline-3 focus-visible:outline-brand"
+                >
+                  {other.name}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
 
       <div className="mt-5">
         {livePreset ? (
