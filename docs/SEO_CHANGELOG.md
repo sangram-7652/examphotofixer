@@ -178,3 +178,75 @@ scope for this product):
 - No "effective/last updated" date was added to `/privacy` or `/terms`: neither page has an
   existing date convention to extend, and inventing one would be a fabricated date.
 
+## 2026-10-09 — `/ibps-complete-pack` — title/H1/description for search intent; pack FAQ depth
+
+- Old title / New title (`/ibps-complete-pack`): "IBPS Complete Pack – Photo, Signature, Thumb &
+  Declaration Images | ExamPhotoFixer" → "IBPS RRB Resizer – Photo, Signature, Thumb &
+  Declaration for IBPS CRP RRBs-XV | ExamPhotoFixer". `metaTitle` in
+  `src/lib/tools/registry.ts` (the `ibps-pack` entry) changed from `"IBPS Complete Pack – Photo,
+Signature, Thumb & Declaration Images"` to `"IBPS RRB Resizer – Photo, Signature, Thumb &
+Declaration for IBPS CRP RRBs-XV"`. Adds "RRB" and "Resizer" (the terms a competitor audit
+  found missing from the rendered `<title>`) and keeps "IBPS" immediately next to "CRP
+  RRBs-XV" — required by the existing guardrail test `"never names the CRP RRBs-XV cycle
+without 'IBPS' immediately next to it"` (`src/lib/presets/presets.test.ts`), which exists so
+  the scope can never read as ambiguous about which organisation's cycle it is. This mirrors the
+  live `ibps-photo` title's own pattern ("IBPS Photo Resizer – Resize Photo for IBPS CRP
+  RRBs-XV Forms"), which also names "IBPS" twice for the same reason. No bare year was added:
+  the notification's year (2026) is already carried by "CRP RRBs-XV" and `source.published`; a
+  literal "2026" in the title would go stale the moment IBPS issues a CRP RRBs-XVI notification,
+  and the page would need a content update anyway at that point (new source, new SHA-256, new
+  verification event) — so a year in the title buys no long-term value and risks looking
+  outdated. The root layout's `"%s | ExamPhotoFixer"` template still applies here (this route is
+  not `/`, so the homepage-only `title.absolute` exception doesn't apply) — confirmed by reading
+  the actual built HTML (`.next/server/app/ibps-complete-pack.html`): `<title>IBPS RRB Resizer –
+Photo, Signature, Thumb & Declaration for IBPS CRP RRBs-XV | ExamPhotoFixer</title>`.
+- Old description / New description (`/ibps-complete-pack`): "Prepare all four IBPS CRP RRBs-XV
+  application images — photo, signature, left thumb impression and handwritten declaration — on
+  one page, check each against the requirements and download them as a ZIP. Processed in your
+  browser." → "Resize and check all four IBPS CRP RRBs-XV application images — photo, signature,
+  left thumb impression and handwritten declaration — against the official requirements, then
+  download them together as a ZIP. Processed in your browser; nothing is uploaded." Adds the
+  "resize" verb for intent match; keeps every existing claim (CRP RRBs-XV scope, all four
+  documents named, ZIP, local processing) and strengthens the privacy claim ("nothing is
+  uploaded" is more specific than "processed in your browser" alone).
+- Other changes (H1, intro, links): H1 (`src/lib/tools/registry.ts`, `ibps-pack.h1`): "IBPS
+  Complete Pack: Photo, Signature, Thumb Impression & Declaration" → "IBPS Complete Pack: Photo,
+  Signature, Thumb Impression & Handwritten Declaration Resizer". Kept the literal "IBPS Complete
+  Pack" prefix intact (both `e2e/smoke.spec.ts` and `e2e/ibps-documents.spec.ts` assert on that
+  substring via `toContainText`, so no test changes were needed), renamed "Declaration" to
+  "Handwritten Declaration" for consistency with the tool's own name, and added "Resizer". Did
+  not add "(CRP RRBs-XV)" to the H1 itself — the scope is already explicit in the new title, the
+  new description, and the existing `SourceVerification` `scopeNote` rendered on the page, so
+  repeating it a third time in the H1 would be redundant without adding clarity.
+  `ibps-pack.name` (`"IBPS Complete Pack"`) and `ibps-pack.summary` were left unchanged
+  deliberately: `name` only drives internal UI chrome (breadcrumb label, the "Use the {pack.name}"
+  cross-link sentence on the four individual tool pages, the `WebApplication` JSON-LD `name`
+  field) — none of it is the rendered `<title>`, `<h1>` or meta description the audit actually
+  measured, and changing it would force updating the exact-string `getByRole("link", { name:
+"Use the IBPS Complete Pack" })` assertions in `e2e/ibps-documents.spec.ts` for zero SEO
+  benefit. Flagging this choice in case the keyword should be added there too in a later pass.
+  Pack FAQ (`ibpsPackContent` in `src/content/tool-content.ts`): added three FAQs reusing each
+  document's existing verified `guidance` text from `src/lib/presets/ibps.ts` verbatim (no new
+  requirement claims) — "How should I prepare the signature?" (surfaces the black-ink-pen
+  guidance), "How should I prepare the left thumb impression?" (black-or-blue-ink and the
+  missing-thumb alternative), "How should I prepare the handwritten declaration?" (English-only,
+  no capitals, the typed-declaration alternative) — plus one new FAQ, "Does this pack replace the
+  mandatory live photo capture?", promoting the pack's existing `commonProblems` "live photo and
+  certificates" note into FAQ form (same claim, same wording style as the photo tool's own "Does
+  this replace the live photo capture?" FAQ). The visible FAQ list and the `FAQPage` JSON-LD both
+  read from the same `content.faq` array (`ToolPage.tsx`), so they stay structurally consistent
+  with no separate sync step.
+- Reason: competitor-gap reconciliation (2026-10-09) confirmed two real, narrow gaps against the
+  actual rendered page (not competitor copying): the `<title>` lacked "RRB"/"resizer" entirely,
+  and the pack's FAQ was thinner than the individual tool pages it summarizes (ink colour,
+  thumb/declaration prep and the live-photo caveat were already written and verified elsewhere
+  in the codebase but not surfaced on the pack page itself).
+- Data source: competitor-gap reconciliation report (no ranking/analytics data; the site is not
+  live). Audit could not verify Google India rankings, GSC indexation, or competitor CWV/UX —
+  none of that evidence is claimed here.
+- Expected behaviour: the pack page's title and FAQ now match the terms a user searching for
+  "IBPS RRB photo signature thumb declaration resizer" would actually use, without implying
+  coverage of any IBPS recruitment beyond CRP RRBs-XV; no ranking/CTR expectation is set
+  pre-launch.
+- Review date: 4 weeks after launch (Search Console, once indexed).
+- Review: pending.

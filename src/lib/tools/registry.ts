@@ -155,11 +155,12 @@ export const TOOLS: readonly ToolDefinition[] = [
     exam: "ibps",
     presetIds: ["ibps-photo", "ibps-signature", "ibps-left-thumb", "ibps-declaration"],
     name: "IBPS Complete Pack",
-    h1: "IBPS Complete Pack: Photo, Signature, Thumb Impression & Declaration",
-    metaTitle: "IBPS Complete Pack – Photo, Signature, Thumb & Declaration Images",
+    h1: "IBPS Complete Pack: Photo, Signature, Thumb Impression & Handwritten Declaration Resizer",
+    metaTitle: "IBPS RRB Resizer – Photo, Signature, Thumb & Declaration for IBPS CRP RRBs-XV",
     metaDescription:
-      "Prepare all four IBPS application images — photo, signature, left thumb impression and hand-written declaration — on one page, check each against IBPS's published guidelines and download them as a ZIP. Processed in your browser.",
-    summary: "Prepare the IBPS photo, signature, thumb impression and declaration together.",
+      "Resize and check all four IBPS CRP RRBs-XV application images — photo, signature, left thumb impression and handwritten declaration — against the official requirements, then download them together as a ZIP. Processed in your browser; nothing is uploaded.",
+    summary:
+      "Prepare the IBPS CRP RRBs-XV photo, signature, thumb impression and declaration together.",
   },
   {
     id: "image-resizer",

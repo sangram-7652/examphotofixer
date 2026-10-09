@@ -463,6 +463,9 @@ function ibpsPackContent(presets: ImagePreset[]): ToolContent {
     })
     .join("; ");
   const first = describe(presets[0]);
+  const signature = presets[1];
+  const thumb = presets[2];
+  const declaration = presets[3];
   return {
     intro: `Prepare all four IBPS CRP RRBs-XV application images on one page — photo, signature, left thumb impression and handwritten declaration — check each against the requirements and download them together as a ZIP. Everything is processed on your device.`,
     howItWorks: [
@@ -485,6 +488,35 @@ function ibpsPackContent(presets: ImagePreset[]): ToolContent {
       {
         question: "What are the IBPS application image requirements?",
         answer: `According to the ${sourceCitation(presets[0].source)}: ${list}. All must be ${first.format}, and the scanning instructions ask for ${first.dpi}.`,
+      },
+      ...(signature.guidance && signature.guidance.length > 0
+        ? [
+            {
+              question: "How should I prepare the signature?",
+              answer: `${signature.guidance.join(" ")} This tool fixes the size, file size, format and DPI; it can't change how the signature was made.`,
+            },
+          ]
+        : []),
+      ...(thumb.guidance && thumb.guidance.length > 0
+        ? [
+            {
+              question: "How should I prepare the left thumb impression?",
+              answer: `${thumb.guidance.join(" ")} This tool fixes the size, file size, format and DPI; it can't change how the thumb impression was made.`,
+            },
+          ]
+        : []),
+      ...(declaration.guidance && declaration.guidance.length > 0
+        ? [
+            {
+              question: "How should I prepare the handwritten declaration?",
+              answer: `${declaration.guidance.join(" ")} This tool fixes the size, file size, format and DPI; it can't change how the declaration was made.`,
+            },
+          ]
+        : []),
+      {
+        question: "Does this pack replace the mandatory live photo capture?",
+        answer:
+          "No. IBPS also asks you to capture a photo with a webcam or mobile phone during the application, and in some recruitments to upload certificates as PDF. Those steps happen on the IBPS website; this pack only prepares the four uploaded images.",
       },
       {
         question: "What is in the ZIP file?",

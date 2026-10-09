@@ -3,6 +3,7 @@ import { getToolContent } from "@/content/tool-content";
 import type { OutputFacts } from "@/lib/image/pipeline";
 import { getPreset } from "@/lib/presets";
 import { CCC_LEFT_THUMB, CCC_PHOTO, CCC_SIGNATURE } from "@/lib/presets/ccc";
+import { IBPS_DECLARATION, IBPS_LEFT_THUMB, IBPS_PHOTO, IBPS_SIGNATURE } from "@/lib/presets/ibps";
 import type { ValidationCheck } from "@/lib/validation/types";
 import { validateAgainstPreset } from "@/lib/validation/validate";
 import { ERROR_COPY, errorMessageFor, isRetryable } from "./error-copy";
@@ -223,5 +224,30 @@ describe("tool registry and content", () => {
     expect(text).toContain("NIELIT CCC Examination Application Guidelines, Version 1.11 (2023)");
     for (const line of CCC_PHOTO.guidance ?? []) expect(text).toContain(line);
     expect(text.toLowerCase()).not.toContain("phone camera");
+  });
+
+  it("ibps-pack metaTitle, h1 and metaDescription name the actual search intent without widening scope", () => {
+    const tool = getTool("ibps-pack");
+    for (const keyword of ["RRB", "Resizer", "CRP RRBs-XV"]) {
+      expect(tool.metaTitle, tool.metaTitle).toContain(keyword);
+    }
+    expect(tool.h1).toContain("IBPS Complete Pack");
+    expect(tool.h1).toContain("Resizer");
+    expect(tool.metaDescription).toContain("CRP RRBs-XV");
+    // Scope stays to the one verified recruitment cycle; never widened to other IBPS exams.
+    expect(`${tool.metaTitle} ${tool.h1} ${tool.metaDescription}`).not.toMatch(/\b(PO|Clerk|SO)\b/);
+  });
+
+  it("ibps-pack FAQ repeats each document's verified guidance (ink colour, thumb, declaration) and the live-photo caveat", () => {
+    const presets = [IBPS_PHOTO, IBPS_SIGNATURE, IBPS_LEFT_THUMB, IBPS_DECLARATION];
+    const content = getToolContent(getTool("ibps-pack"), presets)!;
+    const text = JSON.stringify(content);
+    for (const preset of [IBPS_SIGNATURE, IBPS_LEFT_THUMB, IBPS_DECLARATION]) {
+      for (const line of preset.guidance ?? []) expect(text).toContain(line);
+    }
+    expect(text.toLowerCase()).toContain("black ink");
+    expect(content.faq.map((q) => q.question)).toContain(
+      "Does this pack replace the mandatory live photo capture?",
+    );
   });
 });
