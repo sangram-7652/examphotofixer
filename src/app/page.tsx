@@ -7,6 +7,7 @@ import { JsonLd } from "@/components/JsonLd";
 import { SpecFrame } from "@/components/SpecFrame";
 import { ToolCard } from "@/components/ToolCard";
 import { siteConfig } from "@/config/site";
+import { guidePath, listGuides } from "@/content/guides";
 import { listExams, listPresets, verifiedScopeSummary } from "@/lib/presets";
 import { describePreset } from "@/lib/presets/describe";
 import { formatIsoDate, isVerifiedSource, sourceCitation } from "@/lib/presets/source";
@@ -14,13 +15,34 @@ import { organizationJsonLd, websiteJsonLd } from "@/lib/seo/json-ld";
 import { buildPageMetadata } from "@/lib/seo/metadata";
 import { genericTools, TOOLS, toolsForExam } from "@/lib/tools/registry";
 
-const homeTitle = `${siteConfig.name} – Exam Photo & Signature Resizer`;
+// "for CCC and IBPS RRB" is a reader-friendly stand-in for the exact verified scope (CCC and
+// IBPS CRP RRBs-XV); the body copy and tool pages below state the precise scope.
+//
+// The root layout's `title.template` ("%s | ExamPhotoFixer") never applies here: per Next's
+// docs (node_modules/next/dist/docs/01-app/03-api-reference/04-functions/generate-metadata.md),
+// a layout's title.template does not apply to a title set by page.tsx of that SAME route
+// segment, and "/" is exactly that segment. So the "| <site name>" suffix is written out in
+// full below rather than left for the template to add — it would otherwise be silently dropped.
+const homeTitle = `Exam Photo & Signature Resizer for CCC and IBPS RRB | ${siteConfig.name}`;
+const homeDescription =
+  "Resize and compress photos, signatures and thumb impressions for CCC and IBPS RRB (CRP RRBs-XV) application forms. Processing happens in your browser — images are never uploaded or stored on a server.";
 
 export const metadata: Metadata = {
-  ...buildPageMetadata({ title: homeTitle, description: siteConfig.description, path: "/" }),
-  // Absolute so the root layout's "%s | ExamPhotoFixer" template is not applied twice.
+  ...buildPageMetadata({ title: homeTitle, description: homeDescription, path: "/" }),
+  // Belt-and-suspenders: guarantees the full title (including the site name) is what's rendered
+  // even if the template-resolution behaviour above ever changes, without depending on it.
   title: { absolute: homeTitle },
 };
+
+// Priority guides linked directly from the homepage so key answer pages are reachable in one click.
+const FEATURED_GUIDE_SLUGS = [
+  "ccc-photo-size",
+  "ccc-signature-size",
+  "ccc-thumb-impression-size",
+  "ccc-photo-upload-problems",
+  "ibps-photo-size",
+  "ibps-signature-thumb-declaration-size",
+] as const;
 
 const STEPS = [
   { title: "Upload", body: "Choose the exam, then the photo, signature or thumb impression." },
@@ -47,6 +69,12 @@ export default function HomePage() {
   const examSections = listExams()
     .map((exam) => ({ exam, tools: toolsForExam(exam.id).filter((t) => t.status === "live") }))
     .filter(({ tools }) => tools.length > 0);
+
+  // Direct links to the guides that answer the most common size/KB/DPI and upload questions.
+  const allGuides = listGuides();
+  const featuredGuides = FEATURED_GUIDE_SLUGS.map((slug) =>
+    allGuides.find((guide) => guide.slug === slug),
+  ).filter((guide): guide is NonNullable<typeof guide> => guide !== undefined);
 
   // The hero's spec sheet shows a real, verified requirement: the first live photo preset.
   const livePresetIds = new Set(
@@ -193,6 +221,33 @@ export default function HomePage() {
           ))}
         </div>
       </section>
+
+      {featuredGuides.length > 0 ? (
+        <section aria-labelledby="guides-title" className="mx-auto max-w-6xl px-4 py-4">
+          <h2 id="guides-title" className="section-title">
+            Guides: size, KB, DPI and upload problems
+          </h2>
+          <p className="mt-2 text-muted">
+            Short answers to the most common CCC and IBPS RRB requirement questions.
+          </p>
+          <ul className="mt-6 grid gap-3 sm:grid-cols-2">
+            {featuredGuides.map((guide) => (
+              <li key={guide.slug} className="card p-5">
+                <Link
+                  href={guidePath(guide)}
+                  className="font-semibold text-foreground underline-offset-4 hover:text-brand hover:underline"
+                >
+                  {guide.title}
+                </Link>
+                <p className="mt-1 text-sm text-muted">{guide.summary}</p>
+              </li>
+            ))}
+          </ul>
+          <Link href="/guides" className="text-link mt-4 inline-block text-sm">
+            See all guides
+          </Link>
+        </section>
+      ) : null}
 
       <section aria-labelledby="image-tools" className="mx-auto max-w-6xl px-4">
         <h2 id="image-tools" className="section-title">

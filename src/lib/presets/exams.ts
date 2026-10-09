@@ -50,6 +50,18 @@ export function listExams(): ExamDefinition[] {
 }
 
 /**
+ * "{scope} · {conducting body}", e.g. "CCC · NIELIT" — or just "{scope}" when the conducting
+ * body is already named inside the scope label (e.g. IBPS's "IBPS CRP RRBs-XV" already names
+ * IBPS), so the byline never repeats the same organisation twice. Case-insensitive substring
+ * check so this holds for any future exam without a per-exam flag.
+ */
+export function examByline(exam: ExamDefinition): string {
+  const scope = exam.scopeLabel ?? exam.shortName;
+  const body = exam.conductingBody;
+  return scope.toLowerCase().includes(body.toLowerCase()) ? scope : `${scope} · ${body}`;
+}
+
+/**
  * "CCC and IBPS CRP RRBs-XV" — the active exams' verified scope, joined for a sentence. Reads
  * `scopeLabel`/`shortName` from the registry so this can't list an exam that isn't actually
  * `active`, and can't drift from the scope named in that exam's own preset `source`.

@@ -33,9 +33,10 @@ export default function PrivacyPage() {
         or camera details, or anything you type.{" "}
         {gaEnabled ? (
           <>
-            These events are sent to Google Analytics 4, configured so it never sets a cookie or any
-            other persistent identifier (no cookies are used), so visits cannot be linked together
-            across pages or return visits.
+            These events are sent to Google Analytics 4 (GA4), configured cookieless with client
+            storage disabled (<code>client_storage: &quot;none&quot;</code>) so it never sets a
+            cookie or any other persistent identifier on your device, so visits cannot be linked
+            together across pages or return visits.
           </>
         ) : (
           <>
@@ -57,6 +58,15 @@ export default function PrivacyPage() {
       <p>
         Requirement pages link to official notifications on exam bodies&rsquo; websites. Those links
         open the other website in a new tab, and its own privacy policy applies there.
+      </p>
+
+      <h2>How requirement values are checked</h2>
+      <p>
+        Each size, file-size, format and DPI value is read from the exam body&rsquo;s own published
+        notification or guideline, not from memory or other websites. Every tool and guide page
+        shows the source document, its version and the date it was last checked, with a link to the
+        source so you can confirm it yourself. Where a value hasn&rsquo;t been checked against an
+        official source, it is not shown as a requirement.
       </p>
 
       <h2>Contact</h2>

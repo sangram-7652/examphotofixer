@@ -109,7 +109,7 @@ export const IBPS_DECLARATION: ImagePreset = {
   id: "ibps-declaration",
   exam: "ibps",
   documentType: "handwritten-declaration",
-  label: "IBPS Hand-written Declaration",
+  label: "IBPS Handwritten Declaration",
   width: 800,
   height: 400,
   preferredDimensions: true,

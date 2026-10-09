@@ -32,7 +32,7 @@ export function documentTitle(preset: ImagePreset): string {
     preset.documentType === "left-thumb-impression"
       ? "left thumb impression"
       : preset.documentType === "handwritten-declaration"
-        ? "hand-written declaration"
+        ? "handwritten declaration"
         : NOUNS[preset.documentType];
   return noun.charAt(0).toUpperCase() + noun.slice(1);
 }

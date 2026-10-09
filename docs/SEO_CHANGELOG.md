@@ -92,3 +92,89 @@ Template:
   downloading".
 - Reason: product UI polish and one accuracy fix. Data source: design review (no data).
 - Review date: 4 weeks after launch. Review: pending.
+
+## 2026-10-09 — IBPS scope wording, content consistency and trust fixes (SEO audit)
+
+- Old title / New title (`/`): "ExamPhotoFixer – Exam Photo & Signature Resizer" → "Exam Photo &
+  Signature Resizer for CCC and IBPS RRB | ExamPhotoFixer". The full string, including the
+  "| ExamPhotoFixer" suffix, is now written explicitly in `src/app/page.tsx` and set with
+  `title: { absolute: homeTitle } }` and passed to Open Graph/Twitter directly — **not** left
+  for the root layout's `%s | ExamPhotoFixer` template to add. (An earlier version of this
+  entry said the template added the suffix; it doesn't. Per Next's own docs
+  (`node_modules/next/dist/docs/01-app/03-api-reference/04-functions/generate-metadata.md`),
+  a layout's `title.template` never applies to a title set by `page.js` of that _same_ route
+  segment, and `/` is exactly that segment — so the earlier removal of the explicit `absolute`
+  title silently dropped the site name from `<title>` and `og:title` until this fix put it
+  back, written out in full rather than relying on the template.)
+- Old description / New description (`/`): was the generic `siteConfig.description`; now a
+  homepage-specific description naming CCC, "IBPS RRB (CRP RRBs-XV)", browser-local processing
+  and no server upload/storage.
+- Other changes (H1, intro, links):
+  - IBPS tool `summary` fields and several `metaDescription`s (registry.ts) replaced generic
+    "IBPS bank recruitment application forms" / "IBPS application forms" / "IBPS forms" with
+    "the IBPS CRP RRBs-XV application" / "the IBPS CRP RRBs-XV scanning guidelines", so no copy
+    implies coverage of IBPS recruitments beyond the one verified notification.
+  - `/guides/ibps-photo-size` title/description/summary and the combined
+    signature/thumb/declaration guide's description/summary: same generic-"IBPS" → "IBPS CRP
+    RRBs-XV" fix.
+  - `/tools` meta description: "IBPS" → "IBPS CRP RRBs-XV" for the resizer list.
+  - ToolPage eyebrow: IBPS tool pages showed "IBPS · IBPS" (conducting body duplicating the
+    short name, called out but left as-is in the 2026-09-25 P12.1 entry above). A first pass
+    swapped the short name for the exam's `scopeLabel`, which only removed the duplication when
+    the two strings were exactly equal — it still rendered "IBPS CRP RRBs-XV · IBPS" (the review
+    below caught this). `examByline()` (`src/lib/presets/exams.ts`) now does a case-insensitive
+    substring check instead of an exact-equality check, so the conducting body is dropped
+    whenever it's already named inside the scope label; IBPS tool pages now show plainly "IBPS
+    CRP RRBs-XV", while CCC is unaffected ("CCC · NIELIT", since "NIELIT" isn't contained in
+    "CCC"). The "{exam} upload requirements" H2 is unchanged by this fix (it only ever showed
+    the scope label, never the conducting body, so it had no duplication): "IBPS CRP RRBs-XV
+    upload requirements" instead of "IBPS upload requirements".
+  - Spelling consistency: "Hand-written declaration" / "hand-written declaration" → "Handwritten
+    declaration" / "handwritten declaration" everywhere user-facing (preset label, registry
+    name/h1/metaDescription/summary, tool-content.ts, guides.ts, preset-labels.ts). Internal,
+    non-rendered fields (`RequirementSource.notes`, code comments, the monitoring-report
+    generator) were left as-is — not user-facing content.
+  - CCC signature and thumb impression guide/tool content: the two pages' "can't fix…" and
+    common-problem copy was near-identical; each now names its own failure modes (faint/bled
+    ink and re-signing for the signature; smudged/partial/faint impression and re-inking for the
+    thumb) instead of a shared one-line caveat. No new requirement claims — only tool-limitation
+    and preparation copy, not sourced guideline text.
+  - `/` gains a new "Guides: size, KB, DPI and upload problems" section linking directly to the
+    six guides most likely to answer a size/KB/DPI or upload-problem query (previously reachable
+    only via `/guides`, the footer, or a related-guides list on another guide/tool page).
+  - `/privacy`: the GA4 paragraph now names the actual mechanism (`client_storage: "none"`) it
+    already uses, and a new "How requirement values are checked" paragraph explains the
+    verification practice already in place (source documents, version, checked date, link).
+    No new legal claims; no change to what data is actually collected.
+- Reason: SEO/content/trust audit (2026-10-09) found generic "IBPS" wording that overstated
+  scope beyond the one verified notification (CRP RRBs-XV), inconsistent "hand-written"
+  spelling, near-duplicate CCC signature/thumb copy, a literal "IBPS · IBPS" label, no homepage
+  links to the guides, and Privacy Policy wording that was accurate but less specific than the
+  implementation. The audit's claim that four guides showed "Last reviewed 24 September 2026"
+  was checked against the live code and found already correct — both sources' `verifiedOn` is
+  `2026-09-25`, and `GuidePage` renders that field directly — so no change was needed there (see
+  "Audit items not changed" below).
+- Data source: content audit (no data); the site is not live.
+- Expected behaviour: homepage and tool-page copy no longer reads as covering more of IBPS than
+  is verified; no ranking/CTR expectation is set pre-launch.
+- Review date: 4 weeks after launch (Search Console, once indexed).
+- Review: pending.
+
+Audit items checked but intentionally not changed (already correct, or out of the audit's
+scope for this product):
+
+- Guide "Last reviewed" date: already `25 September 2026` on every CCC/IBPS guide (derived live
+  from `source.verifiedOn`, not a hard-coded date) — the audit's "24 September" finding did not
+  reproduce in the current code.
+- CCC source citation and PDF/printed page (`page: 3`) and the CCC physical-size values (3.5×4.5
+  cm / 4.5×3.5 cm): already shown via `sourceCitation()` and `RequirementsTable` on every CCC
+  tool and guide page — no missing citation or dimension found.
+- No Article JSON-LD exists (or was added): guides use Open Graph `article` `publishedTime`/
+  `modifiedTime` only, already consistent with `source.verifiedOn`/`firstVerifiedOn`; adding a
+  separate `Article` type would be new schema beyond what the audit asked to fix.
+- No About page exists and none was added, per the task's instruction not to create a large new
+  page; the trust content it asked for (source, version, checked date shown; unverified exams
+  never presented as verified) already exists via `SourceVerification` and the Privacy Policy.
+- No "effective/last updated" date was added to `/privacy` or `/terms`: neither page has an
+  existing date convention to extend, and inventing one would be a fabricated date.
+

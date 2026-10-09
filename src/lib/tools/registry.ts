@@ -101,8 +101,8 @@ export const TOOLS: readonly ToolDefinition[] = [
     h1: "IBPS Photo Resizer",
     metaTitle: "IBPS Photo Resizer – Resize Photo for IBPS CRP RRBs-XV Forms",
     metaDescription:
-      "Resize your photo to the size, file size, format and DPI in IBPS's published scanning guidelines for its bank recruitment forms, and check it before you upload — processed in your browser.",
-    summary: "Resize and check your photo for IBPS bank recruitment application forms.",
+      "Resize your photo to the size, file size, format and DPI in the IBPS CRP RRBs-XV scanning guidelines, and check it before you upload — processed in your browser.",
+    summary: "Resize and check your photo for the IBPS CRP RRBs-XV application.",
   },
   {
     id: "ibps-signature",
@@ -115,8 +115,8 @@ export const TOOLS: readonly ToolDefinition[] = [
     h1: "IBPS Signature Resizer",
     metaTitle: "IBPS Signature Resizer – Resize Signature for IBPS CRP RRBs-XV Forms",
     metaDescription:
-      "Resize your signature to the size, file size, format and DPI in IBPS's published scanning guidelines, and check it before you upload — processed in your browser.",
-    summary: "Resize and check your signature for IBPS bank recruitment application forms.",
+      "Resize your signature to the size, file size, format and DPI in the IBPS CRP RRBs-XV scanning guidelines, and check it before you upload — processed in your browser.",
+    summary: "Resize and check your signature for the IBPS CRP RRBs-XV application.",
   },
   {
     id: "ibps-thumb",
@@ -129,8 +129,8 @@ export const TOOLS: readonly ToolDefinition[] = [
     h1: "IBPS Left Thumb Impression Resizer",
     metaTitle: "IBPS Thumb Impression Resizer – Left Thumb Image for IBPS CRP RRBs-XV",
     metaDescription:
-      "Resize your left thumb impression to the size, file size, format and DPI in IBPS's published scanning guidelines, and check it before you upload — processed in your browser.",
-    summary: "Resize and check your left thumb impression for IBPS application forms.",
+      "Resize your left thumb impression to the size, file size, format and DPI in the IBPS CRP RRBs-XV scanning guidelines, and check it before you upload — processed in your browser.",
+    summary: "Resize and check your left thumb impression for the IBPS CRP RRBs-XV application.",
   },
   {
     id: "ibps-declaration",
@@ -139,12 +139,13 @@ export const TOOLS: readonly ToolDefinition[] = [
     kind: "preset",
     exam: "ibps",
     presetIds: ["ibps-declaration"],
-    name: "IBPS Hand-written Declaration Resizer",
-    h1: "IBPS Hand-written Declaration Resizer",
+    name: "IBPS Handwritten Declaration Resizer",
+    h1: "IBPS Handwritten Declaration Resizer",
     metaTitle: "IBPS Handwritten Declaration Resizer – Size, KB and DPI for IBPS CRP RRBs-XV",
     metaDescription:
-      "Resize the image of your hand-written declaration to the size, file size, format and DPI in IBPS's published scanning guidelines, and check it before you upload — processed in your browser.",
-    summary: "Resize and check your hand-written declaration image for IBPS forms.",
+      "Resize the image of your handwritten declaration to the size, file size, format and DPI in the IBPS CRP RRBs-XV scanning guidelines, and check it before you upload — processed in your browser.",
+    summary:
+      "Resize and check your handwritten declaration image for the IBPS CRP RRBs-XV application.",
   },
   {
     id: "ibps-pack",

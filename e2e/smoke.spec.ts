@@ -11,7 +11,7 @@ const TOOL_PAGES = [
   { path: "/ibps-photo-resizer", h1: "IBPS Photo Resizer" },
   { path: "/ibps-signature-resizer", h1: "IBPS Signature Resizer" },
   { path: "/ibps-thumb-impression-resizer", h1: "IBPS Left Thumb Impression Resizer" },
-  { path: "/ibps-handwritten-declaration-resizer", h1: "IBPS Hand-written Declaration Resizer" },
+  { path: "/ibps-handwritten-declaration-resizer", h1: "IBPS Handwritten Declaration Resizer" },
   { path: "/ibps-complete-pack", h1: "IBPS Complete Pack" },
   { path: "/image-resizer", h1: "Image Resizer" },
   { path: "/image-compressor", h1: "Image Compressor" },

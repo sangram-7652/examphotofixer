@@ -114,6 +114,15 @@ function cccInkContent(preset: ImagePreset, kind: "signature" | "thumb"): ToolCo
         title: `${kind === "signature" ? "Signature" : "Thumb impression"} too small in the frame`,
         body: `Zoom in so the ${short} fills most of the frame. Extra blank paper around it is kept in the image and makes it harder to read.`,
       },
+      kind === "signature"
+        ? {
+            title: "Ink looks faint or patchy after resizing",
+            body: "Resizing can't restore ink that didn't transfer evenly onto the paper. Sign again with a fresh pen stroke in good, even light, and avoid signing over a fold or a textured surface.",
+          }
+        : {
+            title: "Impression looks smudged or incomplete",
+            body: "Resizing can't fix a thumb impression that smudged or didn't fully touch the paper. Clean your thumb, apply an even, thin layer of ink and press down firmly without sliding.",
+          },
       {
         title: "“Invalid dimensions” on the form",
         body: `The form checks exact pixel sizes. Scans and camera images are usually thousands of pixels wide; this tool outputs exactly ${d.size}.`,
@@ -330,7 +339,7 @@ function ibpsPhotoContent(preset: ImagePreset): ToolContent {
   const d = describe(preset);
   const citation = sourceCitation(preset.source);
   return {
-    intro: `Resize your photo to the requirements in IBPS's published scanning guidelines — ${d.size}, ${d.kb}, ${d.format}, ${d.dpi} — and check it before you upload. Your photo is processed on your device and never uploaded to our servers.`,
+    intro: `Resize your photo to the requirements in the IBPS CRP RRBs-XV scanning guidelines — ${d.size}, ${d.kb}, ${d.format}, ${d.dpi} — and check it before you upload. Your photo is processed on your device and never uploaded to our servers.`,
     howItWorks: [
       "Choose a recent passport-style colour photo (see the guideline notes further down this page).",
       `Drag and zoom so your face fills the frame. The frame has the ${preset.width}:${preset.height} shape, so your photo is cropped, never stretched.`,
@@ -375,7 +384,7 @@ function ibpsPhotoContent(preset: ImagePreset): ToolContent {
   };
 }
 
-/** IBPS signature, left thumb impression and hand-written declaration share one flow. */
+/** IBPS signature, left thumb impression and handwritten declaration share one flow. */
 function ibpsDocumentContent(
   preset: ImagePreset,
   kind: "signature" | "thumb" | "declaration",
@@ -385,7 +394,7 @@ function ibpsDocumentContent(
   const noun = {
     signature: "signature",
     thumb: "left thumb impression",
-    declaration: "hand-written declaration",
+    declaration: "handwritten declaration",
   }[kind];
   const short = { signature: "signature", thumb: "thumb impression", declaration: "declaration" }[
     kind
@@ -399,7 +408,7 @@ function ibpsDocumentContent(
       "the handwriting, the language, capital letters, or whether the text matches the declaration IBPS asks for",
   }[kind];
   return {
-    intro: `Resize the image of your ${noun} to the requirements in IBPS's published scanning guidelines — ${d.size}, ${d.kb}, ${d.format}, ${d.dpi} — and check it before you upload. The image is processed on your device and never uploaded to our servers.`,
+    intro: `Resize the image of your ${noun} to the requirements in the IBPS CRP RRBs-XV scanning guidelines — ${d.size}, ${d.kb}, ${d.format}, ${d.dpi} — and check it before you upload. The image is processed on your device and never uploaded to our servers.`,
     howItWorks: [
       `Prepare your ${noun} as the notification describes (see “The same guidelines also ask” below), then scan it or take a clear, well-lit picture of it.`,
       `Choose the image and drag or zoom so the ${short} fills the frame. The frame has the ${preset.width}:${preset.height} shape, so nothing is stretched.`,
@@ -455,9 +464,9 @@ function ibpsPackContent(presets: ImagePreset[]): ToolContent {
     .join("; ");
   const first = describe(presets[0]);
   return {
-    intro: `Prepare all four IBPS application images on one page — photo, signature, left thumb impression and hand-written declaration — check each against IBPS's published guidelines and download them together as a ZIP. Everything is processed on your device.`,
+    intro: `Prepare all four IBPS CRP RRBs-XV application images on one page — photo, signature, left thumb impression and handwritten declaration — check each against the requirements and download them together as a ZIP. Everything is processed on your device.`,
     howItWorks: [
-      "Work through the four steps on this page: photo, signature, left thumb impression, then hand-written declaration.",
+      "Work through the four steps on this page: photo, signature, left thumb impression, then handwritten declaration.",
       "For each file: choose the image, adjust the crop, and process it. Each file is checked against its own requirements.",
       "The pack status shows which files are ready, which have a warning and which still need attention.",
       "When all four are processed, download them together as one ZIP — or download each file on its own.",

@@ -210,7 +210,7 @@ const GUIDES: readonly Guide[] = [
                 ],
               ),
               p(
-                "It can't fix a faint, blurred or smudged signature. If the result looks unclear, sign again and rescan.",
+                "It can't fix a signature that's faint, blurred, smudged, or where the ink has bled into the paper. If the result looks unclear, sign again with a fresh pen stroke on dry paper and rescan.",
               ),
             ],
           },
@@ -270,7 +270,7 @@ const GUIDES: readonly Guide[] = [
                 [`${d.format} output with ${chooseOutputDpi(thumb.dpi)} DPI written into the file`],
               ),
               p(
-                "It can't make a smudged or faint impression clearer. If it's hard to see, take it again.",
+                "It can't make a smudged, partial or faint impression clearer, or tell you if too much or too little ink was used. Clean your thumb, apply a thin, even layer of ink, and press down firmly without sliding before taking it again.",
               ),
             ],
           },
@@ -428,10 +428,11 @@ const GUIDES: readonly Guide[] = [
     slug: "ibps-photo-size",
     category: "IBPS",
     title: "IBPS Photo Size: Dimensions, File Size, Format and DPI",
-    metaTitle: "IBPS Photo Size – Dimensions, KB, Format & DPI for Bank Exam Forms",
+    metaTitle: "IBPS Photo Size – Dimensions, KB, Format & DPI for IBPS CRP RRBs-XV Forms",
     description:
-      "The photograph size in IBPS's scanning guidelines for its bank recruitment forms: pixel dimensions, file size in KB, format and DPI, with the source notification and how to prepare your photo.",
-    summary: "The photograph dimensions, file size, format and DPI in IBPS's scanning guidelines.",
+      "The photograph size in the IBPS CRP RRBs-XV scanning guidelines: pixel dimensions, file size in KB, format and DPI, with the source notification and how to prepare your photo.",
+    summary:
+      "The photograph dimensions, file size, format and DPI in the IBPS CRP RRBs-XV scanning guidelines.",
     presetIds: ["ibps-photo"],
     toolLinks: [
       { toolId: "ibps-photo", text: "Resize your photo with the IBPS Photo Resizer" },
@@ -520,12 +521,12 @@ const GUIDES: readonly Guide[] = [
   {
     slug: "ibps-signature-thumb-declaration-size",
     category: "IBPS",
-    title: "IBPS Signature, Left Thumb Impression and Hand-written Declaration Size",
+    title: "IBPS Signature, Left Thumb Impression and Handwritten Declaration Size",
     metaTitle: "IBPS Signature, Thumb Impression & Declaration Size – Pixels, KB, DPI",
     description:
-      "The signature, left thumb impression and hand-written declaration requirements in IBPS's scanning guidelines: pixel dimensions, file size in KB, format and DPI, with the declaration text, the source notification and how to prepare each image.",
+      "The signature, left thumb impression and handwritten declaration requirements in the IBPS CRP RRBs-XV scanning guidelines: pixel dimensions, file size in KB, format and DPI, with the declaration text, the source notification and how to prepare each image.",
     summary:
-      "Signature, left thumb impression and hand-written declaration requirements in IBPS's scanning guidelines.",
+      "Signature, left thumb impression and handwritten declaration requirements in the IBPS CRP RRBs-XV scanning guidelines.",
     presetIds: ["ibps-signature", "ibps-left-thumb", "ibps-declaration"],
     toolLinks: [
       { toolId: "ibps-signature", text: "Resize your signature with the IBPS Signature Resizer" },
@@ -535,7 +536,7 @@ const GUIDES: readonly Guide[] = [
       },
       {
         toolId: "ibps-declaration",
-        text: "Resize your declaration with the IBPS Hand-written Declaration Resizer",
+        text: "Resize your declaration with the IBPS Handwritten Declaration Resizer",
       },
       { toolId: "ibps-pack", text: "Prepare all four IBPS images in the IBPS Complete Pack" },
     ],
@@ -544,14 +545,14 @@ const GUIDES: readonly Guide[] = [
       const t = describePreset(thumb);
       const dec = describePreset(declaration);
       return {
-        shortAnswer: `According to the ${sourceCitation(signature.source)}: signature ${s.size}, ${s.kb}; left thumb impression ${t.size}, ${t.kb}; hand-written declaration ${dec.size}, ${dec.kb}. All three in ${s.format} format, scanned at ${s.dpi}. The pixel sizes are stated as preferred.`,
+        shortAnswer: `According to the ${sourceCitation(signature.source)}: signature ${s.size}, ${s.kb}; left thumb impression ${t.size}, ${t.kb}; handwritten declaration ${dec.size}, ${dec.kb}. All three in ${s.format} format, scanned at ${s.dpi}. The pixel sizes are stated as preferred.`,
         sections: [
           {
             id: "four-images",
             heading: "Four images in the IBPS application",
             blocks: [
               p(
-                "The IBPS application asks you to upload a photograph, a signature, a left thumb impression and a hand-written declaration; the notification says the application isn't registered until they are uploaded. This page covers the signature, thumb impression and declaration. For the photograph, see ",
+                "The IBPS CRP RRBs-XV application asks you to upload a photograph, a signature, a left thumb impression and a handwritten declaration; the notification says the application isn't registered until they are uploaded. This page covers the signature, thumb impression and declaration. For the photograph, see ",
                 { href: "/guides/ibps-photo-size", text: "IBPS photo size" },
                 ".",
               ),
@@ -587,7 +588,7 @@ const GUIDES: readonly Guide[] = [
           },
           {
             id: "declaration",
-            heading: "Hand-written declaration",
+            heading: "Handwritten declaration",
             blocks: [
               list(
                 [`${dec.size} (width × height), stated as preferred`],

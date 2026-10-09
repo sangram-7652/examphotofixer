@@ -22,7 +22,7 @@ import {
 } from "./helpers";
 
 /**
- * IBPS signature, left thumb impression and hand-written declaration tools (P12), and the IBPS
+ * IBPS signature, left thumb impression and handwritten declaration tools (P12), and the IBPS
  * Complete Pack. Every expected value comes from the presets; downloads are re-validated from
  * their bytes.
  */
@@ -43,7 +43,7 @@ const TOOLS: { path: string; h1: string; noun: string; preset: ImagePreset }[] =
   },
   {
     path: "/ibps-handwritten-declaration-resizer",
-    h1: "IBPS Hand-written Declaration Resizer",
+    h1: "IBPS Handwritten Declaration Resizer",
     noun: "declaration",
     preset: IBPS_DECLARATION,
   },
@@ -101,7 +101,7 @@ for (const { path, h1, noun, preset } of TOOLS) {
       const packLink = page.getByRole("link", { name: "Use the IBPS Complete Pack" });
       await expect(packLink).toHaveAttribute("href", "/ibps-complete-pack");
       await expect(packLink.locator("xpath=..")).toContainText(
-        "photo, signature, left thumb impression and hand-written declaration",
+        "photo, signature, left thumb impression and handwritten declaration",
       );
       await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
         "href",

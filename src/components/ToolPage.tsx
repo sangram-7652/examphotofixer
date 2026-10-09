@@ -11,7 +11,7 @@ import { ImageCompressorTool } from "@/components/tool/generic/ImageCompressorTo
 import { ImageResizerTool } from "@/components/tool/generic/ImageResizerTool";
 import { guidePath, guidesForTool } from "@/content/guides";
 import { getToolContent } from "@/content/tool-content";
-import { EXAMS, getPreset } from "@/lib/presets";
+import { EXAMS, examByline, getPreset } from "@/lib/presets";
 import { SourceVerification } from "@/components/SourceVerification";
 import {
   breadcrumbJsonLd,
@@ -90,11 +90,7 @@ export function ToolPage({ toolId }: { toolId: ToolId }) {
       <JsonLd data={jsonLd} />
       <Breadcrumbs crumbs={crumbs} />
 
-      <p className="eyebrow mt-6">
-        {tool.exam
-          ? `${EXAMS[tool.exam].shortName} · ${EXAMS[tool.exam].conductingBody}`
-          : "Image tool"}
-      </p>
+      <p className="eyebrow mt-6">{tool.exam ? examByline(EXAMS[tool.exam]) : "Image tool"}</p>
       <h1 className="mt-2 font-display text-3xl font-bold tracking-tight text-balance sm:text-4xl">
         {tool.h1}
       </h1>
@@ -149,7 +145,7 @@ export function ToolPage({ toolId }: { toolId: ToolId }) {
         <section aria-labelledby="requirements" className="mt-14">
           <h2 id="requirements" className="section-title">
             {tool.exam
-              ? `${EXAMS[tool.exam].shortName} upload requirements`
+              ? `${EXAMS[tool.exam].scopeLabel ?? EXAMS[tool.exam].shortName} upload requirements`
               : "Upload requirements"}
           </h2>
           <div className="mt-4 space-y-4">
